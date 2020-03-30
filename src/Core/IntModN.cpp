@@ -1,8 +1,8 @@
-#include <kxm/Core/IntModN.h>
+#include <K/Core/IntModN.h>
 
-#include <kxm/Core/NumberTools.h>
+#include <K/Core/NumberTools.h>
 
-namespace kxm {
+namespace K {
 namespace Core {
 
 IntModN::IntModN(int modulus, int offset) {
@@ -89,4 +89,4 @@ bool IntModN::IncrementWillWrap() const {
 }
 
 }    // Namespace Core.
-}    // Namespace kxm.
+}    // Namespace K.

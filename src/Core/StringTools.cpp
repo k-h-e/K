@@ -1,4 +1,4 @@
-#include <kxm/Core/StringTools.h>
+#include <K/Core/StringTools.h>
 
 #include <sstream>
 
@@ -8,7 +8,7 @@ using std::vector;
 using std::invalid_argument;
 using std::out_of_range;
 
-namespace kxm {
+namespace K {
 namespace Core {
 
 void StringTools::Tokenize(const string &text, char separator, vector<string> *outTokens) {
@@ -54,4 +54,4 @@ bool StringTools::Parse(const std::string &text, double *outValue) {
 }
 
 }    // Namespace Core.
-}    // namespace kxm.
+}    // namespace K.

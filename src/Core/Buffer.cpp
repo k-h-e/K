@@ -1,12 +1,12 @@
-#include <kxm/Core/Buffer.h>
+#include <K/Core/Buffer.h>
 
 #include <cassert>
 #include <cstring>
-#include <kxm/Core/NumberTools.h>
+#include <K/Core/NumberTools.h>
 
 using namespace std;
 
-namespace kxm {
+namespace K {
 namespace Core {
 
 Buffer::Buffer()
@@ -78,4 +78,4 @@ int Buffer::Reader::Read(void *targetBuffer, int targetBufferSize) {
 }
     
 }    // Namespace Core.
-}    // Namespace kxm.
+}    // Namespace K.

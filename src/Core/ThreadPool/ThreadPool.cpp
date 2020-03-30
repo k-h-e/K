@@ -4,7 +4,7 @@
 
 using std::shared_ptr;
 using std::make_shared;
-using kxm::Core::ActionInterface;
+using K::Core::ActionInterface;
 using K::Core::CompletionHandlerInterface;
 
 namespace K {

@@ -1,10 +1,10 @@
-#include <kxm/Core/Interface.h>
+#include <K/Core/Interface.h>
 
-namespace kxm {
+namespace K {
 namespace Core {
 
 Interface::~Interface() {
 }
 
 }    // Namespace Core.
-}    // Namespace kxm.
+}    // Namespace K.

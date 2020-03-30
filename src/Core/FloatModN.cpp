@@ -1,9 +1,9 @@
-#include <kxm/Core/FloatModN.h>
+#include <K/Core/FloatModN.h>
 
 #include <cassert>
-#include <kxm/Core/NumberTools.h>
+#include <K/Core/NumberTools.h>
 
-namespace kxm {
+namespace K {
 namespace Core {
 
 FloatModN::FloatModN(int modulus)
@@ -60,4 +60,4 @@ void FloatModN::MoveTo(const FloatModN &other, float maxStepSize) {
 }
 
 }    // Namespace Core.
-}    // Namespace kxm.
+}    // Namespace K.

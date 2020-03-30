@@ -3,8 +3,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <K/IO/SocketStream.h>
 #include <K/Core/Log.h>
+#include <K/IO/SocketStream.h>
 
 using std::shared_ptr;
 using std::make_shared;

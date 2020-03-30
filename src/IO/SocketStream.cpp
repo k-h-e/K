@@ -4,7 +4,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <vector>
-#include <kxm/Core/StringTools.h>
+#include <K/Core/StringTools.h>
 #include <K/Core/Log.h>
 
 using std::shared_ptr;
@@ -14,7 +14,7 @@ using std::mutex;
 using std::unique_lock;
 using std::string;
 using std::vector;
-using kxm::Core::StringTools;
+using K::Core::StringTools;
 using K::Core::Log;
 
 namespace K {

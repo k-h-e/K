@@ -1,18 +1,5 @@
-Next
-====
-- make views hold a RenderTarget
-
-Zarch
-- implement collision check: bounding box <-> bounding box.
-
-Raspiator
-- fix header dependencies
-    - kxm Core dependencies missing in CMake stuff
-    - same in Qt version
-
 General
 - Check everywhere regarding default move operations!
 - Switch Log().Stream() to moving.
 - Add locking to Log().Stream().
 
-blah...

@@ -9,15 +9,10 @@
 #include <K/Core/ThreadPool.h>
 #include <K/Core/CompletionHandlerInterface.h>
 
-namespace kxm {
-namespace Core {
-    class ActionInterface;
-}
-}
-
 namespace K {
 namespace Core {
 
+class ActionInterface;
 class CompletionHandlerInterface;
 
 //! Shared state for the thread pool.
@@ -26,10 +21,10 @@ class CompletionHandlerInterface;
  *
  *  Thread-safe (all public methods).
  */
-class ThreadPool::SharedState : public virtual K::Core::CompletionHandlerInterface {
+class ThreadPool::SharedState : public virtual CompletionHandlerInterface {
   public:
-    void Run(const std::shared_ptr<kxm::Core::ActionInterface> &action,
-             const std::shared_ptr<K::Core::CompletionHandlerInterface> &completionHandler, int completionId);
+    void Run(const std::shared_ptr<ActionInterface> &action,
+             const std::shared_ptr<CompletionHandlerInterface> &completionHandler, int completionId);
     void OnCompletion(int completionId);
     void ShutDown();
 

@@ -1,6 +1,6 @@
-#include <kxm/Core/NumberTools.h>
+#include <K/Core/NumberTools.h>
 
-namespace kxm {
+namespace K {
 namespace Core {
 
 const double NumberTools::pi = 3.141592654;
@@ -48,4 +48,4 @@ void NumberTools::ClampMax(float *numba, float max) {
 }
 
 }    // Namespace Core.
-}    // namespace kxm.
+}    // namespace K.

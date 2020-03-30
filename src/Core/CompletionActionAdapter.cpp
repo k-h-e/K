@@ -1,9 +1,9 @@
 #include <K/Core/CompletionActionAdapter.h>
 
-#include <kxm/Core/ActionInterface.h>
+#include <K/Core/ActionInterface.h>
 
 using std::shared_ptr;
-using kxm::Core::ActionInterface;
+using K::Core::ActionInterface;
 
 namespace K {
 namespace Core {

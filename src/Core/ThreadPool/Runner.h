@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <K/Core/ThreadPool.h>
-#include <kxm/Core/Interface.h>
+#include <K/Core/Interface.h>
 
 namespace K {
 namespace Core {
@@ -12,7 +12,7 @@ namespace Core {
 /*!
  *  \ingroup Core
  */
-class ThreadPool::Runner : public virtual kxm::Core::Interface {
+class ThreadPool::Runner : public virtual Interface {
   public:
     Runner(int thread, CompletionHandlerInterface &completionHandler,
            const std::shared_ptr<SharedRunnerState> &sharedState);

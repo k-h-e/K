@@ -1,13 +1,13 @@
 #include "Runner.h"
 
-#include <kxm/Core/ActionInterface.h>
+#include <K/Core/ActionInterface.h>
 #include <K/Core/CompletionHandlerInterface.h>
 #include <K/Core/Log.h>
 #include "SharedRunnerState.h"
 
 using std::shared_ptr;
 using std::to_string;
-using kxm::Core::ActionInterface;
+using K::Core::ActionInterface;
 using K::Core::CompletionHandlerInterface;
 using K::Core::Log;
 

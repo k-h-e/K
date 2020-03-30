@@ -10,7 +10,7 @@ using std::mutex;
 using std::thread;
 using std::unique_lock;
 using std::to_string;
-using kxm::Core::ActionInterface;
+using K::Core::ActionInterface;
 using K::Core::CompletionHandlerInterface;
 using K::Core::Log;
 
