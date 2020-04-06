@@ -8,12 +8,36 @@ class NumberTools {
   public:
     static const double pi;
 
-    static void Clamp(int *numba, int min, int max);
-    static void Clamp(float *numba, float min, float max);
-    static void ClampMin(int *numba, int min);
-    static void ClampMax(int *numba, int max);
-    static void ClampMin(float *numba, float min);
-    static void ClampMax(float *numba, float max);
+    template<typename T>
+    static void Clamp(T *numba, T min, T max) {
+        if (*numba < min) {
+            *numba = min;
+        }
+        else if (*numba > max) {
+            *numba = max;
+        }
+    }
+
+    template<typename T>
+    static void ClampMin(T *numba, T min) {
+        if (*numba < min) {
+            *numba = min;
+        }
+    }
+
+    template<typename T>
+    static void ClampMax(T *numba, T max) {
+        if (*numba > max) {
+            *numba = max;
+        }
+    }
+
+    template<typename T>
+    static void Swap(T *number, T *otherNumber) {
+        T temporary = *number;
+        *number = *otherNumber;
+        *otherNumber = temporary;
+    }
 };
 
 }    // Namespace Core.
