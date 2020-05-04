@@ -46,6 +46,8 @@ void NetworkEventCoupling::Reader::ExecuteAction() {
         }
     }
 
+    hub_->RequestShutDown(hubClientId_);
+
     Log::Print(Log::Level::Debug, this, []{ return "terminating"; });
 }
 
