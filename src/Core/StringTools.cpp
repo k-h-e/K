@@ -20,6 +20,25 @@ void StringTools::Tokenize(const string &text, char separator, vector<string> *o
     }
 }
 
+void StringTools::Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters) {
+    if (inOutText->length() > 0u) {
+        int left  = 0;
+        int right = static_cast<int>(inOutText->length()) - 1;
+        while ((left <= right) && (invalidCharacters.find((*inOutText)[left]) != invalidCharacters.end())) {
+            ++left;
+        }
+        while ((left <= right) && (invalidCharacters.find((*inOutText)[right]) != invalidCharacters.end())) {
+            --right;
+        }
+
+        string result;
+        for (int i = left; i <= right; ++i) {
+            result.push_back((*inOutText)[i]);
+        }
+        *inOutText = result;
+    }
+}
+
 bool StringTools::Parse(const std::string &text, int *outValue) {
     try {
         *outValue = stoi(text);
