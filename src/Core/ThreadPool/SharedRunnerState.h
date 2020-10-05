@@ -13,8 +13,6 @@ class CompletionHandlerInterface;
 
 //! Shared state for a thread pool runner.
 /*!
- *  \ingroup Core
- *
  *  Threadsafe (all public methods).
  */
 class ThreadPool::SharedRunnerState {

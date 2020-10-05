@@ -9,9 +9,6 @@ namespace Events {
 class Event;
 
 //! Interface to event receivers.
-/*!
- *  \ingroup Events
- */
 class EventReceiverInterface : public virtual Core::Interface {
   public:
     //! Posts the specified event to the receiver.

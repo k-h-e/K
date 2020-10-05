@@ -10,8 +10,6 @@ namespace IO {
 
 //! Socket stream.
 /*!
- *  \ingroup IO
- *
  *  The class is thread-safe (i.e. all public methods).
  */
 class SocketStream : public virtual StreamIOInterface {

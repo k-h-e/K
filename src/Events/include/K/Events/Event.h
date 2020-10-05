@@ -1,8 +1,3 @@
-/*!
- *  \defgroup Events Events
- *  \brief Event mechanism.
- */
-
 #ifndef K_EVENTS_EVENT_H_
 #define K_EVENTS_EVENT_H_
 
@@ -10,12 +5,11 @@
 #include <K/Core/Buffer.h>
 
 namespace K {
+//! Event mechanism.
 namespace Events {
 
 //! Base class to events.
 /*!
- *  \ingroup Events
- *
  *  Events exclusively contain "data" fields and never directly reference any other objects. If the data describes
  *  aspects of an actor, the actor is identified via a non-negative integer actor id.
  */

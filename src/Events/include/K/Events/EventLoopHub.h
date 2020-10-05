@@ -15,8 +15,6 @@ namespace Events {
 
 //! Hub joining together multiple \ref EventLoop s where each lives in an individual thread.
 /*!
- *  \ingroup Events
- *
  *  The class is threadsafe (i.e. all public methods).
  */
 class EventLoopHub : public virtual EventReceiverInterface {

@@ -11,8 +11,6 @@ class CompletionHandlerInterface;
 
 //! Thread pool.
 /*!
- *  \ingroup Core
- *
  *  Thread-safe (all public methods).
  */
 class ThreadPool {

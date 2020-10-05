@@ -17,8 +17,6 @@ class CompletionHandlerInterface;
 
 //! Shared state for the thread pool.
 /*!
- *  \ingroup Core
- *
  *  Thread-safe (all public methods).
  */
 class ThreadPool::SharedState : public virtual CompletionHandlerInterface {

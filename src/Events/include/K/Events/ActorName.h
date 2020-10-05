@@ -9,9 +9,6 @@ namespace K {
 namespace Events {
 
 //! Identifies an actor.
-/*!
- *  \ingroup Events
- */
 class ActorName {
   public:
     //! Creates a "none" actor name.
@@ -39,6 +36,6 @@ class ActorName {
 };
 
 }    // Namespace Events.
-}    // Namespace kxm.
+}    // Namespace K.
 
 #endif    // K_EVENTS_ACTORNAME_

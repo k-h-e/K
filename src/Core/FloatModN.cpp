@@ -13,7 +13,7 @@ FloatModN::FloatModN(int modulus)
 }
 
 void FloatModN::SetValue(float number) {
-    NumberTools::Clamp(&number, 0.0f, modulus_);
+    NumberTools::Clamp(&number, 0.0f, static_cast<float>(modulus_));
     value_ = (number < modulus_) ? number : 0.0f;
 }
 

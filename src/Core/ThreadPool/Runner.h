@@ -9,9 +9,6 @@ namespace K {
 namespace Core {
 
 //! Runner for the thread pool.
-/*!
- *  \ingroup Core
- */
 class ThreadPool::Runner : public virtual Interface {
   public:
     Runner(int thread, CompletionHandlerInterface &completionHandler,

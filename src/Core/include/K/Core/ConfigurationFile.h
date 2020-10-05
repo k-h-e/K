@@ -10,9 +10,6 @@ namespace K {
 namespace Core {
 
 //! In-RAM representation of a configuration file.
-/*!
- *  \ingroup Core
- */
 class ConfigurationFile : public virtual Interface {
   public:
     ConfigurationFile();

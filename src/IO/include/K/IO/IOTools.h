@@ -8,9 +8,6 @@ class StreamInputInterface;
 class StreamOutputInterface;
 
 //! I/O tools.
-/*!
- *  \ingroup IO
- */
 class IOTools {
   public:
 

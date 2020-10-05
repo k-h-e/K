@@ -16,9 +16,6 @@ namespace Events {
 class EventLoopHub;
 
 //! Reader for the network event coupling.
-/*!
- *  \ingroup Events
- */
 class NetworkEventCoupling::Reader : public virtual K::Core::ActionInterface {
   public:
     Reader(const std::shared_ptr<K::IO::SocketStream> &stream, const std::shared_ptr<EventLoopHub> &hub,

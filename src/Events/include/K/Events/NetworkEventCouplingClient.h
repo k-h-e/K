@@ -17,9 +17,6 @@ class EventLoopHub;
 
 //! Establishes network connections (at most one at a time) to remote event loop mechanisms and installs local network
 //! event couplings for them.
-/*!
- *  \ingroup Events
- */
 class NetworkEventCouplingClient {
   public:
     //! Constructor.

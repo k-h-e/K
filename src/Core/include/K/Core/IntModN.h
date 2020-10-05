@@ -8,9 +8,6 @@ namespace Core {
 //! interpreted as a ring-like structure. For example, incrementing <c>n - 1</c> by one will yield <c>0</c>.
 //! Furthermore, the whole set can be offset by a given value <c>offset</c>, thus becoming
 //! <c>[offset, offset + n - 1]</c>, with <c>(offset + n - 1) + 1 = offset</c>.
-/*!
- *  \ingroup Core
- */
 class IntModN {
   public:
     //! Initializes the variable to the value of <c>offset</c>.

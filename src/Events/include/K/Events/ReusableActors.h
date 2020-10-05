@@ -9,9 +9,6 @@ namespace K {
 namespace Events {
 
 //! Actor collection, allowing reuse of actors.
-/*!
- *  \ingroup Events
- */
 template<class ActorType, class ArgumentType>
 class ReusableActors {
   public:
@@ -60,9 +57,6 @@ class ReusableActors {
 };
 
 //! Allows for iterating over the actors that are currently in use.
-/*!
- *  \ingroup Game
- */
 template<class ActorType, class ArgumentType>
 class ReusableActors<ActorType, ArgumentType>::Iterator {
   public:

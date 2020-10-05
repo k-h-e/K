@@ -7,9 +7,6 @@ namespace K {
 namespace Core {
 
 //! Interface to actions that can be executed.
-/*!
- *  \ingroup Core
- */
 class ActionInterface : public virtual Interface {
   public:
     //! Executes the action.

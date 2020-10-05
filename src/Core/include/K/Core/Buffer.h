@@ -8,9 +8,6 @@ namespace K {
 namespace Core {
 
 //! Binary buffer, allowing iterative composition and readout.
-/*!
- *  \ingroup Core
- */
 class Buffer {
   public:
     //! Allows for iterative buffer readout.

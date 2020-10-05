@@ -7,9 +7,6 @@ namespace K {
 namespace Core {
 
 //! Interface to completion handlers.
-/*!
- *  \ingroup Core
- */
 class CompletionHandlerInterface : public virtual Interface {
   public:
     //! Called upon completion of the specified operation.

@@ -10,8 +10,6 @@ namespace Core {
 //! Pool-like item container, keeping track of which items are currently in use and which are idle (= waiting to be
 //! re-used), and providing efficient means of moving items between those two states.
 /*!
- *  \ingroup Core
- *
  *  Multiple groups can be set up in order to organize the items currently in use. Each item that is currently in use
  *  belongs to exactly one of these groups.
  *
@@ -77,9 +75,6 @@ class ReusableItems {
 };
 
 //! Allows for iterating over the items that are currently in use and assigned to a specific group.
-/*!
- *  \ingroup Core
- */
 template<class T>
 class ReusableItems<T>::Iterator {
   public:
@@ -110,9 +105,6 @@ class ReusableItems<T>::Iterator {
 };
 
 //! Supports standard iteration over a given item group.
-/*!
- *  \ingroup Core
- */
 template<class T>
 class ReusableItems<T>::IteratorProvider {
   public:

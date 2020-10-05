@@ -8,9 +8,6 @@ namespace K {
 namespace Core {
 
 //! Action calling a <c>std::function</c>.
-/*!
- *  \ingroup Core
- */
 class FunctionAction : public virtual ActionInterface {
   public:
     FunctionAction(const std::function<void()> &aFunction);

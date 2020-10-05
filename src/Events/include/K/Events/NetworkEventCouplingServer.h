@@ -19,9 +19,6 @@ namespace Events {
 class EventLoopHub;
 
 //! Installs network event couplings for incoming network connections.
-/*!
- *  \ingroup Events
- */
 class NetworkEventCouplingServer : public virtual K::Core::ErrorInterface {
   public:
     NetworkEventCouplingServer(int port, const std::shared_ptr<EventLoopHub> &hub,

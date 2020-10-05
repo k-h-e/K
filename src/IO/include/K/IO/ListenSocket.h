@@ -1,8 +1,3 @@
-/*!
- *  \defgroup IO IO
- *  \brief I/O.
- */
-
 #ifndef K_IO_LISTENSOCKET_H_
 #define K_IO_LISTENSOCKET_H_
 
@@ -17,8 +12,6 @@ class SocketStream;
 
 //! Listen socket.
 /*!
- *  \ingroup IO
- *
  * Thread-safe (i.e. all public methods).
  */
 class ListenSocket : public virtual K::Core::ErrorInterface {

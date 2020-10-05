@@ -10,9 +10,6 @@ namespace Core {
 class Interface;
 
 //! Logging mechanism.
-/*!
- *  \ingroup Core
- */
 class Log {
   public:
     enum class Level { Debug,

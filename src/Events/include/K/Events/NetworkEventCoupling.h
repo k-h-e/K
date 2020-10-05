@@ -20,9 +20,6 @@ namespace Events {
 class EventLoopHub;
 
 //! Extends the event mechanism to other nodes across the network.
-/*!
- *  \ingroup Events
- */
 class NetworkEventCoupling : public virtual K::Core::Interface {
   public:
     //! Well, constructor.

@@ -20,8 +20,6 @@ namespace Events {
  *
  *  <c>EventClass</c> must derive from <c>Event</c> and implement a method <c>void Dispatch(EventHandlerClass *handler)
  *  const</c>.
- *
- *  \ingroup Events
  */
 template<class EventClass, class EventHandlerClass>
 class EventLoop : public virtual EventReceiverInterface {

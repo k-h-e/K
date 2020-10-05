@@ -11,8 +11,6 @@ namespace Events {
 
 //! State shared between threads of the network event coupling.
 /*!
- *  \ingroup Events
- *
  *  The class is thread-safe (i.e. all public methods).
  */
 class NetworkEventCoupling::SharedState : public virtual K::Core::CompletionHandlerInterface {

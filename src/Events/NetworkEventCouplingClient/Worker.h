@@ -10,9 +10,6 @@ namespace Events {
 class EventLoopHub;
 
 //! Worker for the network event coupling client.
-/*!
- *  \ingroup Events
- */
 class NetworkEventCouplingClient::Worker : public virtual Core::ActionInterface {
   public:
     Worker(const std::shared_ptr<EventLoopHub> &hub,

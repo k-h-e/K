@@ -16,9 +16,6 @@ namespace Events {
 class EventLoopHub;
 
 //! Worker for the network event coupling server.
-/*!
- *  \ingroup Events
- */
 class NetworkEventCouplingServer::Worker : public virtual K::Core::ActionInterface {
   public:
     Worker(const std::shared_ptr<K::IO::ListenSocket> &listenSocket,

@@ -5,12 +5,10 @@
 #include <K/IO/StreamOutputInterface.h>
 
 namespace K {
+//! I/O.
 namespace IO {
 
 //! Interface to entities providing stream I/O.
-/*!
- *  \ingroup IO
- */
 class StreamIOInterface : public virtual StreamInputInterface,
                           public virtual StreamOutputInterface {
 };

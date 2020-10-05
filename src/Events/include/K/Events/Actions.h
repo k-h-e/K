@@ -8,9 +8,6 @@ namespace K {
 namespace Events {
 
 //! Keeps track of actions to perform.
-/*!
- *  \ingroup Events
- */
 class Actions {
   public:
     Actions() : actions_(1) {};

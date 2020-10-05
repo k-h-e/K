@@ -9,9 +9,6 @@ namespace K {
 namespace Events {
 
 //! Central authority for keeping track of and assigning new actor ids.
-/*!
- *  \ingroup Events
- */
 class ActorNaming {
   public:
     ActorNaming();

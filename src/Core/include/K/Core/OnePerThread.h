@@ -12,8 +12,6 @@ namespace Core {
 
 //! Manages an object resource where each thread must have its own copy.
 /*!
- *  \ingroup Core
- *
  *  The class is thread-safe, i.e. all its public methods.
  */
 template<class T>

@@ -5,9 +5,6 @@ namespace K {
 namespace Core {
 
 //! Comparable to \ref IntModN, yet float-valued.
-/*!
- *  \ingroup Core
- */
 class FloatModN {
   public:
     //! Initializes the variable to the value of <c>0.0f</c>.

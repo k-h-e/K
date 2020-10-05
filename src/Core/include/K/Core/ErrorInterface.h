@@ -7,9 +7,6 @@ namespace K {
 namespace Core {
 
 //! Interface to entities that can enter error state.
-/*!
- *  \ingroup Core
- */
 class ErrorInterface : public virtual Interface {
   public:
     //! Tells whether or not the object has entered error state.

@@ -16,9 +16,6 @@ namespace Events {
 class EventLoopHub;
 
 //! Writer for the network event coupling.
-/*!
- *  \ingroup Events
- */
 class NetworkEventCoupling::Writer : public virtual K::Core::ActionInterface {
   public:
     Writer(const std::shared_ptr<K::IO::SocketStream> &stream, const std::shared_ptr<EventLoopHub> &hub,

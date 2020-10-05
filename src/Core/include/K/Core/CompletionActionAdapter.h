@@ -10,9 +10,6 @@ namespace Core {
 class ActionInterface;
 
 //! Completion handler executing an action.
-/*!
- *  \ingroup Core
- */
 class CompletionActionAdapter : public virtual CompletionHandlerInterface {
   public:
     CompletionActionAdapter(const std::shared_ptr<ActionInterface> &action);

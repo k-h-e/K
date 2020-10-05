@@ -10,8 +10,6 @@ namespace Events {
 
 //! Maps actor names to user-definable data.
 /*!
- *  \ingroup Events
- *
  *  The <c>ActorData</c> type must be copyable and default-constructible.
  */
 template<class ActorData>

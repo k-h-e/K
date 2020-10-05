@@ -7,9 +7,6 @@ namespace K {
 namespace IO {
 
 //! Interface to entities providing stream input.
-/*!
- *  \ingroup IO
- */
 class StreamInputInterface : public virtual K::Core::ErrorInterface {
   public:
     //! Reads data into the specified buffer.

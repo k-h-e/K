@@ -7,9 +7,6 @@ namespace K {
 namespace IO {
 
 //! Interface to entities providing stream output.
-/*!
- *  \ingroup IO
- */
 class StreamOutputInterface : public virtual K::Core::ErrorInterface {
   public:
     //! Writes the specified data to the stream.
