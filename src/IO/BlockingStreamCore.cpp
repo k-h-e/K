@@ -1,23 +1,21 @@
-#include <K/IO/IOTools.h>
+#include <K/IO/BlockingStreamCore.h>
 
-#include <stdint.h>
-#include <K/IO/StreamInputInterface.h>
-#include <K/IO/StreamOutputInterface.h>
+#include <cstdint>
 
 namespace K {
 namespace IO {
 
-bool ReadItem(StreamInputInterface *stream, void *outItem, int itemSize) {
+bool BlockingStreamCore::ReadItem(void *outItem, int itemSize) {
     uint8_t *target      = static_cast<uint8_t *>(outItem);
     int     numRemaining = itemSize;
     while (numRemaining > 0) {
-        int num = stream->Read(target, numRemaining);
+        int num = Read(target, numRemaining);
         if (num > 0) {
             target       += num;
             numRemaining -= num;
         }
         else {
-            if (stream->Error() || stream->EndOfStream()) {
+            if (Error() || EndOfStream()) {
                 return false;
             }
         }
@@ -25,17 +23,17 @@ bool ReadItem(StreamInputInterface *stream, void *outItem, int itemSize) {
     return true;
 }
 
-bool WriteItem(StreamOutputInterface *stream, const void *item, int itemSize) {
+bool BlockingStreamCore::WriteItem(const void *item, int itemSize) {
     const uint8_t *source      = static_cast<const uint8_t *>(item);
     int           numRemaining = itemSize;
     while (numRemaining > 0) {
-        int num = stream->Write(source, numRemaining);
+        int num = Write(source, numRemaining);
         if (num > 0) {
             source       += num;
             numRemaining -= num;
         }
         else {
-            if (stream->Error()) {
+            if (Error()) {
                 return false;
             }
         }

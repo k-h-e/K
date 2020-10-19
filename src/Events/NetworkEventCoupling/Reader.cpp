@@ -4,7 +4,7 @@
 #include <K/Core/Buffer.h>
 #include <K/Core/Log.h>
 #include <K/IO/SocketStream.h>
-#include <K/IO/IOTools.h>
+#include <K/IO/BlockingStreamCore.h>
 #include <K/Events/EventLoopHub.h>
 
 using std::shared_ptr;
@@ -31,7 +31,7 @@ void NetworkEventCoupling::Reader::ExecuteAction() {
     bool   badSize = false;
     while (!stream_->Error() && !stream_->EndOfStream() && !badSize) {
         uint32_t size;
-        if (ReadItem(stream_.get(), &size, sizeof(size))) {
+        if (stream_->ReadItem(&size, sizeof(size))) {
             int sizeAsInt = static_cast<int>(size);
             if (sizeAsInt <= 0) {
                 badSize = true;
@@ -39,7 +39,7 @@ void NetworkEventCoupling::Reader::ExecuteAction() {
             if (!badSize) {
                 buffer.Clear();
                 buffer.Append(nullptr, sizeAsInt);
-                if (ReadItem(stream_.get(), buffer.Data(), buffer.DataSize())) {
+                if (stream_->ReadItem(buffer.Data(), buffer.DataSize())) {
                     hub_->Post(hubClientId_, buffer, true);
                 }
             }

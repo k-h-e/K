@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <mutex>
-#include <K/IO/StreamIOInterface.h>
+#include <K/IO/BlockingStreamCore.h>
 
 namespace K {
 namespace IO {
@@ -12,7 +12,7 @@ namespace IO {
 /*!
  *  The class is thread-safe (i.e. all public methods).
  */
-class SocketStream : public virtual StreamIOInterface {
+class SocketStream : public BlockingStreamCore {
   public:
     //! The socket stream takes ownership over the UNIX file descriptor.
     SocketStream(int fd);
@@ -25,10 +25,10 @@ class SocketStream : public virtual StreamIOInterface {
     //! Shuts down the underlying socket if it is still up.
     void ShutDown();
 
-    virtual int Read(void *outBuffer, int bufferSize);
-    virtual int Write(const void *data, int dataSize);
-    virtual bool EndOfStream();
-    virtual bool Error();
+    int Read(void *outBuffer, int bufferSize) override;
+    int Write(const void *data, int dataSize) override;
+    bool EndOfStream() override;
+    bool Error() override;
 
     //! Establishes a network stream connection to a host given by name and port, separated by a <c>':'</c>.
     /*!

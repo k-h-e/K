@@ -18,7 +18,7 @@ class NetworkEventCoupling::SharedState : public virtual K::Core::CompletionHand
     SharedState(const std::shared_ptr<K::Core::CompletionHandlerInterface> &completionHandler,
                 int completionId);
     void WaitForThreadsFinished();
-    void OnCompletion(int completionId);
+    void OnCompletion(int completionId) override;
 
   private:
     std::mutex                                           lock_;

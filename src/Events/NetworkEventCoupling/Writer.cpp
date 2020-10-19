@@ -3,7 +3,7 @@
 
 #include <K/Core/Log.h>
 #include <K/IO/SocketStream.h>
-#include <K/IO/IOTools.h>
+#include <K/IO/BlockingStreamCore.h>
 #include <K/Events/EventLoopHub.h>
 
 using std::shared_ptr;
@@ -33,8 +33,8 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
         int dataSize = buffer->DataSize();
         if (dataSize > 0) {    // Defensive, shouldn't be necessary.
             uint32_t size = dataSize;
-            WriteItem(stream_.get(), &size, sizeof(size));
-            WriteItem(stream_.get(), buffer->Data(), dataSize);
+            stream_->WriteItem(&size, sizeof(size));
+            stream_->WriteItem(buffer->Data(), dataSize);
         }
     }
 
