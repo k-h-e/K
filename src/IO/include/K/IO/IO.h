@@ -20,11 +20,11 @@ namespace IO {
  */
 class IO : public virtual K::Core::Interface {
   public:
-    class ReadHandler : public virtual K::Core::Interface {
-        virtual void OnDataRead(const void *data, int dataSize) = 0;
+    class ReadHandlerInterface : public virtual K::Core::Interface {
+        virtual void OnReadyRead() = 0;
     };
-    class WriteHandler : public virtual K::Core::Interface {
-        virtual int OnRequestDataToWrite(void *buffer, int bufferSize) = 0;
+    class WriteHandlerInterface : public virtual K::Core::Interface {
+        virtual void OnReadyWrite() = 0;
     };
 
     IO(const std::shared_ptr<K::Core::ThreadPool> &threadPool);
@@ -41,7 +41,7 @@ class IO : public virtual K::Core::Interface {
      *  \return
      *  <c>false</c> in case the file descriptor could not be registered.
      */
-    bool Register(int fd, ReadHandler *reader, WriteHandler *writer);
+    bool Register(int fd, ReadHandlerInterface *reader, WriteHandlerInterface *writer);
     //! Unregisters the respective file descriptor if it was registered.
     /*!
      *  When the method returns it is guaranteed that the file descriptor is no longer used, and that the respective

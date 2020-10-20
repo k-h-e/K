@@ -18,7 +18,7 @@ IO::IO(const shared_ptr<ThreadPool> &threadPool) {
     threadPool->Run(worker_, sharedState_, 0);
 }
 
-bool IO::Register(int fd, ReadHandler *reader, WriteHandler *writer) {
+bool IO::Register(int fd, ReadHandlerInterface *reader, WriteHandlerInterface *writer) {
     return sharedState_->Register(fd, reader, writer);
 }
 

@@ -10,17 +10,17 @@ namespace IO {
 //! Interface to entities providing nonblocking stream I/O.
 class NonBlockingStreamInterface : public virtual StreamInterface {
   public:
-    class Listener : public virtual K::Core::Interface {
+    class HandlerInterface : public virtual K::Core::Interface {
         virtual void OnReadyRead() = 0;
         virtual void OnReadyWrite() = 0;
     };
 
-    //! Registers the specified listener.
+    //! Registers the specified handler.
     /*!
-     *  Pass <c>nullptr</c> to unregister a previously registered listener. In this case, when the method returns, it
-     *  is guaranteed that the listener will not be called again.
+     *  Pass <c>nullptr</c> to unregister a previously registered handler. In this case, when the method returns, it
+     *  is guaranteed that the handler will not be called again.
      */
-    virtual void RegisterListener(Listener *listener) = 0;
+    virtual void Register(HandlerInterface *handler) = 0;
 };
 
 }    // Namespace IO.

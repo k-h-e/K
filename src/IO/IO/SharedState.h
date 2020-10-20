@@ -16,7 +16,7 @@ namespace IO {
 class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
   public:
     SharedState();
-    bool Register(int fd, ReadHandler *reader, WriteHandler *writer);
+    bool Register(int fd, ReadHandlerInterface *reader, WriteHandlerInterface *writer);
     void Unregister(int fd);
     void OnCompletion(int completionId) override;
 
