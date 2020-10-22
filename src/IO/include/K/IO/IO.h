@@ -28,6 +28,7 @@ class IO : public virtual K::Core::Interface {
     };
 
     IO(const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+    ~IO();
     IO(const IO &other)            = delete;
     IO &operator=(const IO &other) = delete;
     IO(IO &&other)                 = delete;
