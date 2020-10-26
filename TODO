@@ -1,5 +1,3 @@
-General
+- IO::IO: NotifyWorker() is void, uses assert. Better solution?
 - Check everywhere regarding default move operations!
-- Switch Log().Stream() to moving.
-- Add locking to Log().Stream().
 
