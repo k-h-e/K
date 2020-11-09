@@ -17,8 +17,6 @@ class StreamInterface : public virtual K::Core::ErrorInterface {
      *  (short read). <c>0</c> does not necessarily indicate an error.
      */
     virtual int Read(void *outBuffer, int bufferSize) = 0;
-    //! Tells whether or not reading has reached the end of the stream.
-    virtual bool EndOfStream() = 0;
     //! Writes the specified data to the stream.
     /*!
      *  \return
@@ -26,6 +24,8 @@ class StreamInterface : public virtual K::Core::ErrorInterface {
      *  indicate an error.
      */
     virtual int Write(const void *data, int dataSize) = 0;
+    //! Tells whether or not reading has reached the end of the stream.
+    virtual bool EndOfStream() = 0;
 };
 
 }    // Namespace IO.

@@ -1,10 +1,8 @@
 #include "Worker.h"
 
 #include <unistd.h>
-#include <sys/select.h>
 #include <K/Core/Log.h>
 #include "SharedState.h"
-#include "WorkInfo.h"
 
 using std::shared_ptr;
 using std::to_string;
@@ -30,26 +28,19 @@ void IO::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, [&]{ return "spawning, pipe=" + to_string(pipe_) + "..."; });
 
     if (pipe_ != -1) {
-        fd_set readSet;
-        fd_set writeSet;
-        fd_set errorSet;
         bool done = false;
         while (!done) {
-            FD_ZERO(&readSet);
-            FD_ZERO(&writeSet);
-            FD_ZERO(&errorSet);
-            highestFileDescriptor_ = -1;
-
-            FD_SET(pipe_, &readSet);
-            UpdateHighestFileDescriptor(pipe_);
+            SetUpSelectSets();
 
             Log::Print(Log::Level::Debug, this, []{ return "sleeping..."; });
-            int result = select(highestFileDescriptor_ + 1, &readSet, &writeSet, &errorSet, nullptr);
+            int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, &errorSet_, nullptr);
             Log::Print(Log::Level::Debug, this, []{ return "awake"; });
             if (result > 0) {
-                if (FD_ISSET(pipe_, &readSet)) {
+                doIO();
+                if (FD_ISSET(pipe_, &readSet_)) {
                     bool eof;
-                    if (!Read(pipe_, &eof) || eof) {
+                    bool clientStalling;
+                    if (!Read(pipe_, nullptr, &eof, &clientStalling) || eof) {
                         sharedState_->SetErrorState();
                         done = true;
                     }
@@ -76,62 +67,135 @@ void IO::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "terminating"; });
 }
 
+void IO::Worker::SetUpSelectSets() {
+    FD_ZERO(&readSet_);
+    FD_ZERO(&writeSet_);
+    FD_ZERO(&errorSet_);
+    highestFileDescriptor_ = -1;
+
+    for (auto &pair : clients_) {
+        if (!pair.second.error) {
+            FD_SET(pair.first, &errorSet_);
+            if (pair.second.canRead && !pair.second.eof) {
+                FD_SET(pair.first, &readSet_);
+            }
+            if (pair.second.canWrite) {
+                FD_SET(pair.first, &writeSet_);
+            }
+            UpdateHighestFileDescriptor(pair.first);
+        }
+    }
+
+    FD_SET(pipe_, &readSet_);
+    UpdateHighestFileDescriptor(pipe_);
+}
+
 void IO::Worker::UpdateHighestFileDescriptor(int fileDescriptor) {
     if (fileDescriptor > highestFileDescriptor_) {
         highestFileDescriptor_ = fileDescriptor;
     }
 }
 
+void IO::Worker::doIO() {
+    for (auto &pair : clients_) {
+        if (!pair.second.error) {
+            if (FD_ISSET(pair.first, &errorSet_)) {
+                pair.second.error = true;
+            }
+            else {
+                if (pair.second.canRead && !pair.second.eof && FD_ISSET(pair.first, &readSet_)) {
+                    bool eof;
+                    bool clientStalling;
+                    if (!Read(pair.first, pair.second.client, &eof, &clientStalling)) {
+                        pair.second.error = true;
+                    }
+                    else {
+                        if (clientStalling) {
+                            pair.second.canRead = false;
+                        }
+                        if (eof) {
+                            pair.second.eof = true;
+                            pair.second.client->OnEof();
+                        }
+                    }
+                }
+
+                if (pair.second.canWrite && FD_ISSET(pair.first, &writeSet_)) {
+
+                }
+            }
+
+            if (pair.second.error) {
+                pair.second.client->OnError();
+            }
+        }
+    }
+}
+
 bool IO::Worker::ProcessClientRequests() {
-    WorkInfo info;
-    sharedState_->GetWork(&info);
-    if (info.shutDownRequested) {
+    sharedState_->GetWork(&workInfo_);
+    if (workInfo_.shutDownRequested) {
         return false;
     }
 
-    if (info.registrationInfo.fileDescriptor >= 0) {
+    if (workInfo_.registrationInfo.fileDescriptor >= 0) {
         bool success = false;
-        if (fileDescriptors_.find(info.registrationInfo.fileDescriptor) == fileDescriptors_.end()) {
-            fileDescriptors_[info.registrationInfo.fileDescriptor]
-                = FileDescriptorInfo(info.registrationInfo.reader, info.registrationInfo.writer);
+        if (clients_.find(workInfo_.registrationInfo.fileDescriptor) == clients_.end()) {
+            clients_[workInfo_.registrationInfo.fileDescriptor] = ClientInfo(workInfo_.registrationInfo.client);
             Log::Print(Log::Level::Debug, this, [&]{
-                return "registered client, fd=" + to_string(info.registrationInfo.fileDescriptor)
-                     + ", num=" + to_string(fileDescriptors_.size());
+                return "registered client, fd=" + to_string(workInfo_.registrationInfo.fileDescriptor)
+                     + ", num=" + to_string(clients_.size());
             });
             success = true;
         }
         sharedState_->OnClientRegistered(success);
     }
 
-    if (info.fileDescriptorToUnregister >= 0) {
-        if (fileDescriptors_.erase(info.fileDescriptorToUnregister) == 1u) {
+    if (workInfo_.fileDescriptorToUnregister >= 0) {
+        if (clients_.erase(workInfo_.fileDescriptorToUnregister) == 1u) {
             Log::Print(Log::Level::Debug, this, [&]{
-                return "unregistered client, fd=" + to_string(info.fileDescriptorToUnregister)
-                    + ", num_remaining=" + to_string(fileDescriptors_.size());
+                return "unregistered client, fd=" + to_string(workInfo_.fileDescriptorToUnregister)
+                    + ", num_remaining=" + to_string(clients_.size());
             });
         }
         sharedState_->OnClientUnregistered();
     }
 
+    for (int fd : workInfo_.clientsReadyToRead) {
+        auto iter = clients_.find(fd);
+        if (iter != clients_.end()) {
+            iter->second.canRead = true;
+            Log::Print(Log::Level::Debug, this, [&]{ return "client can read, fd=" + to_string(fd); });
+        }
+    }
+
+    for (int fd : workInfo_.clientsReadyToWrite) {
+        auto iter = clients_.find(fd);
+        if (iter != clients_.end()) {
+            iter->second.canWrite = true;
+            Log::Print(Log::Level::Debug, this, [&]{ return "client can write, fd=" + to_string(fd); });
+        }
+    }
+
     return true;
 }
 
-bool IO::Worker::Read(int fileDescriptor, bool *outEof) {
-    *outEof = false;
+bool IO::Worker::Read(int fileDescriptor, ClientInterface *client, bool *outEof, bool *outClientStalling) {
+    *outEof            = false;
+    *outClientStalling = false;
 
-    int numTotal = 0;
     while (true) {
         int numRead = read(fileDescriptor, buffer_, bufferSize);
         if (numRead > 0) {
-            numTotal += numRead;
+            if (client) {
+                if (!client->OnDataRead(buffer_, numRead)) {
+                    *outClientStalling = true;
+                    return true;
+                }
+            }
         }
         else if (numRead == -1) {
             if (errno == EAGAIN) {
-                if (numTotal > 0) {
-                    Log::Print(Log::Level::Debug, this, [&]{
-                        return "read " + to_string(numTotal) + " bytes, fd=" + to_string(fileDescriptor);
-                    });
-                }
                 return true;
             }
             else {

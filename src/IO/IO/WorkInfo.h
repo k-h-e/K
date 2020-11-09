@@ -1,30 +1,26 @@
 #ifndef K_EVENTS_IO_WORKINFO_H_
 #define K_EVENTS_IO_WORKINFO_H_
 
+#include <vector>
 #include <K/IO/IO.h>
 
 namespace K {
 namespace IO {
 
 struct RegistrationInfo {
-    int                       fileDescriptor;
-    IO::ReadHandlerInterface  *reader;
-    IO::WriteHandlerInterface *writer;
+    int                 fileDescriptor;
+    IO::ClientInterface *client;
 
     RegistrationInfo()
         : fileDescriptor(-1),
-          reader(nullptr),
-          writer(nullptr) {
+          client(nullptr) {
         // Nop.
     }
-
-    RegistrationInfo(int aFileDescriptor, IO::ReadHandlerInterface  *aReader, IO::WriteHandlerInterface *aWriter)
+    RegistrationInfo(int aFileDescriptor, IO::ClientInterface  *aClient)
         : fileDescriptor(aFileDescriptor),
-          reader(aReader),
-          writer(aWriter) {
+          client(aClient) {
         // Nop.
     }
-
     // Default copy/move, okay.
 };
 
@@ -33,11 +29,20 @@ struct WorkInfo {
     bool             shutDownRequested;
     RegistrationInfo registrationInfo;
     int              fileDescriptorToUnregister;
+    std::vector<int> clientsReadyToRead;
+    std::vector<int> clientsReadyToWrite;
 
-    WorkInfo()
-        : shutDownRequested(false),
-          fileDescriptorToUnregister(-1) {
-        // Nop.
+    WorkInfo() {
+        Clear();
+    }
+    // Default copy/move, okay.
+
+    void Clear() {
+        shutDownRequested          = false;
+        registrationInfo           = RegistrationInfo();
+        fileDescriptorToUnregister = -1;
+        clientsReadyToRead.clear();
+        clientsReadyToWrite.clear();
     }
 };
 

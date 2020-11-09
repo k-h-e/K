@@ -1,6 +1,7 @@
 #ifndef K_IO_IO_SHAREDSTATE_H_
 #define K_IO_IO_SHAREDSTATE_H_
 
+#include <vector>
 #include <mutex>
 #include <condition_variable>
 #include <K/Core/CompletionHandlerInterface.h>
@@ -25,8 +26,10 @@ class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
     SharedState &operator=(SharedState &&other)      = delete;
     ~SharedState();
 
-    bool Register(int fd, ReadHandlerInterface *reader, WriteHandlerInterface *writer);
+    bool Register(int fd, ClientInterface *client);
     void Unregister(int fd);
+    void SetClientCanRead(int fd);
+    void SetClientCanWrite(int fd);
     void ShutDown();
 
     // Called from worker...
@@ -50,6 +53,8 @@ class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
     bool                    unregistrationRunning_;
     int                     fileDescriptorToUnregister_;
     bool                    unregistrationFinished_;
+    std::vector<int>        clientsReadyToRead_;
+    std::vector<int>        clientsReadyToWrite_;
     bool                    error_;
     bool                    shutDownRequested_;
     bool                    workerFinished_;

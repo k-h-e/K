@@ -44,12 +44,20 @@ IO::~IO() {
     sharedState_->ShutDown();
 }
 
-bool IO::Register(int fd, ReadHandlerInterface *reader, WriteHandlerInterface *writer) {
-    return sharedState_->Register(fd, reader, writer);
+bool IO::Register(int fd, ClientInterface *client) {
+    return sharedState_->Register(fd, client);
 }
 
 void IO::Unregister(int fd) {
     sharedState_->Unregister(fd);
+}
+
+void IO::SetClientCanRead(int fd) {
+    sharedState_->SetClientCanRead(fd);
+}
+
+void IO::SetClientCanWrite(int fd) {
+    sharedState_->SetClientCanWrite(fd);
 }
 
 }    // Namespace IO.

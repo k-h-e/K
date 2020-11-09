@@ -1,6 +1,7 @@
 #include "SharedState.h"
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <cstring>
 #include <cassert>
 #include <K/Core/Log.h>
@@ -36,9 +37,20 @@ IO::SharedState::~SharedState() {
     }
 }
 
-bool IO::SharedState::Register(int fd, ReadHandlerInterface *reader, WriteHandlerInterface *writer) {
+bool IO::SharedState::Register(int fd, ClientInterface *client) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (error_ || (fd < 0) || (!reader && !writer)) {
+    if (error_ || (fd < 0) || !client) {
+        return false;
+    }
+
+    bool switchedToNonBlocking = false;
+    int flags = fcntl(fd, F_GETFL);
+    if (flags != -1) {
+        if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1) {
+            switchedToNonBlocking = true;
+        }
+    }
+    if (!switchedToNonBlocking) {
         return false;
     }
 
@@ -51,7 +63,7 @@ bool IO::SharedState::Register(int fd, ReadHandlerInterface *reader, WriteHandle
 
     registrationRunning_ = true;
 
-    registrationInfo_      = RegistrationInfo(fd, reader, writer);
+    registrationInfo_      = RegistrationInfo(fd, client);
     registrationSucceeded_ = false;
     registrationFailed_    = false;
     NotifyWorker();
@@ -103,6 +115,18 @@ void IO::SharedState::Unregister(int fd)  {
     unregistrationRunning_ = false;
 }    // ......................................................................................... critical section, end.
 
+void IO::SharedState::SetClientCanRead(int fd) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    clientsReadyToRead_.push_back(fd);
+    NotifyWorker();
+}    // ......................................................................................... critical section, end.
+
+void IO::SharedState::SetClientCanWrite(int fd) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    clientsReadyToWrite_.push_back(fd);
+    NotifyWorker();
+}    // ......................................................................................... critical section, end.
+
 void IO::SharedState::ShutDown()  {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     DoShutDown(&critical);
@@ -110,16 +134,31 @@ void IO::SharedState::ShutDown()  {
 
 void IO::SharedState::GetWork(WorkInfo *outInfo) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    *outInfo = WorkInfo();
+
+    outInfo->Clear();
+
     outInfo->shutDownRequested = shutDownRequested_;
+
     if (registrationInfo_.fileDescriptor >= 0) {
         outInfo->registrationInfo = registrationInfo_;
         registrationInfo_ = RegistrationInfo();
     }
+
     if (fileDescriptorToUnregister_ >= 0) {
         outInfo->fileDescriptorToUnregister = fileDescriptorToUnregister_;
         fileDescriptorToUnregister_ = -1;
     }
+
+    for (int fd : clientsReadyToRead_) {
+        outInfo->clientsReadyToRead.push_back(fd);
+    }
+    clientsReadyToRead_.clear();
+
+    for (int fd : clientsReadyToWrite_) {
+        outInfo->clientsReadyToWrite.push_back(fd);
+    }
+    clientsReadyToWrite_.clear();
+
 }    // ......................................................................................... critical section, end.
 
 void IO::SharedState::SetErrorState() {

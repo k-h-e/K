@@ -1,9 +1,11 @@
 #ifndef K_EVENTS_IO_WORKER_H_
 #define K_EVENTS_IO_WORKER_H_
 
+#include <sys/select.h>
 #include <unordered_map>
 #include <K/Core/ActionInterface.h>
 #include <K/IO/IO.h>
+#include "WorkInfo.h"
 
 namespace K {
 namespace IO {
@@ -22,46 +24,49 @@ class IO::Worker : public virtual K::Core::ActionInterface {
   private:
     static const int bufferSize = 8192;
 
-    struct FileDescriptorInfo {
-        IO::ReadHandlerInterface  *reader;
-        IO::WriteHandlerInterface *writer;
-        bool canRead;
-        bool canWrite;
-        bool clientCanRead;
-        bool clientCanWrite;
+    struct ClientInfo {
+        IO::ClientInterface  *client;
+        bool                 canRead;
+        bool                 canWrite;
+        bool                 eof;
+        bool                 error;
 
-        FileDescriptorInfo()
-            : reader(nullptr),
-              writer(nullptr),
+        ClientInfo()
+            : client(nullptr),
               canRead(false),
               canWrite(false),
-              clientCanRead(false),
-              clientCanWrite(false) {
+              eof(false),
+              error(false) {
             // Nop.
         }
 
-        FileDescriptorInfo(IO::ReadHandlerInterface *aReader, IO::WriteHandlerInterface *aWriter)
-            : reader(aReader),
-              writer(aWriter),
+        ClientInfo(IO::ClientInterface *aClient)
+            : client(aClient),
               canRead(false),
               canWrite(false),
-              clientCanRead(false),
-              clientCanWrite(false) {
+              eof(false),
+              error(false) {
             // Nop.
         }
         // Defaut copy/move, okay.
     };
 
+    void SetUpSelectSets();
     void UpdateHighestFileDescriptor(int fileDescriptor);
+    void doIO();
     bool ProcessClientRequests();
-    bool Read(int fileDescriptor, bool *outEof);
+    bool Read(int fileDescriptor, ClientInterface *client, bool *outEof, bool *outClientStalling);
 
     std::shared_ptr<SharedState> sharedState_;
 
-    int                                         pipe_;
-    int                                         highestFileDescriptor_;
-    uint8_t                                     buffer_[bufferSize];
-    std::unordered_map<int, FileDescriptorInfo> fileDescriptors_;
+    int                                 pipe_;
+    fd_set                              readSet_;
+    fd_set                              writeSet_;
+    fd_set                              errorSet_;
+    int                                 highestFileDescriptor_;
+    uint8_t                             buffer_[bufferSize];
+    WorkInfo                            workInfo_;
+    std::unordered_map<int, ClientInfo> clients_;
 };
 
 }    // Namespace IO.
