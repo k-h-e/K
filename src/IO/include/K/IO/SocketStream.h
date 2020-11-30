@@ -27,7 +27,7 @@ class SocketStream : public BlockingStreamCore {
 
     int Read(void *outBuffer, int bufferSize) override;
     int Write(const void *data, int dataSize) override;
-    bool EndOfStream() override;
+    bool Eof() override;
     bool Error() override;
 
     //! Establishes a network stream connection to a host given by name and port, separated by a <c>':'</c>.

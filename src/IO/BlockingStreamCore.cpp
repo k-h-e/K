@@ -15,7 +15,7 @@ bool BlockingStreamCore::ReadItem(void *outItem, int itemSize) {
             numRemaining -= num;
         }
         else {
-            if (Error() || EndOfStream()) {
+            if (Error() || Eof()) {
                 return false;
             }
         }

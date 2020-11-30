@@ -41,7 +41,7 @@ int RingBuffer::Read(void *outBuffer, int bufferSize) {
     }
 }
 
-bool RingBuffer::EndOfStream() {
+bool RingBuffer::Eof() {
     return false;
 }
 

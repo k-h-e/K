@@ -1,7 +1,8 @@
-#include <K/IO/NonBlockingFileDescriptorStream.h>
+#include "SharedState.h"
 
 #include <cassert>
 #include <K/Core/Log.h>
+#include <K/IO/BufferedFileDescriptorConnection.h>
 #include <K/IO/IO.h>
 
 using std::shared_ptr;
@@ -9,12 +10,12 @@ using std::unique_lock;
 using std::mutex;
 using std::to_string;
 using K::Core::Log;
+using K::IO::IO;
 
 namespace K {
 namespace IO {
 
-NonBlockingFileDescriptorStream::NonBlockingFileDescriptorStream(int fd, int bufferSizeThreshold,
-                                                                 const shared_ptr<IO> &io)
+BufferedFileDescriptorConnection::SharedState::SharedState(int fd, int bufferSizeThreshold, const shared_ptr<IO> &io)
         : io_(io),
           fd_(fd),
           handler_(nullptr),
@@ -32,21 +33,21 @@ NonBlockingFileDescriptorStream::NonBlockingFileDescriptorStream(int fd, int buf
     }
 }
 
-NonBlockingFileDescriptorStream::~NonBlockingFileDescriptorStream() {
+BufferedFileDescriptorConnection::SharedState::~SharedState() {
     io_->Unregister(fd_);
 }
 
-void NonBlockingFileDescriptorStream::Register(HandlerInterface *handler) {
+void BufferedFileDescriptorConnection::SharedState::Register(HandlerInterface *handler) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     handler_ = handler;
 }    // ......................................................................................... critical section, end.
 
-void NonBlockingFileDescriptorStream::Register(ReadHandlerInterface *handler) {
+void BufferedFileDescriptorConnection::SharedState::Register(ReadHandlerInterface *handler) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
 
 }    // ......................................................................................... critical section, end.
 
-int NonBlockingFileDescriptorStream::Read(void *outBuffer, int bufferSize) {
+int BufferedFileDescriptorConnection::SharedState::Read(void *outBuffer, int bufferSize) {
     assert(bufferSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     int numRead = 0;
@@ -66,7 +67,7 @@ int NonBlockingFileDescriptorStream::Read(void *outBuffer, int bufferSize) {
     return numRead;
 }    // ......................................................................................... critical section, end.
 
-int NonBlockingFileDescriptorStream::Write(const void *data, int dataSize) {
+int BufferedFileDescriptorConnection::SharedState::Write(const void *data, int dataSize) {
     assert(dataSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     int numWritten = 0;
@@ -85,24 +86,24 @@ int NonBlockingFileDescriptorStream::Write(const void *data, int dataSize) {
     return numWritten;
 }    // ......................................................................................... critical section, end.
 
-bool NonBlockingFileDescriptorStream::WriteItem(const void *item, int itemSize) {
+bool BufferedFileDescriptorConnection::SharedState::WriteItem(const void *item, int itemSize) {
     assert(itemSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return false;
 }    // ......................................................................................... critical section, end.
 
 
-bool NonBlockingFileDescriptorStream::EndOfStream() {
+bool BufferedFileDescriptorConnection::SharedState::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return eof_ && (readBuffer_.Fill() == 0);
 }    // ......................................................................................... critical section, end.
 
-bool NonBlockingFileDescriptorStream::Error() {
+bool BufferedFileDescriptorConnection::SharedState::Error() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
 }    // ......................................................................................... critical section, end.
 
-bool NonBlockingFileDescriptorStream::OnDataRead(void *data, int dataSize) {
+bool BufferedFileDescriptorConnection::SharedState::OnDataRead(void *data, int dataSize) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_ && !eof_) {
         (void)readBuffer_.Write(data, dataSize);
@@ -126,19 +127,30 @@ bool NonBlockingFileDescriptorStream::OnDataRead(void *data, int dataSize) {
     }
 }    // ......................................................................................... critical section, end.
 
-void NonBlockingFileDescriptorStream::OnReadyWrite() {
+void BufferedFileDescriptorConnection::SharedState::OnReadyWrite() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
 
 }    // ......................................................................................... critical section, end.
 
-void NonBlockingFileDescriptorStream::OnEof() {
+void BufferedFileDescriptorConnection::SharedState::OnEof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    eof_ = true;
+    if (!error_ && !eof_) {
+        eof_ = true;
+        if (handler_) {
+            handler_->OnReadyRead();
+        }
+    }
 }    // ......................................................................................... critical section, end.
 
-void NonBlockingFileDescriptorStream::OnError() {
+void BufferedFileDescriptorConnection::SharedState::OnError() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    error_ = true;
+    if (!error_) {
+        error_ = true;
+        if (handler_) {
+            handler_->OnReadyRead();
+            handler_->OnReadyWrite();
+        }
+    }
 }    // ......................................................................................... critical section, end.
 
 }    // Namesapce IO.

@@ -34,7 +34,6 @@ void IO::Worker::ExecuteAction() {
 
             Log::Print(Log::Level::Debug, this, []{ return "sleeping..."; });
             int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, &errorSet_, nullptr);
-            Log::Print(Log::Level::Debug, this, []{ return "awake"; });
             if (result > 0) {
                 doIO();
                 if (FD_ISSET(pipe_, &readSet_)) {
@@ -187,6 +186,9 @@ bool IO::Worker::Read(int fileDescriptor, ClientInterface *client, bool *outEof,
     while (true) {
         int numRead = read(fileDescriptor, buffer_, bufferSize);
         if (numRead > 0) {
+            Log::Print(Log::Level::Debug, this, [&]{
+                return "read " + to_string(numRead) + " bytes from fd " + to_string(fileDescriptor);
+            });
             if (client) {
                 if (!client->OnDataRead(buffer_, numRead)) {
                     *outClientStalling = true;

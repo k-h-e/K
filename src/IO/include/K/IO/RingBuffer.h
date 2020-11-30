@@ -21,7 +21,7 @@ class RingBuffer : public virtual SimpleNonBlockingStreamInterface {
     int Fill();
     bool Error() override;
     int Read(void *outBuffer, int bufferSize) override;
-    bool EndOfStream() override;
+    bool Eof() override;
     int Write(const void *data, int dataSize) override;
 
   private:

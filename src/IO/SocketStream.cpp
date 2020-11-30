@@ -116,7 +116,7 @@ int SocketStream::Write(const void *data, int dataSize) {
     }
 }
 
-bool SocketStream::EndOfStream() {
+bool SocketStream::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return eof_;
 }    // ......................................................................................... critical section, end.
