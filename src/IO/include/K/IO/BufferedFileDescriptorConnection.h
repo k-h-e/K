@@ -2,7 +2,7 @@
 #define K_IO_BUFFEREDFILEDESCRIPTORCONNECTION_H_
 
 #include <memory>
-#include <K/IO/BufferedConnectionStreamInterface.h>
+#include <K/IO/ConnectionStreamInterface.h>
 
 namespace K {
 namespace IO {
@@ -10,7 +10,7 @@ namespace IO {
 class IO;
 
 //! Buffered connection working on a <c>UNIX</c> file descriptor.
-class BufferedFileDescriptorConnection : public virtual BufferedConnectionStreamInterface {
+class BufferedFileDescriptorConnection : public virtual ConnectionStreamInterface {
   public:
     //! The connection takes ownership over the UNIX file descriptor.
     BufferedFileDescriptorConnection(int fd, int bufferSizeThreshold, const std::shared_ptr<K::IO::IO> &io);
@@ -20,9 +20,6 @@ class BufferedFileDescriptorConnection : public virtual BufferedConnectionStream
     BufferedFileDescriptorConnection &operator=(const BufferedFileDescriptorConnection &&other) = delete;
 
     void Register(HandlerInterface *handler) override;
-    void Register(ReadHandlerInterface *handler) override;
-    int Read(void *outBuffer, int bufferSize) override;
-    int Write(const void *data, int dataSize) override;
     bool WriteItem(const void *item, int itemSize) override;
     bool Eof() override;
     bool Error() override;

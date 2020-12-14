@@ -21,18 +21,6 @@ void BufferedFileDescriptorConnection::Register(HandlerInterface *handler) {
     sharedState_->Register(handler);
 }
 
-void BufferedFileDescriptorConnection::Register(ReadHandlerInterface *handler) {
-    sharedState_->Register(handler);
-}
-
-int BufferedFileDescriptorConnection::Read(void *outBuffer, int bufferSize) {
-    return sharedState_->Read(outBuffer, bufferSize);
-}
-
-int BufferedFileDescriptorConnection::Write(const void *data, int dataSize) {
-    return sharedState_->Write(data, dataSize);
-}
-
 bool BufferedFileDescriptorConnection::WriteItem(const void *item, int itemSize) {
     return sharedState_->WriteItem(item, itemSize);
 }

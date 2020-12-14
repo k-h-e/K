@@ -69,7 +69,7 @@ class Buffer {
      *  This operation is fast and does not shrink the buffer's underlying capacity.
      */
     void Shrink(int size);
-	//! Appends a copy of the specified memory region to the buffer, potentially invalidating the
+    //! Appends a copy of the specified memory region to the buffer, potentially invalidating the
     //! memory location handed out earlier via \ref Data().
     /*!
      *  If <c>data</c> is <c>0</c>, the buffer will still be grown, but no data will actually get

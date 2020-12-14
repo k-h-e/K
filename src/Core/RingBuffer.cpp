@@ -1,10 +1,10 @@
-#include <K/IO/RingBuffer.h>
+#include <K/Core/RingBuffer.h>
 
 #include <cassert>
 #include <cstring>
 
 namespace K {
-namespace IO {
+namespace Core {
 
 RingBuffer::RingBuffer()
     : size_(256),
@@ -17,11 +17,7 @@ int RingBuffer::Fill() {
     return fill_;
 }
 
-bool RingBuffer::Error() {
-    return false;
-}
-
-int RingBuffer::Read(void *outBuffer, int bufferSize) {
+int RingBuffer::Get(void *outBuffer, int bufferSize) {
     assert(bufferSize > 0);
     if (fill_) {
         int numToRead = std::min(size_ - cursor_, fill_);    // >= 1.
@@ -41,11 +37,7 @@ int RingBuffer::Read(void *outBuffer, int bufferSize) {
     }
 }
 
-bool RingBuffer::Eof() {
-    return false;
-}
-
-int RingBuffer::Write(const void *data, int dataSize) {
+void RingBuffer::Put(const void *data, int dataSize) {
     assert(dataSize > 0);
     while (size_ - fill_ < dataSize) {
         Grow();
@@ -61,7 +53,6 @@ int RingBuffer::Write(const void *data, int dataSize) {
     }
 
     fill_ += dataSize;
-    return dataSize;
 }
 
 void RingBuffer::Grow() {
@@ -73,5 +64,5 @@ void RingBuffer::Grow() {
     }
 }
 
-}    // Namespace IO.
+}    // Namespace Core.
 }    // Namespace K.

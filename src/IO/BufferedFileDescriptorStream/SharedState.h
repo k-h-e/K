@@ -4,14 +4,14 @@
 #include <memory>
 #include <mutex>
 #include <K/Core/RingBuffer.h>
-#include <K/IO/BufferedFileDescriptorConnection.h>
+#include <K/IO/BufferedFileDescriptorStream.h>
 #include <K/IO/IO.h>
 
 namespace K {
 namespace IO {
 
 //! State shared between threads of the buffered connection.
-class BufferedFileDescriptorConnection::SharedState : public virtual IO::ClientInterface {
+class BufferedFileDescriptorStream::SharedState : public virtual IO::ClientInterface {
   public:
     SharedState(int fd, int bufferSizeThreshold, const std::shared_ptr<K::IO::IO> &io);
     SharedState(const SharedState &other)             = delete;
@@ -21,7 +21,8 @@ class BufferedFileDescriptorConnection::SharedState : public virtual IO::ClientI
     ~SharedState();
 
     void Register(HandlerInterface *handler);
-    bool WriteItem(const void *item, int itemSize);
+    int Read(void *outBuffer, int bufferSize);
+    int Write(const void *data, int dataSize);
     bool Eof();
     bool Error();
 
@@ -35,8 +36,11 @@ class BufferedFileDescriptorConnection::SharedState : public virtual IO::ClientI
     std::shared_ptr<IO> io_;
     int                 fd_;
     HandlerInterface    *handler_;
+    Core::RingBuffer    readBuffer_;
     Core::RingBuffer    writeBuffer_;
     int                 bufferSizeThreshold_;
+    bool                needToSignalReadyRead_;
+    bool                canNotRead_;
     bool                canNotWrite_;
     bool                eof_;
     bool                error_;

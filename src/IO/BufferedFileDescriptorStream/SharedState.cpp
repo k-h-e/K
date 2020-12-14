@@ -2,7 +2,7 @@
 
 #include <cassert>
 #include <K/Core/Log.h>
-#include <K/IO/BufferedFileDescriptorConnection.h>
+#include <K/IO/BufferedFileDescriptorStream.h>
 #include <K/IO/IO.h>
 
 using std::shared_ptr;
@@ -15,11 +15,13 @@ using K::IO::IO;
 namespace K {
 namespace IO {
 
-BufferedFileDescriptorConnection::SharedState::SharedState(int fd, int bufferSizeThreshold, const shared_ptr<IO> &io)
+BufferedFileDescriptorStream::SharedState::SharedState(int fd, int bufferSizeThreshold, const shared_ptr<IO> &io)
         : io_(io),
           fd_(fd),
           handler_(nullptr),
           bufferSizeThreshold_(bufferSizeThreshold),
+          needToSignalReadyRead_(true),
+          canNotRead_(false),
           canNotWrite_(true),
           eof_(false),
           error_(false) {
@@ -31,66 +33,110 @@ BufferedFileDescriptorConnection::SharedState::SharedState(int fd, int bufferSiz
     }
 }
 
-BufferedFileDescriptorConnection::SharedState::~SharedState() {
+BufferedFileDescriptorStream::SharedState::~SharedState() {
     io_->Unregister(fd_);
 }
 
-void BufferedFileDescriptorConnection::SharedState::Register(HandlerInterface *handler) {
+void BufferedFileDescriptorStream::SharedState::Register(HandlerInterface *handler) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     handler_ = handler;
 }    // ......................................................................................... critical section, end.
 
-bool BufferedFileDescriptorConnection::SharedState::WriteItem(const void *item, int itemSize) {
-    assert(itemSize > 0);
+int BufferedFileDescriptorStream::SharedState::Read(void *outBuffer, int bufferSize) {
+    assert(bufferSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    return false;
+    int numRead = 0;
+
+    if (!error_ && !eof_) {
+        numRead = readBuffer_.Get(outBuffer, bufferSize);
+        if (!numRead) {
+            needToSignalReadyRead_ = true;
+        }
+
+        if (canNotRead_ && (readBuffer_.Fill() < bufferSizeThreshold_)) {
+            io_->SetClientCanRead(fd_);
+            canNotRead_ = false;
+        }
+    }
+
+    return numRead;
 }    // ......................................................................................... critical section, end.
 
-
-bool BufferedFileDescriptorConnection::SharedState::Eof() {
+int BufferedFileDescriptorStream::SharedState::Write(const void *data, int dataSize) {
+    assert(dataSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    return eof_;
+    int numWritten = 0;
+
+    if (!error_) {
+        if (writeBuffer_.Fill() < bufferSizeThreshold_) {
+            numWritten = std::min(dataSize, bufferSizeThreshold_ - writeBuffer_.Fill());    // >= 1.
+            writeBuffer_.Put(data, numWritten);
+            if (canNotWrite_) {
+                io_->SetClientCanWrite(fd_);
+                canNotWrite_ = false;
+            }
+        }
+    }
+
+    return numWritten;
 }    // ......................................................................................... critical section, end.
 
-bool BufferedFileDescriptorConnection::SharedState::Error() {
+bool BufferedFileDescriptorStream::SharedState::Eof() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    return eof_ && (readBuffer_.Fill() == 0);
+}    // ......................................................................................... critical section, end.
+
+bool BufferedFileDescriptorStream::SharedState::Error() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
 }    // ......................................................................................... critical section, end.
 
-bool BufferedFileDescriptorConnection::SharedState::OnDataRead(void *data, int dataSize) {
+bool BufferedFileDescriptorStream::SharedState::OnDataRead(void *data, int dataSize) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_ && !eof_) {
-        if (handler_) {
-            handler_->OnDataRead(data, dataSize);
+        readBuffer_.Put(data, dataSize);
+        Log::Print(Log::Level::Debug, this, [&]{ return "read_buffer_fill=" + to_string(readBuffer_.Fill()); });
+
+        if (readBuffer_.Fill() >= bufferSizeThreshold_) {
+            canNotRead_ = true;
         }
-        return true;
+
+        if (needToSignalReadyRead_) {
+            if (handler_) {
+                handler_->OnReadyRead();
+            }
+            needToSignalReadyRead_ = false;
+        }
+
+        return !canNotRead_;
     }
     else {
         return false;
     }
 }    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorConnection::SharedState::OnReadyWrite() {
+void BufferedFileDescriptorStream::SharedState::OnReadyWrite() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
 
 }    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorConnection::SharedState::OnEof() {
+void BufferedFileDescriptorStream::SharedState::OnEof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_ && !eof_) {
         eof_ = true;
         if (handler_) {
-            handler_->OnEof();
+            handler_->OnReadyRead();
         }
     }
 }    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorConnection::SharedState::OnError() {
+void BufferedFileDescriptorStream::SharedState::OnError() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_) {
         error_ = true;
         if (handler_) {
-            handler_->OnError();
+            handler_->OnReadyRead();
+            handler_->OnReadyWrite();
         }
     }
 }    // ......................................................................................... critical section, end.
