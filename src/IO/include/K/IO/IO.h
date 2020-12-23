@@ -22,9 +22,20 @@ class IO : public virtual K::Core::Interface {
   public:
     class ClientInterface : public virtual K::Core::Interface {
       public:
-        //! Returns whether or not the client can accept more read data.
-        virtual bool OnDataRead(void *data, int dataSize) = 0;
-        virtual void OnReadyWrite() = 0;
+        //! Provides the client with read data.
+        /*!
+         *  \return
+         *  <c>true</c> in case the client can accept more read data.
+         */
+        virtual bool OnDataRead(const void *data, int dataSize) = 0;
+        //! Asks the client to provide data to write.
+        /*!
+         *  \return
+         *  The number of bytes to write that were put into the specified buffer. <c>0</c> means the client does not
+         *  have any more data to write.
+         */
+        virtual int OnReadyWrite(void *buffer, int bufferSize) = 0;
+        virtual void OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) = 0;
         virtual void OnEof() = 0;
         virtual void OnError() = 0;
     };
@@ -38,7 +49,7 @@ class IO : public virtual K::Core::Interface {
 
     //! Registers the specified file descriptor.
     /*!
-     *  The client will get called on an arbitrary thread.
+     *  The client methods will get called on an arbitrary thread.
      *
      *  \return
      *  <c>false</c> in case the file descriptor could not be registered.

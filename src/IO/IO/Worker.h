@@ -25,6 +25,7 @@ class IO::Worker : public virtual K::Core::ActionInterface {
     static const int bufferSize = 8192;
 
     struct ClientInfo {
+        int                  fileDescriptor;
         IO::ClientInterface  *client;
         bool                 canRead;
         bool                 canWrite;
@@ -32,7 +33,8 @@ class IO::Worker : public virtual K::Core::ActionInterface {
         bool                 error;
 
         ClientInfo()
-            : client(nullptr),
+            : fileDescriptor(-1),
+              client(nullptr),
               canRead(false),
               canWrite(false),
               eof(false),
@@ -40,8 +42,9 @@ class IO::Worker : public virtual K::Core::ActionInterface {
             // Nop.
         }
 
-        ClientInfo(IO::ClientInterface *aClient)
-            : client(aClient),
+        ClientInfo(int aFileDescriptor, IO::ClientInterface *aClient)
+            : fileDescriptor(aFileDescriptor),
+              client(aClient),
               canRead(false),
               canWrite(false),
               eof(false),
@@ -55,14 +58,14 @@ class IO::Worker : public virtual K::Core::ActionInterface {
     void UpdateHighestFileDescriptor(int fileDescriptor);
     void doIO();
     bool ProcessClientRequests();
-    bool Read(int fileDescriptor, ClientInterface *client, bool *outEof, bool *outClientStalling);
+    void Read(ClientInfo *clientInfo);
+    void Write(ClientInfo *clientInfo);
 
     std::shared_ptr<SharedState> sharedState_;
 
     int                                 pipe_;
     fd_set                              readSet_;
     fd_set                              writeSet_;
-    fd_set                              errorSet_;
     int                                 highestFileDescriptor_;
     uint8_t                             buffer_[bufferSize];
     WorkInfo                            workInfo_;

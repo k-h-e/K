@@ -55,6 +55,26 @@ void RingBuffer::Put(const void *data, int dataSize) {
     fill_ += dataSize;
 }
 
+void RingBuffer::PutBack(const void *data, int dataSize) {
+    assert(dataSize > 0);
+    while (size_ - fill_ < dataSize) {
+        Grow();
+    }
+
+    if (dataSize <= cursor_) {
+        cursor_ -= dataSize;
+        std::memcpy(&buffer_[cursor_], data, dataSize);
+    }
+    else {
+        std::memcpy(&buffer_[0], static_cast<const uint8_t *>(data) - cursor_, cursor_);
+        int numRemaining = dataSize - cursor_;    // >= 1.
+        cursor_ = size_ - numRemaining;
+        std::memcpy(&buffer_[cursor_], data, numRemaining);
+    }
+
+    fill_ += dataSize;
+}
+
 void RingBuffer::Grow() {
     int oldSize = size_;
     size_ *= 2;

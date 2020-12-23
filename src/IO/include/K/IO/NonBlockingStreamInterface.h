@@ -33,7 +33,7 @@ class NonBlockingStreamInterface : public virtual StreamInterface,
      *  Pass <c>nullptr</c> to unregister a previously registered handler. In this case, when the method returns, it
      *  is guaranteed that the handler will not be called again.
      *
-     *  The handler methods will get called on an arbitrary thread.
+     *  The handler methods will get called on an arbitrary thread and must not call back into the stream.
      */
     virtual void Register(HandlerInterface *handler) = 0;
 };

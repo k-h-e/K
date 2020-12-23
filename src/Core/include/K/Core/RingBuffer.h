@@ -26,6 +26,14 @@ class RingBuffer {
      *  The buffer grows as needed.
      */
     void Put(const void *data, int dataSize);
+    //! Puts back (a copy of) the specified data into the buffer.
+    /*!
+     *  Intended for data that has been previously taken out of the buffer via <c>Get()</c>, but could not be consumed
+     *  by the client. The put back data will be the first to be delivered with the next call to <c>Get()</c>.
+     *
+     *  The buffer grows as needed.
+     */
+    void PutBack(const void *data, int dataSize);
 
   private:
     void Grow();

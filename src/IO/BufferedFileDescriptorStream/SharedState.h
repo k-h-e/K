@@ -26,8 +26,9 @@ class BufferedFileDescriptorStream::SharedState : public virtual IO::ClientInter
     bool Eof();
     bool Error();
 
-    bool OnDataRead(void *data, int dataSize) override;
-    void OnReadyWrite() override;
+    bool OnDataRead(const void *data, int dataSize) override;
+    int OnReadyWrite(void *buffer, int bufferSize) override;
+    void OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) override;
     void OnEof() override;
     void OnError() override;
 

@@ -91,7 +91,7 @@ bool BufferedFileDescriptorStream::SharedState::Error() {
     return error_;
 }    // ......................................................................................... critical section, end.
 
-bool BufferedFileDescriptorStream::SharedState::OnDataRead(void *data, int dataSize) {
+bool BufferedFileDescriptorStream::SharedState::OnDataRead(const void *data, int dataSize) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_ && !eof_) {
         readBuffer_.Put(data, dataSize);
@@ -115,9 +115,15 @@ bool BufferedFileDescriptorStream::SharedState::OnDataRead(void *data, int dataS
     }
 }    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorStream::SharedState::OnReadyWrite() {
+int BufferedFileDescriptorStream::SharedState::OnReadyWrite(void *buffer, int bufferSize) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
 
+}    // ......................................................................................... critical section, end.
+
+void BufferedFileDescriptorStream::SharedState::OnIncompleteWrite(const void *unwrittenData,
+                                                                      int unwrittenDataSize) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    writeBuffer_.PutBack(unwrittenData, unwrittenDataSize);
 }    // ......................................................................................... critical section, end.
 
 void BufferedFileDescriptorStream::SharedState::OnEof() {

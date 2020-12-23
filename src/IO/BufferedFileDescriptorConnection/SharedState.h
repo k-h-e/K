@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <mutex>
+#include <condition_variable>
 #include <K/Core/RingBuffer.h>
 #include <K/IO/BufferedFileDescriptorConnection.h>
 #include <K/IO/IO.h>
@@ -25,21 +26,28 @@ class BufferedFileDescriptorConnection::SharedState : public virtual IO::ClientI
     bool Eof();
     bool Error();
 
-    bool OnDataRead(void *data, int dataSize) override;
-    void OnReadyWrite() override;
+    bool OnDataRead(const void *data, int dataSize) override;
+    int OnReadyWrite(void *buffer, int bufferSize) override;
+    void OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) override;
     void OnEof() override;
     void OnError() override;
 
   private:
-    std::mutex          lock_;
-    std::shared_ptr<IO> io_;
-    int                 fd_;
-    HandlerInterface    *handler_;
-    Core::RingBuffer    writeBuffer_;
-    int                 bufferSizeThreshold_;
-    bool                canNotWrite_;
-    bool                eof_;
-    bool                error_;
+    // Expects lock to be held.
+    void EnsureHandlerCalledInitially();
+
+    std::mutex              lock_;    // Protects everything below...
+
+    std::condition_variable writeCanContinue_;
+    std::shared_ptr<IO>     io_;
+    int                     fd_;
+    HandlerInterface        *handler_;
+    bool                    handlerCalledInitially_;
+    Core::RingBuffer        writeBuffer_;
+    int                     bufferSizeThreshold_;
+    bool                    canNotWrite_;
+    bool                    eof_;
+    bool                    error_;
 };
 
 }    // Namespace IO.

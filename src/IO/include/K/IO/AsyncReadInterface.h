@@ -12,7 +12,7 @@ class AsyncReadInterface : public virtual K::Core::Interface {
     class HandlerInterface : public virtual K::Core::Interface {
       public:
         //! Gets called to asynchronously deliver read data.
-        virtual void OnDataRead(void *data, int dataSize) = 0;
+        virtual void OnDataRead(const void *data, int dataSize) = 0;
         //! Gets called once when reading reaches EOF.
         virtual void OnEof() = 0;
         //! Gets called once when the stream enters error state (see K::Core::ErrorInterface).
@@ -22,9 +22,11 @@ class AsyncReadInterface : public virtual K::Core::Interface {
     //! Registers the specified asynchronous read handler.
     /*!
      *  Pass <c>nullptr</c> to unregister a previously registered read handler. In this case, when the method returns,
-     *  it is guaranteed that the handler will not be called again.
+     *  it is guaranteed that the handler will not be called again. If registering another read handler later, read data
+     *  might have been missed - with the exception of the initial time after stream construction, there is no garantee
+     *  that the stream buffers read data while no read handler is registered.
      *
-     *  The handler methods will get called on an arbitrary thread.
+     *  The handler methods will get called on an arbitrary thread and must not call back into the stream.
      */
     virtual void Register(HandlerInterface *handler) = 0;
 };

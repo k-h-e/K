@@ -28,18 +28,18 @@ void IO::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, [&]{ return "spawning, pipe=" + to_string(pipe_) + "..."; });
 
     if (pipe_ != -1) {
+        ClientInfo pipeInfo(pipe_, nullptr);
         bool done = false;
         while (!done) {
             SetUpSelectSets();
 
             Log::Print(Log::Level::Debug, this, []{ return "sleeping..."; });
-            int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, &errorSet_, nullptr);
+            int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, nullptr, nullptr);
             if (result > 0) {
                 doIO();
                 if (FD_ISSET(pipe_, &readSet_)) {
-                    bool eof;
-                    bool clientStalling;
-                    if (!Read(pipe_, nullptr, &eof, &clientStalling) || eof) {
+                    Read(&pipeInfo);
+                    if (pipeInfo.error || pipeInfo.eof) {
                         sharedState_->SetErrorState();
                         done = true;
                     }
@@ -69,12 +69,10 @@ void IO::Worker::ExecuteAction() {
 void IO::Worker::SetUpSelectSets() {
     FD_ZERO(&readSet_);
     FD_ZERO(&writeSet_);
-    FD_ZERO(&errorSet_);
     highestFileDescriptor_ = -1;
 
     for (auto &pair : clients_) {
         if (!pair.second.error) {
-            FD_SET(pair.first, &errorSet_);
             if (pair.second.canRead && !pair.second.eof) {
                 FD_SET(pair.first, &readSet_);
             }
@@ -98,34 +96,11 @@ void IO::Worker::UpdateHighestFileDescriptor(int fileDescriptor) {
 void IO::Worker::doIO() {
     for (auto &pair : clients_) {
         if (!pair.second.error) {
-            if (FD_ISSET(pair.first, &errorSet_)) {
-                pair.second.error = true;
+            if (pair.second.canRead && !pair.second.eof && FD_ISSET(pair.first, &readSet_)) {
+                Read(&pair.second);
             }
-            else {
-                if (pair.second.canRead && !pair.second.eof && FD_ISSET(pair.first, &readSet_)) {
-                    bool eof;
-                    bool clientStalling;
-                    if (!Read(pair.first, pair.second.client, &eof, &clientStalling)) {
-                        pair.second.error = true;
-                    }
-                    else {
-                        if (clientStalling) {
-                            pair.second.canRead = false;
-                        }
-                        if (eof) {
-                            pair.second.eof = true;
-                            pair.second.client->OnEof();
-                        }
-                    }
-                }
-
-                if (pair.second.canWrite && FD_ISSET(pair.first, &writeSet_)) {
-
-                }
-            }
-
-            if (pair.second.error) {
-                pair.second.client->OnError();
+            if (pair.second.canWrite && FD_ISSET(pair.first, &writeSet_)) {
+                Write(&pair.second);
             }
         }
     }
@@ -140,7 +115,8 @@ bool IO::Worker::ProcessClientRequests() {
     if (workInfo_.registrationInfo.fileDescriptor >= 0) {
         bool success = false;
         if (clients_.find(workInfo_.registrationInfo.fileDescriptor) == clients_.end()) {
-            clients_[workInfo_.registrationInfo.fileDescriptor] = ClientInfo(workInfo_.registrationInfo.client);
+            clients_[workInfo_.registrationInfo.fileDescriptor]
+                 = ClientInfo(workInfo_.registrationInfo.fileDescriptor, workInfo_.registrationInfo.client);
             Log::Print(Log::Level::Debug, this, [&]{
                 return "registered client, fd=" + to_string(workInfo_.registrationInfo.fileDescriptor)
                      + ", num=" + to_string(clients_.size());
@@ -179,34 +155,86 @@ bool IO::Worker::ProcessClientRequests() {
     return true;
 }
 
-bool IO::Worker::Read(int fileDescriptor, ClientInterface *client, bool *outEof, bool *outClientStalling) {
-    *outEof            = false;
-    *outClientStalling = false;
-
-    while (true) {
-        int numRead = read(fileDescriptor, buffer_, bufferSize);
+void IO::Worker::Read(ClientInfo *clientInfo) {
+    int numReadTotal = 0;
+    while (numReadTotal < bufferSize) {
+        int numRead = read(clientInfo->fileDescriptor, buffer_, bufferSize);
         if (numRead > 0) {
             Log::Print(Log::Level::Debug, this, [&]{
-                return "read " + to_string(numRead) + " bytes from fd " + to_string(fileDescriptor);
+                return "fd " + to_string(clientInfo->fileDescriptor)  + " -> " + to_string(numRead) + " bytes";
             });
-            if (client) {
-                if (!client->OnDataRead(buffer_, numRead)) {
-                    *outClientStalling = true;
-                    return true;
+            numReadTotal += numRead;
+            if (clientInfo->client) {
+                if (!clientInfo->client->OnDataRead(buffer_, numRead)) {
+                    clientInfo->canRead = false;
+                    return;
                 }
             }
         }
         else if (numRead == -1) {
-            if (errno == EAGAIN) {
-                return true;
+            if (errno == EINTR) {
+                continue;
             }
-            else {
-                return false;
+
+            if (errno != EAGAIN) {
+                clientInfo->error = true;
+                if (clientInfo->client) {
+                    clientInfo->client->OnError();
+                }
             }
+
+            return;
         }
         else {
-            *outEof = true;
-            return true;
+            clientInfo->eof = true;
+            if (clientInfo->client) {
+                clientInfo->client->OnEof();
+            }
+            return;
+        }
+    }
+}
+
+void IO::Worker::Write(ClientInfo *clientInfo) {
+    int numWrittenTotal = 0;
+    while (numWrittenTotal < bufferSize) {
+        int numToWrite = clientInfo->client->OnReadyWrite(buffer_, bufferSize);
+        if (!numToWrite) {
+            clientInfo->canWrite = false;
+            return;
+        }
+        else {
+            const uint8_t *data   = buffer_;
+            int           numLeft = numToWrite;
+            while (numLeft) {
+                int numWritten = write(clientInfo->fileDescriptor, data, numLeft);
+                if (numWritten > 0) {
+                    Log::Print(Log::Level::Debug, this, [&]{
+                        return "fd " + to_string(clientInfo->fileDescriptor)  + " <- " + to_string(numWritten)
+                            + " bytes";
+                    });
+                    numWrittenTotal += numWritten;
+                    data    += numWritten;
+                    numLeft -= numWritten;
+                }
+                else if (numWritten == -1) {
+                    if (errno == EINTR) {
+                        continue;
+                    }
+
+                    if (errno == EAGAIN) {
+                        clientInfo->client->OnIncompleteWrite(data, numLeft);
+                    }
+                    else {
+                        clientInfo->error = true;
+                        if (clientInfo->client) {
+                            clientInfo->client->OnError();
+                        }
+                    }
+
+                    return;
+                }
+            }
         }
     }
 }
