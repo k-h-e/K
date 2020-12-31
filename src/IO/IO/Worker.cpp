@@ -72,14 +72,15 @@ void IO::Worker::SetUpSelectSets() {
     highestFileDescriptor_ = -1;
 
     for (auto &pair : clients_) {
-        if (!pair.second.error) {
-            if (pair.second.canRead && !pair.second.eof) {
-                FD_SET(pair.first, &readSet_);
+        ClientInfo &clientInfo = pair.second;
+        if (!clientInfo.error) {
+            if (clientInfo.canRead && !clientInfo.eof) {
+                FD_SET(clientInfo.fileDescriptor, &readSet_);
             }
-            if (pair.second.canWrite) {
-                FD_SET(pair.first, &writeSet_);
+            if (clientInfo.canWrite) {
+                FD_SET(clientInfo.fileDescriptor, &writeSet_);
             }
-            UpdateHighestFileDescriptor(pair.first);
+            UpdateHighestFileDescriptor(clientInfo.fileDescriptor);
         }
     }
 
@@ -95,12 +96,13 @@ void IO::Worker::UpdateHighestFileDescriptor(int fileDescriptor) {
 
 void IO::Worker::doIO() {
     for (auto &pair : clients_) {
-        if (!pair.second.error) {
-            if (pair.second.canRead && !pair.second.eof && FD_ISSET(pair.first, &readSet_)) {
-                Read(&pair.second);
+        ClientInfo &clientInfo = pair.second;
+        if (!clientInfo.error) {
+            if (clientInfo.canRead && !clientInfo.eof && FD_ISSET(clientInfo.fileDescriptor, &readSet_)) {
+                Read(&clientInfo);
             }
-            if (pair.second.canWrite && FD_ISSET(pair.first, &writeSet_)) {
-                Write(&pair.second);
+            if (clientInfo.canWrite && FD_ISSET(clientInfo.fileDescriptor, &writeSet_)) {
+                Write(&clientInfo);
             }
         }
     }
@@ -114,8 +116,8 @@ bool IO::Worker::ProcessClientRequests() {
 
     if (workInfo_.registrationInfo.fileDescriptor >= 0) {
         bool success = false;
-        if (clients_.find(workInfo_.registrationInfo.fileDescriptor) == clients_.end()) {
-            clients_[workInfo_.registrationInfo.fileDescriptor]
+        if (clients_.find(workInfo_.registrationInfo.client) == clients_.end()) {
+            clients_[workInfo_.registrationInfo.client]
                  = ClientInfo(workInfo_.registrationInfo.fileDescriptor, workInfo_.registrationInfo.client);
             Log::Print(Log::Level::Debug, this, [&]{
                 return "registered client, fd=" + to_string(workInfo_.registrationInfo.fileDescriptor)
@@ -126,29 +128,33 @@ bool IO::Worker::ProcessClientRequests() {
         sharedState_->OnClientRegistered(success);
     }
 
-    if (workInfo_.fileDescriptorToUnregister >= 0) {
-        if (clients_.erase(workInfo_.fileDescriptorToUnregister) == 1u) {
+    if (workInfo_.clientToUnregister) {
+        auto iter = clients_.find(workInfo_.registrationInfo.client);
+        if (iter != clients_.end()) {
+            int fd = iter->second.fileDescriptor;
+            clients_.erase(workInfo_.registrationInfo.client);
             Log::Print(Log::Level::Debug, this, [&]{
-                return "unregistered client, fd=" + to_string(workInfo_.fileDescriptorToUnregister)
-                    + ", num_remaining=" + to_string(clients_.size());
+                return "unregistered client, fd=" + to_string(fd) + ", num_remaining=" + to_string(clients_.size());
             });
         }
         sharedState_->OnClientUnregistered();
     }
 
-    for (int fd : workInfo_.clientsReadyToRead) {
-        auto iter = clients_.find(fd);
+    for (ClientInterface *client : workInfo_.clientsReadyToRead) {
+        auto iter = clients_.find(client);
         if (iter != clients_.end()) {
             iter->second.canRead = true;
-            Log::Print(Log::Level::Debug, this, [&]{ return "client can read, fd=" + to_string(fd); });
+            Log::Print(Log::Level::Debug, this, [&]{
+                return "client can read, fd=" + to_string(iter->second.fileDescriptor); });
         }
     }
 
-    for (int fd : workInfo_.clientsReadyToWrite) {
-        auto iter = clients_.find(fd);
+    for (ClientInterface *client : workInfo_.clientsReadyToWrite) {
+        auto iter = clients_.find(client);
         if (iter != clients_.end()) {
             iter->second.canWrite = true;
-            Log::Print(Log::Level::Debug, this, [&]{ return "client can write, fd=" + to_string(fd); });
+            Log::Print(Log::Level::Debug, this, [&]{
+                return "client can write, fd=" + to_string(iter->second.fileDescriptor); });
         }
     }
 

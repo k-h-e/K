@@ -63,13 +63,13 @@ class IO::Worker : public virtual K::Core::ActionInterface {
 
     std::shared_ptr<SharedState> sharedState_;
 
-    int                                 pipe_;
-    fd_set                              readSet_;
-    fd_set                              writeSet_;
-    int                                 highestFileDescriptor_;
-    uint8_t                             buffer_[bufferSize];
-    WorkInfo                            workInfo_;
-    std::unordered_map<int, ClientInfo> clients_;
+    int                                               pipe_;
+    fd_set                                            readSet_;
+    fd_set                                            writeSet_;
+    int                                               highestFileDescriptor_;
+    uint8_t                                           buffer_[bufferSize];
+    WorkInfo                                          workInfo_;
+    std::unordered_map<ClientInterface *, ClientInfo> clients_;
 };
 
 }    // Namespace IO.

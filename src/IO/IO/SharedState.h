@@ -26,10 +26,10 @@ class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
     SharedState &operator=(SharedState &&other)      = delete;
     ~SharedState();
 
-    bool Register(int fd, ClientInterface *client);
-    void Unregister(int fd);
-    void SetClientCanRead(int fd);
-    void SetClientCanWrite(int fd);
+    bool Register(ClientInterface *client, int fd);
+    void Unregister(ClientInterface *client, bool *outError);
+    void SetClientCanRead(ClientInterface *client);
+    void SetClientCanWrite(ClientInterface *client);
     void ShutDown();
 
     // Called from worker...
@@ -43,21 +43,22 @@ class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
     void NotifyWorker();
     void DoShutDown(std::unique_lock<std::mutex> *critical);
 
-    std::mutex              lock_;
-    std::condition_variable stateChanged_;
-    int                     pipe_;
-    bool                    registrationRunning_;
-    RegistrationInfo        registrationInfo_;
-    bool                    registrationSucceeded_;
-    bool                    registrationFailed_;
-    bool                    unregistrationRunning_;
-    int                     fileDescriptorToUnregister_;
-    bool                    unregistrationFinished_;
-    std::vector<int>        clientsReadyToRead_;
-    std::vector<int>        clientsReadyToWrite_;
-    bool                    error_;
-    bool                    shutDownRequested_;
-    bool                    workerFinished_;
+    std::mutex                     lock_;
+    std::condition_variable        stateChanged_;
+    int                            pipe_;
+    bool                           registrationRunning_;
+    RegistrationInfo               registrationInfo_;
+    bool                           registrationSucceeded_;
+    bool                           registrationFailed_;
+    bool                           unregistrationRunning_;
+    ClientInterface                *clientToUnregister_;
+    bool                           unregistrationFinalStreamError_;
+    bool                           unregistrationFinished_;
+    std::vector<ClientInterface *> clientsReadyToRead_;
+    std::vector<ClientInterface *> clientsReadyToWrite_;
+    bool                           error_;
+    bool                           shutDownRequested_;
+    bool                           workerFinished_;
 };
 
 }    // Namespace IO.

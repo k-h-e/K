@@ -3,7 +3,7 @@
 #include <cassert>
 #include <algorithm>
 #include <K/Core/Log.h>
-#include <K/IO/BufferedFileDescriptorConnection.h>
+#include <K/IO/BufferedConnection.h>
 #include <K/IO/IO.h>
 
 using std::shared_ptr;
@@ -16,34 +16,32 @@ using K::IO::IO;
 namespace K {
 namespace IO {
 
-BufferedFileDescriptorConnection::SharedState::SharedState(int fd, int bufferSizeThreshold, const shared_ptr<IO> &io)
+BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shared_ptr<IO> &io)
         : io_(io),
-          fd_(fd),
           handler_(nullptr),
           handlerCalledInitially_(false),
           bufferSizeThreshold_(bufferSizeThreshold),
           canNotWrite_(true),
           eof_(false),
           error_(false) {
-    if (!io_->Register(fd_, this)) {
-        error_ = true;
-    }
+    // Nop.
 }
 
-BufferedFileDescriptorConnection::SharedState::~SharedState() {
-    io_->Unregister(fd_);
-}
+void BufferedConnection::SharedState::SetError() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    error_ = true;
+}    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorConnection::SharedState::Register(HandlerInterface *handler) {
+void BufferedConnection::SharedState::Register(HandlerInterface *handler) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     handler_                = handler;
     handlerCalledInitially_ = false;
     if (handler_ && !error_) {
-        io_->SetClientCanRead(fd_);
+        io_->SetClientCanRead(this);
     }
 }    // ......................................................................................... critical section, end.
 
-bool BufferedFileDescriptorConnection::SharedState::WriteItem(const void *item, int itemSize) {
+bool BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) {
     assert(itemSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     const uint8_t *data   = static_cast<const uint8_t *>(item);
@@ -63,7 +61,7 @@ bool BufferedFileDescriptorConnection::SharedState::WriteItem(const void *item, 
             data    += numToCopy;
             numLeft -= numToCopy;
             if (canNotWrite_) {
-                io_->SetClientCanWrite(fd_);
+                io_->SetClientCanWrite(this);
                 canNotWrite_ = false;
             }
         }
@@ -73,19 +71,19 @@ bool BufferedFileDescriptorConnection::SharedState::WriteItem(const void *item, 
 }    // ......................................................................................... critical section, end.
 
 
-bool BufferedFileDescriptorConnection::SharedState::Eof() {
+bool BufferedConnection::SharedState::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return eof_;
 }    // ......................................................................................... critical section, end.
 
-bool BufferedFileDescriptorConnection::SharedState::Error() {
+bool BufferedConnection::SharedState::Error() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
 }    // ......................................................................................... critical section, end.
 
 // ----
 
-bool BufferedFileDescriptorConnection::SharedState::OnDataRead(const void *data, int dataSize) {
+bool BufferedConnection::SharedState::OnDataRead(const void *data, int dataSize) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     if (!error_ && !eof_) {
@@ -98,7 +96,7 @@ bool BufferedFileDescriptorConnection::SharedState::OnDataRead(const void *data,
     return false;
 }    // ......................................................................................... critical section, end.
 
-int BufferedFileDescriptorConnection::SharedState::OnReadyWrite(void *buffer, int bufferSize) {
+int BufferedConnection::SharedState::OnReadyWrite(void *buffer, int bufferSize) {
     assert(bufferSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
@@ -112,14 +110,13 @@ int BufferedFileDescriptorConnection::SharedState::OnReadyWrite(void *buffer, in
     return numWritten;
 }    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorConnection::SharedState::OnIncompleteWrite(const void *unwrittenData,
-                                                                      int unwrittenDataSize) {
+void BufferedConnection::SharedState::OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) {
     assert (unwrittenDataSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     writeBuffer_.PutBack(unwrittenData, unwrittenDataSize);
 }    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorConnection::SharedState::OnEof() {
+void BufferedConnection::SharedState::OnEof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     if (!error_ && !eof_) {
@@ -130,7 +127,7 @@ void BufferedFileDescriptorConnection::SharedState::OnEof() {
     }
 }    // ......................................................................................... critical section, end.
 
-void BufferedFileDescriptorConnection::SharedState::OnError() {
+void BufferedConnection::SharedState::OnError() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     if (!error_) {
@@ -143,7 +140,7 @@ void BufferedFileDescriptorConnection::SharedState::OnError() {
 }    // ......................................................................................... critical section, end.
 
 // Ensures lock to be held.
-void BufferedFileDescriptorConnection::SharedState::EnsureHandlerCalledInitially() {
+void BufferedConnection::SharedState::EnsureHandlerCalledInitially() {
     if (handler_) {
         if (!handlerCalledInitially_) {
             if (eof_) {

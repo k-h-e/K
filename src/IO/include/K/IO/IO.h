@@ -47,24 +47,24 @@ class IO : public virtual K::Core::Interface {
     IO(IO &&other)                 = delete;
     IO &operator=(IO &&other)      = delete;
 
-    //! Registers the specified file descriptor.
+    //! Registers the specified client and its associated file descriptor.
     /*!
      *  The client methods will get called on an arbitrary thread.
      *
      *  \return
      *  <c>false</c> in case the file descriptor could not be registered.
      */
-    bool Register(int fd, ClientInterface *client);
-    //! Unregisters the respective file descriptor, if it was registered.
+    bool Register(ClientInterface *client, int fd);
+    //! Unregisters the respective client, if it was registered.
     /*!
-     *  When the method returns it is guaranteed that the file descriptor is no longer used, and that the respective
-     *  cient is not called again.
+     *  When the method returns it is guaranteed that the cient will not be called again, and that the associated file
+     *  descriptor will no longer be used.
      */
-    void Unregister(int fd);
-    //! Informs the I/O mechanism that the client for the specified file descriptor can read.
-    void SetClientCanRead(int fd);
-    //! Informs the I/O mechanism that the client for the specified file descriptor can write.
-    void SetClientCanWrite(int fd);
+    void Unregister(ClientInterface *client, bool *outError);
+    //! Informs the I/O mechanism that the specified client can read.
+    void SetClientCanRead(ClientInterface *client);
+    //! Informs the I/O mechanism that the specified client can write.
+    void SetClientCanWrite(ClientInterface *client);
 
   private:
     class SharedState;

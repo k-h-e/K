@@ -23,7 +23,8 @@ IO::SharedState::SharedState(int pipe)
           registrationSucceeded_(false),
           registrationFailed_(false),
           unregistrationRunning_(false),
-          fileDescriptorToUnregister_(-1),
+          clientToUnregister_(nullptr),
+          unregistrationFinalStreamError_(true),
           unregistrationFinished_(false),
           shutDownRequested_(false),
           workerFinished_(false) {
@@ -37,9 +38,10 @@ IO::SharedState::~SharedState() {
     }
 }
 
-bool IO::SharedState::Register(int fd, ClientInterface *client) {
+bool IO::SharedState::Register(ClientInterface *client, int fd) {
+    assert(client);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (error_ || (fd < 0) || !client) {
+    if (error_ || (fd < 0)) {
         return false;
     }
 
@@ -63,7 +65,7 @@ bool IO::SharedState::Register(int fd, ClientInterface *client) {
 
     registrationRunning_ = true;
 
-    registrationInfo_      = RegistrationInfo(fd, client);
+    registrationInfo_      = RegistrationInfo(client, fd);
     registrationSucceeded_ = false;
     registrationFailed_    = false;
     NotifyWorker();
@@ -80,11 +82,11 @@ bool IO::SharedState::Register(int fd, ClientInterface *client) {
     return registrationSucceeded_;
 }    // ......................................................................................... critical section, end.
 
-void IO::SharedState::Unregister(int fd)  {
+void IO::SharedState::Unregister(ClientInterface *client, bool *outError)  {
+    assert(client);
+    *outError = true;
+
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (fd < 0) {
-        return;
-    }
     if (error_) {
         DoShutDown(&critical);
         return;
@@ -98,10 +100,10 @@ void IO::SharedState::Unregister(int fd)  {
         return;
     }
 
-    unregistrationRunning_ = true;
-
-    fileDescriptorToUnregister_ = fd;
-    unregistrationFinished_     = false;
+    unregistrationRunning_          = true;
+    clientToUnregister_             = client;
+    unregistrationFinalStreamError_ = false;
+    unregistrationFinished_         = false;
     NotifyWorker();
 
     while (!unregistrationFinished_ && !error_) {
@@ -112,18 +114,19 @@ void IO::SharedState::Unregister(int fd)  {
         return;
     }
 
+    *outError              = unregistrationFinalStreamError_;
     unregistrationRunning_ = false;
 }    // ......................................................................................... critical section, end.
 
-void IO::SharedState::SetClientCanRead(int fd) {
+void IO::SharedState::SetClientCanRead(ClientInterface *client) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    clientsReadyToRead_.push_back(fd);
+    clientsReadyToRead_.push_back(client);
     NotifyWorker();
 }    // ......................................................................................... critical section, end.
 
-void IO::SharedState::SetClientCanWrite(int fd) {
+void IO::SharedState::SetClientCanWrite(ClientInterface *client) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    clientsReadyToWrite_.push_back(fd);
+    clientsReadyToWrite_.push_back(client);
     NotifyWorker();
 }    // ......................................................................................... critical section, end.
 
@@ -144,18 +147,18 @@ void IO::SharedState::GetWork(WorkInfo *outInfo) {
         registrationInfo_ = RegistrationInfo();
     }
 
-    if (fileDescriptorToUnregister_ >= 0) {
-        outInfo->fileDescriptorToUnregister = fileDescriptorToUnregister_;
-        fileDescriptorToUnregister_ = -1;
+    if (clientToUnregister_) {
+        outInfo->clientToUnregister = clientToUnregister_;
+        clientToUnregister_ = nullptr;
     }
 
-    for (int fd : clientsReadyToRead_) {
-        outInfo->clientsReadyToRead.push_back(fd);
+    for (ClientInterface *client : clientsReadyToRead_) {
+        outInfo->clientsReadyToRead.push_back(client);
     }
     clientsReadyToRead_.clear();
 
-    for (int fd : clientsReadyToWrite_) {
-        outInfo->clientsReadyToWrite.push_back(fd);
+    for (ClientInterface *client : clientsReadyToWrite_) {
+        outInfo->clientsReadyToWrite.push_back(client);
     }
     clientsReadyToWrite_.clear();
 

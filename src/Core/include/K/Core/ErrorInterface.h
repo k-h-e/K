@@ -14,7 +14,8 @@ class ErrorInterface : public virtual Interface {
      *  When in error state, all operations on the object have no effect and indicate failure (for operations returning
      *  results).
      *
-     *  Once the object has entered error state, it does not automatically leave it again.
+     *  Error state is persistent insofar as once the object has entered error state, it does not automatically leave it
+     *  again.
      */
     virtual bool Error() = 0;
 };

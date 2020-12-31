@@ -8,17 +8,17 @@ namespace K {
 namespace IO {
 
 struct RegistrationInfo {
-    int                 fileDescriptor;
     IO::ClientInterface *client;
+    int                 fileDescriptor;
 
     RegistrationInfo()
-        : fileDescriptor(-1),
-          client(nullptr) {
+        : client(nullptr),
+          fileDescriptor(-1) {
         // Nop.
     }
-    RegistrationInfo(int aFileDescriptor, IO::ClientInterface  *aClient)
-        : fileDescriptor(aFileDescriptor),
-          client(aClient) {
+    RegistrationInfo(IO::ClientInterface  *aClient, int aFileDescriptor)
+        : client(aClient),
+          fileDescriptor(aFileDescriptor) {
         // Nop.
     }
     // Default copy/move, okay.
@@ -26,11 +26,11 @@ struct RegistrationInfo {
 
 //! Describes work for the I/O worker.
 struct WorkInfo {
-    bool             shutDownRequested;
-    RegistrationInfo registrationInfo;
-    int              fileDescriptorToUnregister;
-    std::vector<int> clientsReadyToRead;
-    std::vector<int> clientsReadyToWrite;
+    bool                               shutDownRequested;
+    RegistrationInfo                   registrationInfo;
+    IO::ClientInterface                *clientToUnregister;
+    std::vector<IO::ClientInterface *> clientsReadyToRead;
+    std::vector<IO::ClientInterface *> clientsReadyToWrite;
 
     WorkInfo() {
         Clear();
@@ -38,9 +38,9 @@ struct WorkInfo {
     // Default copy/move, okay.
 
     void Clear() {
-        shutDownRequested          = false;
-        registrationInfo           = RegistrationInfo();
-        fileDescriptorToUnregister = -1;
+        shutDownRequested  = false;
+        registrationInfo   = RegistrationInfo();
+        clientToUnregister = nullptr;
         clientsReadyToRead.clear();
         clientsReadyToWrite.clear();
     }
