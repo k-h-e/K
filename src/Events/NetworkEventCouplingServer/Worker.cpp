@@ -29,7 +29,7 @@ NetworkEventCouplingServer::Worker::Worker(
 void NetworkEventCouplingServer::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
-    while (!listenSocket_->Error() && !sharedState_->ShutDownRequested()) {
+    while (!listenSocket_->ErrorState() && !sharedState_->ShutDownRequested()) {
         Log::Print(Log::Level::Debug, this, []{ return "waiting for client to connect..."; });
         shared_ptr<SocketStream> stream = listenSocket_->Accept();
         if (stream && !sharedState_->ShutDownRequested()) {

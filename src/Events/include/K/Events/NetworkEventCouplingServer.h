@@ -2,7 +2,7 @@
 #define K_EVENTS_NETWORKEVENTCOUPLINGSERVER_H_
 
 #include <memory>
-#include <K/Core/ErrorInterface.h>
+#include <K/Core/ErrorStateInterface.h>
 
 namespace K {
 namespace Core {
@@ -19,12 +19,12 @@ namespace Events {
 class EventLoopHub;
 
 //! Installs network event couplings for incoming network connections.
-class NetworkEventCouplingServer : public virtual K::Core::ErrorInterface {
+class NetworkEventCouplingServer : public virtual K::Core::ErrorStateInterface {
   public:
     NetworkEventCouplingServer(int port, const std::shared_ptr<EventLoopHub> &hub,
                                const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     ~NetworkEventCouplingServer();
-    bool Error();
+    bool ErrorState() override;
 
   private:
     static const int couplingCompletionId = 0;

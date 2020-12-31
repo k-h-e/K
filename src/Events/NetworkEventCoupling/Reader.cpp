@@ -29,7 +29,7 @@ void NetworkEventCoupling::Reader::ExecuteAction() {
 
     Buffer buffer;
     bool   badSize = false;
-    while (!stream_->Error() && !stream_->Eof() && !badSize) {
+    while (!stream_->ErrorState() && !stream_->Eof() && !badSize) {
         uint32_t size;
         if (stream_->ReadItem(&size, sizeof(size))) {
             int sizeAsInt = static_cast<int>(size);

@@ -15,7 +15,7 @@ bool BlockingStreamCore::ReadItem(void *outItem, int itemSize) {
             numRemaining -= num;
         }
         else {
-            if (Error() || Eof()) {
+            if (ErrorState() || Eof()) {
                 return false;
             }
         }
@@ -33,7 +33,7 @@ bool BlockingStreamCore::WriteItem(const void *item, int itemSize) {
             numRemaining -= num;
         }
         else {
-            if (Error()) {
+            if (ErrorState()) {
                 return false;
             }
         }

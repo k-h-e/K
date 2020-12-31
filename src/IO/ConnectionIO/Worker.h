@@ -4,14 +4,14 @@
 #include <sys/select.h>
 #include <unordered_map>
 #include <K/Core/ActionInterface.h>
-#include <K/IO/IO.h>
+#include <K/IO/ConnectionIO.h>
 #include "WorkInfo.h"
 
 namespace K {
 namespace IO {
 
 //! Worker for the central I/O mechanism.
-class IO::Worker : public virtual K::Core::ActionInterface {
+class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
   public:
     Worker(int pipe, std::shared_ptr<SharedState> sharedState);
     Worker(const Worker &other)            = delete;
@@ -25,12 +25,13 @@ class IO::Worker : public virtual K::Core::ActionInterface {
     static const int bufferSize = 8192;
 
     struct ClientInfo {
-        int                  fileDescriptor;
-        IO::ClientInterface  *client;
-        bool                 canRead;
-        bool                 canWrite;
-        bool                 eof;
-        bool                 error;
+        int                            fileDescriptor;
+        ConnectionIO::ClientInterface  *client;
+        bool                           canRead;
+        bool                           canWrite;
+        bool                           eof;
+        bool                           error;
+        bool                           unregistering;
 
         ClientInfo()
             : fileDescriptor(-1),
@@ -38,17 +39,19 @@ class IO::Worker : public virtual K::Core::ActionInterface {
               canRead(false),
               canWrite(false),
               eof(false),
-              error(false) {
+              error(false),
+              unregistering(false) {
             // Nop.
         }
 
-        ClientInfo(int aFileDescriptor, IO::ClientInterface *aClient)
+        ClientInfo(int aFileDescriptor, ConnectionIO::ClientInterface *aClient)
             : fileDescriptor(aFileDescriptor),
               client(aClient),
               canRead(false),
               canWrite(false),
               eof(false),
-              error(false) {
+              error(false),
+              unregistering(false) {
             // Nop.
         }
         // Defaut copy/move, okay.
@@ -56,7 +59,8 @@ class IO::Worker : public virtual K::Core::ActionInterface {
 
     void SetUpSelectSets();
     void UpdateHighestFileDescriptor(int fileDescriptor);
-    void doIO();
+    void DoIO();
+    void UnregisterClients();
     bool ProcessClientRequests();
     void Read(ClientInfo *clientInfo);
     void Write(ClientInfo *clientInfo);
@@ -70,6 +74,7 @@ class IO::Worker : public virtual K::Core::ActionInterface {
     uint8_t                                           buffer_[bufferSize];
     WorkInfo                                          workInfo_;
     std::unordered_map<ClientInterface *, ClientInfo> clients_;
+    std::vector<ClientInterface *>                    clientsToUnregister_;
 };
 
 }    // Namespace IO.

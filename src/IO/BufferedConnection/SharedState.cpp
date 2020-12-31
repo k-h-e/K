@@ -4,20 +4,19 @@
 #include <algorithm>
 #include <K/Core/Log.h>
 #include <K/IO/BufferedConnection.h>
-#include <K/IO/IO.h>
+#include <K/IO/ConnectionIO.h>
 
 using std::shared_ptr;
 using std::unique_lock;
 using std::mutex;
 using std::to_string;
 using K::Core::Log;
-using K::IO::IO;
 
 namespace K {
 namespace IO {
 
-BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shared_ptr<IO> &io)
-        : io_(io),
+BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
+        : connectionIO_(connectionIO),
           handler_(nullptr),
           handlerCalledInitially_(false),
           bufferSizeThreshold_(bufferSizeThreshold),
@@ -37,7 +36,7 @@ void BufferedConnection::SharedState::Register(HandlerInterface *handler) {
     handler_                = handler;
     handlerCalledInitially_ = false;
     if (handler_ && !error_) {
-        io_->SetClientCanRead(this);
+        connectionIO_->SetClientCanRead(this);
     }
 }    // ......................................................................................... critical section, end.
 
@@ -61,7 +60,7 @@ bool BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) 
             data    += numToCopy;
             numLeft -= numToCopy;
             if (canNotWrite_) {
-                io_->SetClientCanWrite(this);
+                connectionIO_->SetClientCanWrite(this);
                 canNotWrite_ = false;
             }
         }

@@ -11,20 +11,20 @@ using K::Core::Log;
 namespace K {
 namespace IO {
 
-IO::Worker::Worker(int pipe, shared_ptr<SharedState> sharedState)
+ConnectionIO::Worker::Worker(int pipe, shared_ptr<SharedState> sharedState)
         : sharedState_(sharedState),
           pipe_(pipe),
           highestFileDescriptor_(-1) {
     // Nop.
 }
 
-IO::Worker::~Worker() {
+ConnectionIO::Worker::~Worker() {
     if (pipe_ != -1) {
         close (pipe_);
     }
 }
 
-void IO::Worker::ExecuteAction() {
+void ConnectionIO::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, [&]{ return "spawning, pipe=" + to_string(pipe_) + "..."; });
 
     if (pipe_ != -1) {
@@ -36,7 +36,8 @@ void IO::Worker::ExecuteAction() {
             Log::Print(Log::Level::Debug, this, []{ return "sleeping..."; });
             int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, nullptr, nullptr);
             if (result > 0) {
-                doIO();
+                DoIO();
+                UnregisterClients();
                 if (FD_ISSET(pipe_, &readSet_)) {
                     Read(&pipeInfo);
                     if (pipeInfo.error || pipeInfo.eof) {
@@ -66,7 +67,7 @@ void IO::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "terminating"; });
 }
 
-void IO::Worker::SetUpSelectSets() {
+void ConnectionIO::Worker::SetUpSelectSets() {
     FD_ZERO(&readSet_);
     FD_ZERO(&writeSet_);
     highestFileDescriptor_ = -1;
@@ -88,13 +89,14 @@ void IO::Worker::SetUpSelectSets() {
     UpdateHighestFileDescriptor(pipe_);
 }
 
-void IO::Worker::UpdateHighestFileDescriptor(int fileDescriptor) {
+void ConnectionIO::Worker::UpdateHighestFileDescriptor(int fileDescriptor) {
     if (fileDescriptor > highestFileDescriptor_) {
         highestFileDescriptor_ = fileDescriptor;
     }
 }
 
-void IO::Worker::doIO() {
+void ConnectionIO::Worker::DoIO() {
+    clientsToUnregister_.clear();
     for (auto &pair : clients_) {
         ClientInfo &clientInfo = pair.second;
         if (!clientInfo.error) {
@@ -108,13 +110,32 @@ void IO::Worker::doIO() {
     }
 }
 
-bool IO::Worker::ProcessClientRequests() {
+void ConnectionIO::Worker::UnregisterClients() {
+    for (ClientInterface *client : clientsToUnregister_) {
+        auto iter = clients_.find(client);
+        if (iter != clients_.end()) {
+            ClientInfo &clientInfo = iter->second;
+            int  fd               = clientInfo.fileDescriptor;
+            bool finalStreamError = clientInfo.error;
+            clients_.erase(client);
+            sharedState_->OnClientUnregistered(finalStreamError);
+
+            Log::Print(Log::Level::Debug, this, [&]{ return "unregistered client, fd=" + to_string(fd)
+                + ", num_remaining=" + to_string(clients_.size());
+            });
+        }
+    }
+
+    clientsToUnregister_.clear();
+}
+
+bool ConnectionIO::Worker::ProcessClientRequests() {
     sharedState_->GetWork(&workInfo_);
     if (workInfo_.shutDownRequested) {
         return false;
     }
 
-    if (workInfo_.registrationInfo.fileDescriptor >= 0) {
+    if (workInfo_.registrationInfo.client) {
         bool success = false;
         if (clients_.find(workInfo_.registrationInfo.client) == clients_.end()) {
             clients_[workInfo_.registrationInfo.client]
@@ -128,16 +149,19 @@ bool IO::Worker::ProcessClientRequests() {
         sharedState_->OnClientRegistered(success);
     }
 
-    if (workInfo_.clientToUnregister) {
-        auto iter = clients_.find(workInfo_.registrationInfo.client);
+    if (workInfo_.unregistrationInfo.client) {
+        auto iter = clients_.find(workInfo_.unregistrationInfo.client);
         if (iter != clients_.end()) {
-            int fd = iter->second.fileDescriptor;
-            clients_.erase(workInfo_.registrationInfo.client);
-            Log::Print(Log::Level::Debug, this, [&]{
-                return "unregistered client, fd=" + to_string(fd) + ", num_remaining=" + to_string(clients_.size());
+            ClientInfo &clientInfo = iter->second;
+            clientInfo.unregistering = true;
+            clientInfo.canWrite      = true;
+            Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
+                + " scheduled for deregistration";
             });
         }
-        sharedState_->OnClientUnregistered();
+        else {
+            sharedState_->OnClientUnregistered(true);
+        }
     }
 
     for (ClientInterface *client : workInfo_.clientsReadyToRead) {
@@ -161,7 +185,7 @@ bool IO::Worker::ProcessClientRequests() {
     return true;
 }
 
-void IO::Worker::Read(ClientInfo *clientInfo) {
+void ConnectionIO::Worker::Read(ClientInfo *clientInfo) {
     int numReadTotal = 0;
     while (numReadTotal < bufferSize) {
         int numRead = read(clientInfo->fileDescriptor, buffer_, bufferSize);
@@ -201,12 +225,18 @@ void IO::Worker::Read(ClientInfo *clientInfo) {
     }
 }
 
-void IO::Worker::Write(ClientInfo *clientInfo) {
+void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
     int numWrittenTotal = 0;
     while (numWrittenTotal < bufferSize) {
         int numToWrite = clientInfo->client->OnReadyWrite(buffer_, bufferSize);
         if (!numToWrite) {
             clientInfo->canWrite = false;
+            if (clientInfo->unregistering) {
+                clientsToUnregister_.push_back(clientInfo->client);
+                Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo->fileDescriptor)
+                    + " ready for deregistration";
+                });
+            }
             return;
         }
         else {

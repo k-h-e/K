@@ -5,7 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <K/Core/CompletionHandlerInterface.h>
-#include <K/IO/IO.h>
+#include <K/IO/ConnectionIO.h>
 #include "WorkInfo.h"
 
 namespace K {
@@ -17,7 +17,7 @@ struct WorkInfo;
 /*!
  *  The class is thread-safe (i.e. all public methods).
  */
-class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
+class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInterface {
   public:
     SharedState(int pipe);
     SharedState(const SharedState &other)            = delete;
@@ -36,7 +36,7 @@ class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
     void GetWork(WorkInfo *outInfo);
     void SetErrorState();
     void OnClientRegistered(bool success);
-    void OnClientUnregistered();
+    void OnClientUnregistered(bool finalStreamError);
     void OnCompletion(int completionId) override;
 
   private:
@@ -48,12 +48,8 @@ class IO::SharedState : public virtual K::Core::CompletionHandlerInterface {
     int                            pipe_;
     bool                           registrationRunning_;
     RegistrationInfo               registrationInfo_;
-    bool                           registrationSucceeded_;
-    bool                           registrationFailed_;
     bool                           unregistrationRunning_;
-    ClientInterface                *clientToUnregister_;
-    bool                           unregistrationFinalStreamError_;
-    bool                           unregistrationFinished_;
+    UnregistrationInfo             unregistrationInfo_;
     std::vector<ClientInterface *> clientsReadyToRead_;
     std::vector<ClientInterface *> clientsReadyToWrite_;
     bool                           error_;

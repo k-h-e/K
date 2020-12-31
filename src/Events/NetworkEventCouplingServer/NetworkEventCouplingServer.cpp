@@ -29,8 +29,8 @@ NetworkEventCouplingServer::~NetworkEventCouplingServer() {
     sharedState_->WaitForWorkerFinished();
 }
 
-bool NetworkEventCouplingServer::Error() {
-    return listenSocket_->Error();
+bool NetworkEventCouplingServer::ErrorState() {
+    return listenSocket_->ErrorState();
 }
 
 }    // Namespace Events.

@@ -80,7 +80,7 @@ void ListenSocket::ShutDown() {
     }
 }    // ......................................................................................... critical section, end.
 
-bool ListenSocket::Error() {
+bool ListenSocket::ErrorState() {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
     return (fd_ == -1) || socketDown_;
 }    // ......................................................................................... critical section, end.

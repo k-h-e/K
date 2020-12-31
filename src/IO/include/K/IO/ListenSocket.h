@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <mutex>
-#include <K/Core/ErrorInterface.h>
+#include <K/Core/ErrorStateInterface.h>
 
 namespace K {
 namespace IO {
@@ -14,7 +14,7 @@ class SocketStream;
 /*!
  * Thread-safe (i.e. all public methods).
  */
-class ListenSocket : public virtual K::Core::ErrorInterface {
+class ListenSocket : public virtual K::Core::ErrorStateInterface {
   public:
     ListenSocket(int port);
     ListenSocket(const ListenSocket &other)             = delete;
@@ -31,8 +31,7 @@ class ListenSocket : public virtual K::Core::ErrorInterface {
     std::shared_ptr<SocketStream> Accept();
     //! Shuts down the listen socket, causing active <c>Accept()</c> calls to return and fail.
     void ShutDown();
-
-    bool Error();
+    bool ErrorState();
 
   private:
     void Close();

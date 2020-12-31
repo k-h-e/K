@@ -14,11 +14,11 @@ namespace K {
 //! I/O.
 namespace IO {
 
-//! Central I/O mechanism.
+//! Central I/O mechanism for connection streams.
 /*!
  *  The class is thread-safe, i.e. all its public methods.
  */
-class IO : public virtual K::Core::Interface {
+class ConnectionIO : public virtual K::Core::Interface {
   public:
     class ClientInterface : public virtual K::Core::Interface {
       public:
@@ -40,12 +40,12 @@ class IO : public virtual K::Core::Interface {
         virtual void OnError() = 0;
     };
 
-    IO(const std::shared_ptr<K::Core::ThreadPool> &threadPool);
-    ~IO();
-    IO(const IO &other)            = delete;
-    IO &operator=(const IO &other) = delete;
-    IO(IO &&other)                 = delete;
-    IO &operator=(IO &&other)      = delete;
+    ConnectionIO(const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+    ~ConnectionIO();
+    ConnectionIO(const ConnectionIO &other)            = delete;
+    ConnectionIO &operator=(const ConnectionIO &other) = delete;
+    ConnectionIO(ConnectionIO &&other)                 = delete;
+    ConnectionIO &operator=(ConnectionIO &&other)      = delete;
 
     //! Registers the specified client and its associated file descriptor.
     /*!

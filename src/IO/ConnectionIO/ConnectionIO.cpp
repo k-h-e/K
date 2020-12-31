@@ -1,4 +1,4 @@
-#include <K/IO/IO.h>
+#include <K/IO/ConnectionIO.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -13,7 +13,7 @@ using K::Core::ThreadPool;
 namespace K {
 namespace IO {
 
-IO::IO(const shared_ptr<ThreadPool> &threadPool) {
+ConnectionIO::ConnectionIO(const shared_ptr<ThreadPool> &threadPool) {
     int  fileDescriptors[2];
     bool havePipe = false;
     if (!pipe(fileDescriptors)) {
@@ -40,23 +40,23 @@ IO::IO(const shared_ptr<ThreadPool> &threadPool) {
     threadPool->Run(worker_, sharedState_, 0);
 }
 
-IO::~IO() {
+ConnectionIO::~ConnectionIO() {
     sharedState_->ShutDown();
 }
 
-bool IO::Register(ClientInterface *client, int fd) {
+bool ConnectionIO::Register(ClientInterface *client, int fd) {
     return sharedState_->Register(client, fd);
 }
 
-void IO::Unregister(ClientInterface *client, bool *outError) {
+void ConnectionIO::Unregister(ClientInterface *client, bool *outError) {
     sharedState_->Unregister(client, outError);
 }
 
-void IO::SetClientCanRead(ClientInterface *client) {
+void ConnectionIO::SetClientCanRead(ClientInterface *client) {
     sharedState_->SetClientCanRead(client);
 }
 
-void IO::SetClientCanWrite(ClientInterface *client) {
+void ConnectionIO::SetClientCanWrite(ClientInterface *client) {
     sharedState_->SetClientCanWrite(client);
 }
 

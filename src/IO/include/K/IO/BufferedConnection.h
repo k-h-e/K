@@ -7,13 +7,13 @@
 namespace K {
 namespace IO {
 
-class IO;
+class ConnectionIO;
 
 //! Buffered connection.
 class BufferedConnection : public virtual ConnectionStreamInterface {
   public:
     //! The connection takes ownership over the UNIX file descriptor.
-    BufferedConnection(int fd, int bufferSizeThreshold, const std::shared_ptr<K::IO::IO> &io);
+    BufferedConnection(int fd, int bufferSizeThreshold, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     BufferedConnection(const BufferedConnection &other)             = delete;
     BufferedConnection &operator=(const BufferedConnection &other)  = delete;
     BufferedConnection(const BufferedConnection &&other)            = delete;
@@ -23,15 +23,15 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     void Register(HandlerInterface *handler) override;
     bool WriteItem(const void *item, int itemSize) override;
     bool Eof() override;
-    bool Error() override;
+    bool ErrorState() override;
 
   private:
     class SharedState;
 
     std::shared_ptr<SharedState> sharedState_;
 
-    std::shared_ptr<K::IO::IO> io_;
-    int                        fd_;
+    std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
+    int                                  fd_;
 };
 
 }    // Namespace IO.

@@ -6,15 +6,15 @@
 #include <condition_variable>
 #include <K/Core/RingBuffer.h>
 #include <K/IO/BufferedConnection.h>
-#include <K/IO/IO.h>
+#include <K/IO/ConnectionIO.h>
 
 namespace K {
 namespace IO {
 
 //! State shared between threads of the buffered connection.
-class BufferedConnection::SharedState : public virtual IO::ClientInterface {
+class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInterface {
   public:
-    SharedState(int bufferSizeThreshold, const std::shared_ptr<K::IO::IO> &io);
+    SharedState(int bufferSizeThreshold, const std::shared_ptr<ConnectionIO> &connectionIO);
     SharedState(const SharedState &other)             = delete;
     SharedState &operator=(const SharedState &other)  = delete;
     SharedState(const SharedState &&other)            = delete;
@@ -36,17 +36,17 @@ class BufferedConnection::SharedState : public virtual IO::ClientInterface {
     // Expects lock to be held.
     void EnsureHandlerCalledInitially();
 
-    std::mutex              lock_;    // Protects everything below...
+    std::mutex                    lock_;    // Protects everything below...
 
-    std::condition_variable writeCanContinue_;
-    std::shared_ptr<IO>     io_;
-    HandlerInterface        *handler_;
-    bool                    handlerCalledInitially_;
-    Core::RingBuffer        writeBuffer_;
-    int                     bufferSizeThreshold_;
-    bool                    canNotWrite_;
-    bool                    eof_;
-    bool                    error_;
+    std::condition_variable       writeCanContinue_;
+    std::shared_ptr<ConnectionIO> connectionIO_;
+    HandlerInterface              *handler_;
+    bool                          handlerCalledInitially_;
+    Core::RingBuffer              writeBuffer_;
+    int                           bufferSizeThreshold_;
+    bool                          canNotWrite_;
+    bool                          eof_;
+    bool                          error_;
 };
 
 }    // Namespace IO.

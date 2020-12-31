@@ -3,31 +3,31 @@
 #include <unistd.h>
 #include <cassert>
 #include <K/Core/Log.h>
-#include <K/IO/IO.h>
+#include <K/IO/ConnectionIO.h>
 #include "SharedState.h"
 
 using std::shared_ptr;
 using std::make_shared;
 using std::to_string;
 using K::Core::Log;
-using K::IO::IO;
+using K::IO::ConnectionIO;
 
 namespace K {
 namespace IO {
 
-BufferedConnection::BufferedConnection(int fd, int bufferSizeThreshold, const shared_ptr<IO> &io)
-        : io_(io),
+BufferedConnection::BufferedConnection(int fd, int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
+        : connectionIO_(connectionIO),
           fd_(fd) {
-    sharedState_ = make_shared<SharedState>(bufferSizeThreshold, io_);
+    sharedState_ = make_shared<SharedState>(bufferSizeThreshold, connectionIO_);
 
-    if (!io_->Register(sharedState_.get(), fd_)) {
+    if (!connectionIO_->Register(sharedState_.get(), fd_)) {
         sharedState_->SetError();
     }
 }
 
 BufferedConnection::~BufferedConnection() {
     bool finalStreamError = true;
-    io_->Unregister(sharedState_.get(), &finalStreamError);
+    connectionIO_->Unregister(sharedState_.get(), &finalStreamError);
 
     bool closedSuccessfully = false;
     bool closeError         = false;
@@ -59,7 +59,7 @@ bool BufferedConnection::Eof() {
     return sharedState_->Eof();
 }
 
-bool BufferedConnection::Error() {
+bool BufferedConnection::ErrorState() {
     return sharedState_->Error();
 }
 

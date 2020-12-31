@@ -29,7 +29,7 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
     unique_ptr<Buffer> buffer(new Buffer());
-    while (!stream_->Error() && hub_->GetEvents(hubClientId_, &buffer, false)) {
+    while (!stream_->ErrorState() && hub_->GetEvents(hubClientId_, &buffer, false)) {
         int dataSize = buffer->DataSize();
         if (dataSize > 0) {    // Defensive, shouldn't be necessary.
             uint32_t size = dataSize;
