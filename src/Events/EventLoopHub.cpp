@@ -63,9 +63,9 @@ bool EventLoopHub::RegisterEventIdToSlotMapping(size_t id, int slot) {
     return true;
 }    // ......................................................................................... critical section, end.
 
-void EventLoopHub::Post(int clientLoopId, const Core::Buffer &buffer, bool onlyPostToOthers) {
+void EventLoopHub::Post(int clientLoopId, const void *data, int dataSize, bool onlyPostToOthers) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    DoPost(clientLoopId, buffer, onlyPostToOthers);
+    DoPost(clientLoopId, data, dataSize, onlyPostToOthers);
 }    // ......................................................................................... critical section, end.
 
 bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer, bool nonBlocking) {
@@ -120,18 +120,18 @@ void EventLoopHub::Post(const Event &event) {
     int slot = iter->second;
     eventsToSchedule_.Append(&slot, sizeof(slot));
     event.Serialize(&eventsToSchedule_);
-    DoPost(0, eventsToSchedule_, false);
+    DoPost(0, eventsToSchedule_.Data(), eventsToSchedule_.DataSize(), false);
     eventsToSchedule_.Clear();
 }    // ......................................................................................... critical section, end.
 
 // Expects lock to be held.
-void EventLoopHub::DoPost(int clientLoopId, const Core::Buffer &buffer, bool onlyPostToOthers) {
+void EventLoopHub::DoPost(int clientLoopId, const void *data, int dataSize, bool onlyPostToOthers) {
     int num = static_cast<int>(loops_.size());
     for (int i = 0; i < num; ++i) {
         LoopInfo &loopInfo = loops_[i];
         if (loopInfo.inUse) {
             if (!(onlyPostToOthers && (i == clientLoopId))) {
-                loopInfo.buffer->Append(buffer.Data(), buffer.DataSize());    // Ok, if data size is 0.
+                loopInfo.buffer->Append(data, dataSize);
             }
         }
     }

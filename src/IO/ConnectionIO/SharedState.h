@@ -30,6 +30,7 @@ class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInter
     void Unregister(ClientInterface *client, bool *outError);
     void SetClientCanRead(ClientInterface *client);
     void SetClientCanWrite(ClientInterface *client);
+    void RequestCustomCall(ClientInterface *client);
     void ShutDown();
 
     // Called from worker...
@@ -52,6 +53,7 @@ class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInter
     UnregistrationInfo             unregistrationInfo_;
     std::vector<ClientInterface *> clientsReadyToRead_;
     std::vector<ClientInterface *> clientsReadyToWrite_;
+    std::vector<ClientInterface *> clientsWithCustomCallRequested_;
     bool                           error_;
     bool                           shutDownRequested_;
     bool                           workerFinished_;

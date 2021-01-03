@@ -9,6 +9,8 @@ namespace K {
 namespace IO {
 
 class SocketStream;
+class TcpConnection;
+class ConnectionIO;
 
 //! Listen socket.
 /*!
@@ -16,7 +18,7 @@ class SocketStream;
  */
 class ListenSocket : public virtual K::Core::ErrorStateInterface {
   public:
-    ListenSocket(int port);
+    ListenSocket(int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     ListenSocket(const ListenSocket &other)             = delete;
     ListenSocket &operator=(const ListenSocket &other)  = delete;
     ListenSocket(const ListenSocket &&other)            = delete;
@@ -29,12 +31,21 @@ class ListenSocket : public virtual K::Core::ErrorStateInterface {
      *  <c>null</c> handle in case of failure.
      */
     std::shared_ptr<SocketStream> Accept();
+    //! Accepts a new connection from the listen socket.
+    /*!
+     *  \return
+     *  <c>null</c> handle in case of failure.
+     */
+    std::shared_ptr<TcpConnection> AcceptConnection();
     //! Shuts down the listen socket, causing active <c>Accept()</c> calls to return and fail.
     void ShutDown();
     bool ErrorState();
 
   private:
+    int DoAccept();
     void Close();
+
+    std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
 
     std::mutex lock_;
     int        fd_;

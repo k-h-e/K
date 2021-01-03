@@ -120,6 +120,12 @@ void ConnectionIO::SharedState::SetClientCanWrite(ClientInterface *client) {
     NotifyWorker();
 }    // ......................................................................................... critical section, end.
 
+void ConnectionIO::SharedState::RequestCustomCall(ClientInterface *client) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    clientsWithCustomCallRequested_.push_back(client);
+    NotifyWorker();
+}    // ......................................................................................... critical section, end.
+
 void ConnectionIO::SharedState::ShutDown()  {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     DoShutDown(&critical);
@@ -151,6 +157,11 @@ void ConnectionIO::SharedState::GetWork(WorkInfo *outInfo) {
         outInfo->clientsReadyToWrite.push_back(client);
     }
     clientsReadyToWrite_.clear();
+
+    for (ClientInterface *client : clientsWithCustomCallRequested_) {
+        outInfo->clientsWithCustomCallRequested.push_back(client);
+    }
+    clientsWithCustomCallRequested_.clear();
 
 }    // ......................................................................................... critical section, end.
 

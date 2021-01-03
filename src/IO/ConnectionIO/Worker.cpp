@@ -33,7 +33,7 @@ void ConnectionIO::Worker::ExecuteAction() {
         while (!done) {
             SetUpSelectSets();
 
-            Log::Print(Log::Level::Debug, this, []{ return "sleeping..."; });
+            Log::Print(Log::Level::DebugDebug, this, []{ return "sleeping..."; });
             int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, nullptr, nullptr);
             if (result > 0) {
                 DoIO();
@@ -168,7 +168,7 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
         auto iter = clients_.find(client);
         if (iter != clients_.end()) {
             iter->second.canRead = true;
-            Log::Print(Log::Level::Debug, this, [&]{
+            Log::Print(Log::Level::DebugDebug, this, [&]{
                 return "client can read, fd=" + to_string(iter->second.fileDescriptor); });
         }
     }
@@ -177,8 +177,15 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
         auto iter = clients_.find(client);
         if (iter != clients_.end()) {
             iter->second.canWrite = true;
-            Log::Print(Log::Level::Debug, this, [&]{
+            Log::Print(Log::Level::DebugDebug, this, [&]{
                 return "client can write, fd=" + to_string(iter->second.fileDescriptor); });
+        }
+    }
+
+    for (ClientInterface *client : workInfo_.clientsWithCustomCallRequested) {
+        auto iter = clients_.find(client);
+        if (iter != clients_.end()) {
+            iter->second.client->OnCustomCall();
         }
     }
 
@@ -190,7 +197,7 @@ void ConnectionIO::Worker::Read(ClientInfo *clientInfo) {
     while (numReadTotal < bufferSize) {
         int numRead = read(clientInfo->fileDescriptor, buffer_, bufferSize);
         if (numRead > 0) {
-            Log::Print(Log::Level::Debug, this, [&]{
+            Log::Print(Log::Level::DebugDebug, this, [&]{
                 return "fd " + to_string(clientInfo->fileDescriptor)  + " -> " + to_string(numRead) + " bytes";
             });
             numReadTotal += numRead;
@@ -245,7 +252,7 @@ void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
             while (numLeft) {
                 int numWritten = write(clientInfo->fileDescriptor, data, numLeft);
                 if (numWritten > 0) {
-                    Log::Print(Log::Level::Debug, this, [&]{
+                    Log::Print(Log::Level::DebugDebug, this, [&]{
                         return "fd " + to_string(clientInfo->fileDescriptor)  + " <- " + to_string(numWritten)
                             + " bytes";
                     });

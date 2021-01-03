@@ -12,13 +12,19 @@ class Interface;
 //! Logging mechanism.
 class Log {
   public:
-    enum class Level { Debug,
+    enum class Level { DebugDebug,
+                       Debug,
                        Info,
                        Warning,
                        Critical };
 
     //! Thread-safe.
     static void Print(Level level, Interface *source, const std::function<std::string()> &generateLogLine);
+
+  private:
+    static uint64_t spacer;
+    static Level    currentLevel;    // Will be using this without thread protection for now, okay.
+    static uint64_t spacer2;
 };
 
 }    // Namespace Core.

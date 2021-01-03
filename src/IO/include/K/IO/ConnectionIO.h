@@ -36,6 +36,7 @@ class ConnectionIO : public virtual K::Core::Interface {
          */
         virtual int OnReadyWrite(void *buffer, int bufferSize) = 0;
         virtual void OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) = 0;
+        virtual void OnCustomCall() = 0;
         virtual void OnEof() = 0;
         virtual void OnError() = 0;
     };
@@ -65,6 +66,8 @@ class ConnectionIO : public virtual K::Core::Interface {
     void SetClientCanRead(ClientInterface *client);
     //! Informs the I/O mechanism that the specified client can write.
     void SetClientCanWrite(ClientInterface *client);
+    //! Requests a custom call for the specified client.
+    void RequestCustomCall(ClientInterface *client);
 
   private:
     class SharedState;

@@ -10,7 +10,7 @@ using std::unique_ptr;
 using K::Core::ThreadPool;
 using K::Core::Log;
 using K::IO::ListenSocket;
-using K::IO::SocketStream;
+using K::IO::TcpConnection;
 using K::Events::NetworkEventCoupling;
 
 namespace K {
@@ -31,11 +31,11 @@ void NetworkEventCouplingServer::Worker::ExecuteAction() {
 
     while (!listenSocket_->ErrorState() && !sharedState_->ShutDownRequested()) {
         Log::Print(Log::Level::Debug, this, []{ return "waiting for client to connect..."; });
-        shared_ptr<SocketStream> stream = listenSocket_->Accept();
-        if (stream && !sharedState_->ShutDownRequested()) {
+        shared_ptr<TcpConnection> tcpConnection = listenSocket_->AcceptConnection();
+        if (tcpConnection && !sharedState_->ShutDownRequested()) {
             sharedState_->PrepareForCoupling();
             auto coupling = unique_ptr<NetworkEventCoupling>(
-                new NetworkEventCoupling(stream, hub_, sharedState_, couplingCompletionId, threadPool_));
+                new NetworkEventCoupling(tcpConnection, hub_, sharedState_, couplingCompletionId, threadPool_));
             Log::Print(Log::Level::Debug, this, []{ return "waiting for coupling to finish..."; });
             sharedState_->WaitForCouplingFinished();
         }

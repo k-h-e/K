@@ -1,8 +1,8 @@
 #include <K/Core/Log.h>
 
-#include <typeinfo>
 #include <cstdio>
 #include <K/Core/Interface.h>
+#include <K/Core/StringTools.h>
 
 using std::string;
 using std::puts;
@@ -10,9 +10,12 @@ using std::puts;
 namespace K {
 namespace Core {
 
+Log::Level Log::currentLevel = Log::Level::Debug;
+
 void Log::Print(Level level, Interface *source, const std::function<std::string()> &generateLogLine) {
-    (void)level;
-    puts((string("[") + (source ? typeid(*source).name() : "") + "] " + generateLogLine()).c_str());
+    if (level >= currentLevel) {
+        puts((string("[") + StringTools::GetCleanClassName(source) + "] " + generateLogLine()).c_str());
+    }
 }
 
 }    // Namespace Core.

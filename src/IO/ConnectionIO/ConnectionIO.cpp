@@ -60,5 +60,9 @@ void ConnectionIO::SetClientCanWrite(ClientInterface *client) {
     sharedState_->SetClientCanWrite(client);
 }
 
+void ConnectionIO::RequestCustomCall(ClientInterface *client) {
+    sharedState_->RequestCustomCall(client);
+}
+
 }    // Namespace IO.
 }    // Namespace K.

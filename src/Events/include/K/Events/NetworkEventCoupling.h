@@ -10,7 +10,7 @@ namespace Core {
     class ThreadPool;
 }
 namespace IO {
-    class SocketStream;
+    class TcpConnection;
 }
 }
 
@@ -28,7 +28,7 @@ class NetworkEventCoupling : public virtual K::Core::Interface {
      *  Optional. If given, it will be called on an arbitrary thread and with the completion id as parameter when the
      *  network event coupling has shut down.
      */
-    NetworkEventCoupling(const std::shared_ptr<K::IO::SocketStream> &stream,
+    NetworkEventCoupling(const std::shared_ptr<K::IO::TcpConnection> &tcpConnection,
                          const std::shared_ptr<EventLoopHub> &hub,
                          const std::shared_ptr<K::Core::CompletionHandlerInterface> &completionHandler,
                          int completionId,
@@ -36,21 +36,20 @@ class NetworkEventCoupling : public virtual K::Core::Interface {
     ~NetworkEventCoupling();
 
   private:
-    static const int readerCompletionId = 0;
-    static const int writerCompletionId = 1;
+    static const int writerCompletionId = 0;
 
     class SharedState;
-    class Reader;
     class Writer;
+    class ReadHandler;
 
-    std::shared_ptr<SharedState>         sharedState_;
+    std::shared_ptr<SharedState> sharedState_;
 
-    std::shared_ptr<K::IO::SocketStream> stream_;
-    std::shared_ptr<EventLoopHub>        hub_;
+    std::shared_ptr<EventLoopHub> hub_;
+    int                           hubClientId_;
 
-    std::shared_ptr<Reader>              reader_;
-    std::shared_ptr<Writer>              writer_;
-    int                                  hubClientId_;
+    std::shared_ptr<K::IO::TcpConnection> tcpConnection_;    // Given to the writer thread.
+    std::shared_ptr<Writer>               writer_;           // Writer thread.
+    std::shared_ptr<ReadHandler>          readHandler_;      // Given to the TCP connection, called on arbitrary thread.
 };
 
 }    // Namespace Events.

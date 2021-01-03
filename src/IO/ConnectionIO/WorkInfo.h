@@ -57,6 +57,7 @@ struct WorkInfo {
     UnregistrationInfo                           unregistrationInfo;
     std::vector<ConnectionIO::ClientInterface *> clientsReadyToRead;
     std::vector<ConnectionIO::ClientInterface *> clientsReadyToWrite;
+    std::vector<ConnectionIO::ClientInterface *> clientsWithCustomCallRequested;
 
     WorkInfo() {
         Clear();
@@ -69,6 +70,7 @@ struct WorkInfo {
         unregistrationInfo = UnregistrationInfo();
         clientsReadyToRead.clear();
         clientsReadyToWrite.clear();
+        clientsWithCustomCallRequested.clear();
     }
 };
 

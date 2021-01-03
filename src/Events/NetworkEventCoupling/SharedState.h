@@ -25,7 +25,6 @@ class NetworkEventCoupling::SharedState : public virtual K::Core::CompletionHand
     std::condition_variable                              stateChanged_;
     std::shared_ptr<K::Core::CompletionHandlerInterface> completionHandler_;
     int                                                  completionId_;
-    bool                                                 readerFinished_;
     bool                                                 writerFinished_;
 };
 

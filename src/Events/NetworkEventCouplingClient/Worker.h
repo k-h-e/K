@@ -16,6 +16,7 @@ class NetworkEventCouplingClient::Worker : public virtual Core::ActionInterface 
            const std::shared_ptr<K::Core::ActionInterface> &onConnectedAction,
            const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
            const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,
+           const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
            const std::shared_ptr<K::Core::ThreadPool> &threadPool, std::shared_ptr<SharedState> sharedState);
     //! Informs the worker about the host to connect to.
     void SetHost(uint32_t ip4Address, int port);
@@ -27,6 +28,7 @@ class NetworkEventCouplingClient::Worker : public virtual Core::ActionInterface 
     std::shared_ptr<K::Core::ActionInterface> onConnectedAction_;
     std::shared_ptr<K::Core::ActionInterface> onFailedToConnectAction_;
     std::shared_ptr<K::Core::ActionInterface> onDisconnectedAction_;
+    std::shared_ptr<K::IO::ConnectionIO>      connectionIO_;
     std::shared_ptr<K::Core::ThreadPool>      threadPool_;
     uint32_t                                  hostIp4Address_;
     int                                       hostPort_;

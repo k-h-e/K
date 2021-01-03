@@ -10,6 +10,7 @@ namespace Core {
 }
 namespace IO {
     class ListenSocket;
+    class ConnectionIO;
 }
 }
 
@@ -22,6 +23,7 @@ class EventLoopHub;
 class NetworkEventCouplingServer : public virtual K::Core::ErrorStateInterface {
   public:
     NetworkEventCouplingServer(int port, const std::shared_ptr<EventLoopHub> &hub,
+                               const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
                                const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     ~NetworkEventCouplingServer();
     bool ErrorState() override;

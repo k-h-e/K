@@ -36,6 +36,7 @@ void BufferedConnection::SharedState::Register(HandlerInterface *handler) {
     handler_                = handler;
     handlerCalledInitially_ = false;
     if (handler_ && !error_) {
+        connectionIO_->RequestCustomCall(this);
         connectionIO_->SetClientCanRead(this);
     }
 }    // ......................................................................................... critical section, end.
@@ -112,7 +113,14 @@ int BufferedConnection::SharedState::OnReadyWrite(void *buffer, int bufferSize) 
 void BufferedConnection::SharedState::OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) {
     assert (unwrittenDataSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    EnsureHandlerCalledInitially();
     writeBuffer_.PutBack(unwrittenData, unwrittenDataSize);
+}    // ......................................................................................... critical section, end.
+
+void BufferedConnection::SharedState::OnCustomCall() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    EnsureHandlerCalledInitially();
+    Log::Print(Log::Level::Debug, this, []{ return "handling custom call"; });
 }    // ......................................................................................... critical section, end.
 
 void BufferedConnection::SharedState::OnEof() {

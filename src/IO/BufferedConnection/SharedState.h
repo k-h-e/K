@@ -26,9 +26,11 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     bool Eof();
     bool Error();
 
+    // ConnectionIO::ClientInterface...
     bool OnDataRead(const void *data, int dataSize) override;
     int OnReadyWrite(void *buffer, int bufferSize) override;
     void OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) override;
+    void OnCustomCall() override;
     void OnEof() override;
     void OnError() override;
 

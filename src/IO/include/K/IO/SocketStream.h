@@ -10,7 +10,7 @@ namespace IO {
 
 //! Socket stream.
 /*!
- *  The class is thread-safe (i.e. all public methods).
+ *  The class is thread-safe (i.e. all public instance methods).
  */
 class SocketStream : public BlockingStreamCore {
   public:
@@ -42,14 +42,6 @@ class SocketStream : public BlockingStreamCore {
      *  <c>null</c> handle in case of failure.
      */
     static std::shared_ptr<SocketStream> ConnectToHost(uint32_t ip4Address, int port);
-    //! Resolves the specified host name.
-    /*!
-     *  \return
-     *  <c>false</c> in case of failure. The output parameter will then be undefined.
-     */
-    static bool ResolveHostName(const std::string &hostName, uint32_t *outIp4Address);
-    //! Returns a string representation for the specified IP4 address.
-    static std::string Ip4ToString(uint32_t ip4Address);
 
   private:
     void ShutDownSocket();

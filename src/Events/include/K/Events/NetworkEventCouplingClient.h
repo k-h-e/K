@@ -4,10 +4,13 @@
 #include <memory>
 
 namespace K {
-namespace Core {
-    class ThreadPool;
-    class ActionInterface;
-}
+    namespace Core {
+        class ThreadPool;
+        class ActionInterface;
+    }
+    namespace IO {
+        class ConnectionIO;
+    }
 }
 
 namespace K {
@@ -36,6 +39,7 @@ class NetworkEventCouplingClient {
         const std::shared_ptr<K::Core::ActionInterface> &onConnectedAction,
         const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
         const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
         const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     ~NetworkEventCouplingClient();
     //! Establishes a network event coupling connection to the specified host.
