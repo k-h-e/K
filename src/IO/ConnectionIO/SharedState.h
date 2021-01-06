@@ -27,7 +27,7 @@ class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInter
     ~SharedState();
 
     bool Register(ClientInterface *client, int fd);
-    void Unregister(ClientInterface *client, bool *outError);
+    void Unregister(ClientInterface *client, bool *outFinalStreamError);
     void SetClientCanRead(ClientInterface *client);
     void SetClientCanWrite(ClientInterface *client);
     void RequestCustomCall(ClientInterface *client);
@@ -35,7 +35,7 @@ class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInter
 
     // Called from worker...
     void GetWork(WorkInfo *outInfo);
-    void SetErrorState();
+    void OnErrorState();
     void OnClientRegistered(bool success);
     void OnClientUnregistered(bool finalStreamError);
     void OnCompletion(int completionId) override;
@@ -47,9 +47,8 @@ class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInter
     std::mutex                     lock_;
     std::condition_variable        stateChanged_;
     int                            pipe_;
-    bool                           registrationRunning_;
+    bool                           registrationOperationRunning_;
     RegistrationInfo               registrationInfo_;
-    bool                           unregistrationRunning_;
     UnregistrationInfo             unregistrationInfo_;
     std::vector<ClientInterface *> clientsReadyToRead_;
     std::vector<ClientInterface *> clientsReadyToWrite_;

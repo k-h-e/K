@@ -61,7 +61,7 @@ class ConnectionIO : public virtual K::Core::Interface {
      *  When the method returns it is guaranteed that the cient will not be called again, and that the associated file
      *  descriptor will no longer be used.
      */
-    void Unregister(ClientInterface *client, bool *outError);
+    void Unregister(ClientInterface *client, bool *outFinalStreamError);
     //! Informs the I/O mechanism that the specified client can read.
     void SetClientCanRead(ClientInterface *client);
     //! Informs the I/O mechanism that the specified client can write.

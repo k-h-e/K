@@ -19,16 +19,18 @@ class EventLoopHub;
 class NetworkEventCoupling::Writer : public virtual K::Core::ActionInterface {
   public:
     Writer(const std::shared_ptr<K::IO::TcpConnection> &tcpConnection, const std::shared_ptr<EventLoopHub> &hub,
-           int hubClientId, std::shared_ptr<SharedState> sharedState);
+           int hubClientId, const std::shared_ptr<ReadHandler> &readHandler, std::shared_ptr<SharedState> sharedState);
     void ExecuteAction();
 
   private:
     std::shared_ptr<SharedState>          sharedState_;
 
-    std::shared_ptr<EventLoopHub>         hub_;
+    std::shared_ptr<EventLoopHub>         hub_;            // Thread-safe.
+    std::shared_ptr<ReadHandler>          readHandler_;    // Given to the TCP connection, called on arbitrary thread.
 
     std::shared_ptr<K::IO::TcpConnection> tcpConnection_;
     int                                   hubClientId_;
+
 };
 
 }    // Namespace Events.

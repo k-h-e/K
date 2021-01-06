@@ -4,6 +4,12 @@
 #include <string>
 
 namespace K {
+namespace Core {
+    class Interface;
+}
+}
+
+namespace K {
 namespace IO {
 
 class NetworkTools {
@@ -13,21 +19,25 @@ class NetworkTools {
      *  \return
      *  File descriptor of the created TCP socket, and <c>-1</c> in case of failure.
      */
-    static int ConnectTcp(const std::string &host);
+    static int ConnectTcp(const std::string &host, K::Core::Interface *loggingObject);
     //! Establishes a network stream connection to the specified host.
     /*!
      *  \return
      *  File descriptor of the created TCP socket, and <c>-1</c> in case of failure.
      */
-    static int ConnectTcp(uint32_t ip4Address, int port);
+    static int ConnectTcp(uint32_t ip4Address, int port, K::Core::Interface *loggingObject);
     //! Resolves the specified host name.
     /*!
      *  \return
      *  <c>false</c> in case of failure. The output parameter will then be undefined.
      */
-    static bool ResolveHostName(const std::string &hostName, uint32_t *outIp4Address);
+    static bool ResolveHostName(const std::string &hostName, uint32_t *outIp4Address,
+                                K::Core::Interface *loggingObject);
     //! Returns a string representation for the specified IP4 address.
     static std::string Ip4ToString(uint32_t ip4Address);
+
+  private:
+    static bool PrepareSocket(int fd, Core::Interface *loggingObject);
 };
 
 }    // Namespace IO.

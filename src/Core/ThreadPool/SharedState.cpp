@@ -35,7 +35,7 @@ void ThreadPool::SharedState::Run(const shared_ptr<ActionInterface> &action,
         info.thread.reset(new thread([=]{ aRunner->Run(); }));
     }
 
-    Log::Print(Log::Level::Debug, this, [=]{ return "dispatching action to thread " + to_string(slot); });
+    Log::Print(Log::Level::Debug, this, [=]{ return "executing action on thread " + to_string(slot); });
     ThreadInfo &info = threads_[slot];
     info.sharedRunnerState->Execute(action, completionHandler, completionId);
     LogStats();

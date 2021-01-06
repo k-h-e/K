@@ -42,14 +42,12 @@ class NetworkEventCoupling : public virtual K::Core::Interface {
     class Writer;
     class ReadHandler;
 
-    std::shared_ptr<SharedState> sharedState_;
-
+    std::shared_ptr<SharedState>  sharedState_;
     std::shared_ptr<EventLoopHub> hub_;
-    int                           hubClientId_;
 
-    std::shared_ptr<K::IO::TcpConnection> tcpConnection_;    // Given to the writer thread.
-    std::shared_ptr<Writer>               writer_;           // Writer thread.
-    std::shared_ptr<ReadHandler>          readHandler_;      // Given to the TCP connection, called on arbitrary thread.
+    std::shared_ptr<Writer>       writer_;         // Writer thread.
+
+    int                           hubClientId_;
 };
 
 }    // Namespace Events.

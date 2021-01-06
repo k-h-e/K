@@ -10,12 +10,14 @@ namespace IO {
 struct RegistrationInfo {
     ConnectionIO::ClientInterface *client;
     int                           fileDescriptor;
+    bool                          acceptedByWorker;
     bool                          success;
     bool                          finished;
 
     RegistrationInfo()
         : client(nullptr),
           fileDescriptor(-1),
+          acceptedByWorker(false),
           success(false),
           finished(false) {
         // Nop.
@@ -23,6 +25,7 @@ struct RegistrationInfo {
     RegistrationInfo(ConnectionIO::ClientInterface  *aClient, int aFileDescriptor)
         : client(aClient),
           fileDescriptor(aFileDescriptor),
+          acceptedByWorker(false),
           success(false),
           finished(false) {
         // Nop.
@@ -32,17 +35,20 @@ struct RegistrationInfo {
 
 struct UnregistrationInfo {
     ConnectionIO::ClientInterface *client;
+    bool                          acceptedByWorker;
     bool                          finalStreamError;
     bool                          finished;
 
     UnregistrationInfo()
         : client(nullptr),
+          acceptedByWorker(false),
           finalStreamError(false),
           finished(false) {
         // Nop.
     }
     UnregistrationInfo(ConnectionIO::ClientInterface  *aClient)
         : client(aClient),
+          acceptedByWorker(false),
           finalStreamError(false),
           finished(false) {
         // Nop.

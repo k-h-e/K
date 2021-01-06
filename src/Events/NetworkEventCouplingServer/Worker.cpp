@@ -36,7 +36,8 @@ void NetworkEventCouplingServer::Worker::ExecuteAction() {
             sharedState_->PrepareForCoupling();
             auto coupling = unique_ptr<NetworkEventCoupling>(
                 new NetworkEventCoupling(tcpConnection, hub_, sharedState_, couplingCompletionId, threadPool_));
-            Log::Print(Log::Level::Debug, this, []{ return "waiting for coupling to finish..."; });
+            tcpConnection.reset();
+            Log::Print(Log::Level::Debug, this, []{ return "network event coupling installed"; });
             sharedState_->WaitForCouplingFinished();
         }
     }

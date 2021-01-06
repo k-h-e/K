@@ -17,15 +17,15 @@ TcpConnection::TcpConnection(int fd, const shared_ptr<ConnectionIO> &connectionI
     // Nop.
 }
 
-shared_ptr<TcpConnection> TcpConnection::ConnectToHost(const string &host,
-                                                       const shared_ptr<ConnectionIO> &connectionIO) {
-    int fd = NetworkTools::ConnectTcp(host);
+shared_ptr<TcpConnection> TcpConnection::ConnectToHost(
+        const string &host, const shared_ptr<ConnectionIO> &connectionIO, Core::Interface *loggingObject) {
+    int fd = NetworkTools::ConnectTcp(host, loggingObject);
     return (fd >= 0) ? shared_ptr<TcpConnection>(new TcpConnection(fd, connectionIO)) : nullptr;
 }
 
-shared_ptr<TcpConnection> TcpConnection::ConnectToHost(uint32_t ip4Address, int port,
-                                                       const shared_ptr<ConnectionIO> &connectionIO) {
-    int fd = NetworkTools::ConnectTcp(ip4Address, port);
+shared_ptr<TcpConnection> TcpConnection::ConnectToHost(
+        uint32_t ip4Address, int port, const shared_ptr<ConnectionIO> &connectionIO, Core::Interface *loggingObject) {
+    int fd = NetworkTools::ConnectTcp(ip4Address, port, loggingObject);
     return (fd >= 0) ? shared_ptr<TcpConnection>(new TcpConnection(fd, connectionIO)) : nullptr;
 }
 

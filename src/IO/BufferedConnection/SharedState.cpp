@@ -29,6 +29,7 @@ BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shar
 void BufferedConnection::SharedState::SetError() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     error_ = true;
+    Log::Print(Log::Level::Warning, this, []{ return "error state was set"; });
 }    // ......................................................................................... critical section, end.
 
 void BufferedConnection::SharedState::Register(HandlerInterface *handler) {
@@ -127,6 +128,7 @@ void BufferedConnection::SharedState::OnEof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     if (!error_ && !eof_) {
+        Log::Print(Log::Level::Debug, this, []{ return "reached EOF"; });
         eof_ = true;
         if (handler_) {
             handler_->OnEof();
@@ -138,6 +140,7 @@ void BufferedConnection::SharedState::OnError() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     if (!error_) {
+        Log::Print(Log::Level::Warning, this, []{ return "entered error state"; });
         error_ = true;
         if (handler_) {
             handler_->OnError();

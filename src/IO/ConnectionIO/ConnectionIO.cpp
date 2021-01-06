@@ -3,12 +3,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <K/Core/ThreadPool.h>
+#include <K/Core/Log.h>
 #include "SharedState.h"
 #include "Worker.h"
 
 using std::shared_ptr;
 using std::make_shared;
 using K::Core::ThreadPool;
+using K::Core::Log;
 
 namespace K {
 namespace IO {
@@ -27,11 +29,13 @@ ConnectionIO::ConnectionIO(const shared_ptr<ThreadPool> &threadPool) {
         if (!havePipe) {
             close(fileDescriptors[0]);
             close(fileDescriptors[1]);
+            Log::Print(Log::Level::Warning, this, []{ return "failed to set pipe end non-blocking"; });
         }
     }
     if (!havePipe) {
         fileDescriptors[0] = -1;
         fileDescriptors[1] = -1;
+        Log::Print(Log::Level::Warning, this, []{ return "failed to create pipe"; });
     }
 
     sharedState_ = make_shared<SharedState>(fileDescriptors[1]);
@@ -48,8 +52,8 @@ bool ConnectionIO::Register(ClientInterface *client, int fd) {
     return sharedState_->Register(client, fd);
 }
 
-void ConnectionIO::Unregister(ClientInterface *client, bool *outError) {
-    sharedState_->Unregister(client, outError);
+void ConnectionIO::Unregister(ClientInterface *client, bool *outFinalStreamError) {
+    sharedState_->Unregister(client, outFinalStreamError);
 }
 
 void ConnectionIO::SetClientCanRead(ClientInterface *client) {

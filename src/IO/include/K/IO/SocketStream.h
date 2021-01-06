@@ -35,13 +35,14 @@ class SocketStream : public BlockingStreamCore {
      *  \return
      *  <c>null</c> handle in case of failure.
      */
-    static std::shared_ptr<SocketStream> ConnectToHost(const std::string &host);
+    static std::shared_ptr<SocketStream> ConnectToHost(const std::string &host, K::Core::Interface *loggingObject);
     //! Establishes a network stream connection to the specified host.
     /*!
      *  \return
      *  <c>null</c> handle in case of failure.
      */
-    static std::shared_ptr<SocketStream> ConnectToHost(uint32_t ip4Address, int port);
+    static std::shared_ptr<SocketStream> ConnectToHost(uint32_t ip4Address, int port,
+                                                       K::Core::Interface *loggingObject);
 
   private:
     void ShutDownSocket();

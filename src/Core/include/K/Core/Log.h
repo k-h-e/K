@@ -16,7 +16,7 @@ class Log {
                        Debug,
                        Info,
                        Warning,
-                       Critical };
+                       Error       };
 
     //! Thread-safe.
     static void Print(Level level, Interface *source, const std::function<std::string()> &generateLogLine);

@@ -3,6 +3,7 @@
 
 #include <sys/select.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <K/Core/ActionInterface.h>
 #include <K/IO/ConnectionIO.h>
 #include "WorkInfo.h"
@@ -57,6 +58,7 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
         // Defaut copy/move, okay.
     };
 
+    bool BlockSigPipe();
     void SetUpSelectSets();
     void UpdateHighestFileDescriptor(int fileDescriptor);
     void DoIO();
@@ -64,6 +66,8 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
     bool ProcessClientRequests();
     void Read(ClientInfo *clientInfo);
     void Write(ClientInfo *clientInfo);
+    void SetClientError(ClientInfo *clientInfo);
+    void ScheduleClientDeregistration(const ClientInfo &clientInfo);
 
     std::shared_ptr<SharedState> sharedState_;
 
@@ -75,6 +79,7 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
     WorkInfo                                          workInfo_;
     std::unordered_map<ClientInterface *, ClientInfo> clients_;
     std::vector<ClientInterface *>                    clientsToUnregister_;
+    std::unordered_set<int>                           fileDescriptors_;
 };
 
 }    // Namespace IO.

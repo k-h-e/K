@@ -4,6 +4,8 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <cerrno>
+#include <K/Core/config.h>
+#include <K/Core/Interface.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Log.h>
 
@@ -16,16 +18,14 @@ using K::Core::Log;
 namespace K {
 namespace IO {
 
-int NetworkTools::ConnectTcp(const string &host) {
-    vector<string> tokens;
-    StringTools::Tokenize(host, ':', &tokens);
+int NetworkTools::ConnectTcp(const string &host, Core::Interface *loggingObject) {
+    vector<string> tokens = StringTools::Tokenize(host, ':');
     if (tokens.size() == 2) {
         int port;
         if (StringTools::Parse(tokens[1], &port)) {
-            Log::Print(Log::Level::Debug, nullptr, [=]{ return "port is " + to_string(port); });
             uint32_t ip4Address;
-            if (ResolveHostName(tokens[0], &ip4Address)) {
-                return ConnectTcp(ip4Address, port);
+            if (ResolveHostName(tokens[0], &ip4Address, loggingObject)) {
+                return ConnectTcp(ip4Address, port, loggingObject);
             }
         }
     }
@@ -33,34 +33,41 @@ int NetworkTools::ConnectTcp(const string &host) {
     return -1;
 }
 
-int NetworkTools::ConnectTcp(uint32_t ip4Address, int port) {
+int NetworkTools::ConnectTcp(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
     int fd = socket(PF_INET, SOCK_STREAM, 0);
     if (fd != -1) {
-        struct sockaddr_in address = {};
-        address.sin_family      = AF_INET;
-        address.sin_addr.s_addr = htonl(ip4Address);
-        address.sin_port        = htons(static_cast<uint16_t>(port));
-        while (true) {
-            if (!connect(fd, (struct sockaddr *)&address, sizeof(address))) {
-                Log::Print(Log::Level::Debug, nullptr, [=]{ return "socket " + to_string(fd) + " connected to ip4="
-                    + Ip4ToString(ip4Address) + ", port=" + to_string(port); });
-                return fd;
-            }
-            else if (errno == EINTR) {
-                continue;
-            }
-            else {
-                break;
+        if (PrepareSocket(fd, loggingObject)) {
+            struct sockaddr_in address = {};
+            address.sin_family      = AF_INET;
+            address.sin_addr.s_addr = htonl(ip4Address);
+            address.sin_port        = htons(static_cast<uint16_t>(port));
+            while (true) {
+                if (!connect(fd, (struct sockaddr *)&address, sizeof(address))) {
+                    Log::Print(Log::Level::Debug, loggingObject, [&]{ return "TCP socket " + to_string(fd)
+                        + " connected to ip4=" + Ip4ToString(ip4Address) + ", port=" + to_string(port); });
+                    return fd;
+                }
+                else if (errno == EINTR) {
+                    continue;
+                }
+                else {
+                    Log::Print(Log::Level::Warning, loggingObject, [&]{ return "failed to connect TCP socket "
+                        + to_string(fd) + " to ip4=" + Ip4ToString(ip4Address) + ", port=" + to_string(port); });
+                    break;
+                }
             }
         }
         close(fd);
     }
+    else {
+        Log::Print(Log::Level::Warning, loggingObject, []{ return "failed to create socket"; });
+    }
 
     return -1;
 }
 
-bool NetworkTools::ResolveHostName(const string &hostName, uint32_t *outIp4Address) {
-    Log::Print(Log::Level::Debug, nullptr, [=]{ return "resolving host name \"" + hostName + "\"..."; });
+bool NetworkTools::ResolveHostName(const string &hostName, uint32_t *outIp4Address, Core::Interface *loggingObject) {
+    Log::Print(Log::Level::Debug, loggingObject, [&]{ return "resolving host name \"" + hostName + "\"..."; });
 
     struct addrinfo *result = nullptr;
     struct addrinfo hints   = { };
@@ -78,17 +85,37 @@ bool NetworkTools::ResolveHostName(const string &hostName, uint32_t *outIp4Addre
         freeaddrinfo(result);
 
         if (current) {
+            Log::Print(Log::Level::Debug, loggingObject, [&]{ return "resolved host name \"" + hostName + "\" to "
+                + Ip4ToString(ip); });
             *outIp4Address = ip;
             return true;
         }
     }
 
+    Log::Print(Log::Level::Warning, loggingObject, [&]{ return "failed to resolve host name \"" + hostName + "\""; });
     return false;
 }
 
 string NetworkTools::Ip4ToString(uint32_t ip4Address) {
     uint8_t *ip = reinterpret_cast<uint8_t *>(&ip4Address);
     return to_string(ip[3]) + "." + to_string(ip[2]) + "." + to_string(ip[1]) + "." + to_string(ip[0]);
+}
+
+bool NetworkTools::PrepareSocket(int fd, Core::Interface *loggingObject) {
+    static_assert(K_PLATFORM_SET);
+#if defined(K_PLATFORM_APPLE)
+    int enabled = 1;
+    if (setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &enabled, sizeof(enabled))) {
+        Log::Print(Log::Level::Warning, loggingObject, [&]{
+            return "failed to disable SIGPIPE for socket " + to_string(fd); });
+        return false;
+    }
+    return true;
+#else
+    (void)fd;
+    (void)loggingObject;
+    return true;
+#endif
 }
 
 }    // Namespace IO.

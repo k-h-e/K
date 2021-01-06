@@ -14,38 +14,37 @@ using std::out_of_range;
 namespace K {
 namespace Core {
 
-void StringTools::Tokenize(const string &text, char separator, vector<string> *outTokens) {
-    outTokens->clear();
-    istringstream stream(text);
-    string token;
+vector<string> StringTools::Tokenize(const string &text, char separator) {
+    vector<string> tokens;
+    istringstream  stream(text);
+    string         token;
     while (getline(stream, token, separator)) {
-        outTokens->push_back(token);
+        tokens.push_back(token);
     }
+    return tokens;
 }
 
-void StringTools::Tokenize(const std::string &text, const std::string &separators, bool suppressEmptyTokens,
-                           std::vector<std::string> *outTokens) {
-    outTokens->clear();
-    string remainder = text;
+vector<string> StringTools::Tokenize(const std::string &text, const std::string &separators, bool suppressEmptyTokens) {
+    vector<string> tokens;
+    string         remainder = text;
     while (true) {
         size_t position = remainder.find_first_of(separators);
         if (position == string::npos) {
             if (!suppressEmptyTokens || remainder.length()) {
-                outTokens->push_back(remainder);
+                tokens.push_back(remainder);
             }
-            return;
+            return tokens;
         }
         else {
             if (!suppressEmptyTokens || position) {
-                outTokens->push_back(remainder.substr(0, position));
+                tokens.push_back(remainder.substr(0, position));
             }
             remainder.erase(0, position + 1u);
         }
     }
 }
 
-void StringTools::Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString,
-                              std::string *outResult) {
+string StringTools::Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString) {
     ostringstream stream;
     bool first = true;
     for (const string &token : tokens) {
@@ -56,7 +55,7 @@ void StringTools::Concatenate(const std::vector<std::string> &tokens, const std:
         first = false;
     }
 
-    *outResult = stream.str();
+    return stream.str();
 }
 
 void StringTools::Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters) {
@@ -119,11 +118,7 @@ string StringTools::GetCleanClassName(Interface *instance) {
     if (className.length() && (className[className.length() - 1u] == 'E')) {
         className.erase(className.length() - 1u, 1);
     }
-    vector<string> tokens;
-    StringTools::Tokenize(className, "1234567890", true, &tokens);
-    StringTools::Concatenate(tokens, "::", &className);
-
-    return className;
+    return StringTools::Concatenate(StringTools::Tokenize(className, "1234567890", true), "::");
 }
 
 }    // Namespace Core.

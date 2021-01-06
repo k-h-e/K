@@ -127,13 +127,13 @@ bool SocketStream::ErrorState() {
     return error_;
 }    // ......................................................................................... critical section, end.
 
-shared_ptr<SocketStream> SocketStream::ConnectToHost(const string &host) {
-    int fd = NetworkTools::ConnectTcp(host);
+shared_ptr<SocketStream> SocketStream::ConnectToHost(const string &host, Core::Interface *loggingObject) {
+    int fd = NetworkTools::ConnectTcp(host, loggingObject);
     return (fd >= 0) ? make_shared<SocketStream>(fd) : nullptr;
 }
 
-shared_ptr<SocketStream> SocketStream::ConnectToHost(uint32_t ip4Address, int port) {
-    int fd = NetworkTools::ConnectTcp(ip4Address, port);
+shared_ptr<SocketStream> SocketStream::ConnectToHost(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
+    int fd = NetworkTools::ConnectTcp(ip4Address, port, loggingObject);
     return (fd >= 0) ? make_shared<SocketStream>(fd) : nullptr;
 }
 

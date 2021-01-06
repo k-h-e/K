@@ -82,14 +82,13 @@ bool ConfigurationFile::Load(const std::string &fileName) {
     sections_.clear();
     ifstream stream(fileName, ios::in | ios::binary);
     string line;
-    vector<string> tokens;
     while (getline(stream, line)) {
         if ((line.length() > 0u) && (line[0] == '[')) {
             StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
             currentSection = line;
         }
         else {
-            StringTools::Tokenize(line, '=', &tokens);
+            vector<string> tokens = StringTools::Tokenize(line, '=');
             if (tokens.size() == 2u) {
                 StringTools::Trim(&tokens[0], whiteSpace);
                 StringTools::Trim(&tokens[1], whiteSpace);

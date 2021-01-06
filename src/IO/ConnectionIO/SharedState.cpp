@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cassert>
 #include <K/Core/Log.h>
+#include <K/IO/IOTools.h>
 #include "WorkInfo.h"
 
 using std::shared_ptr;
@@ -19,17 +20,16 @@ namespace IO {
 
 ConnectionIO::SharedState::SharedState(int pipe)
         : pipe_(pipe),
-          registrationRunning_(false),
-          unregistrationRunning_(false),
+          registrationOperationRunning_(false),
+          error_(false),
           shutDownRequested_(false),
           workerFinished_(false) {
-    error_ = (pipe_ == -1);
-    Log::Print(Log::Level::Debug, this, [&]{ return "pipe=" + to_string(pipe_); });
+    // If the pipe is bad, error state will be regularly raised by the worker.
 }
 
 ConnectionIO::SharedState::~SharedState() {
     if (pipe_ != -1) {
-        close(pipe_);
+        (void)IOTools::CloseFileDescriptor(pipe_, this);
     }
 }
 
@@ -37,9 +37,12 @@ bool ConnectionIO::SharedState::Register(ClientInterface *client, int fd) {
     assert(client);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (error_ || (fd < 0)) {
+        Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
+            + ", initial checks failed, error_state=" + to_string(error_); });
         return false;
     }
 
+    Log::Print(Log::Level::Debug, this, [&]{ return "switching fd " + to_string(fd) + " to non-blocking"; });
     bool switchedToNonBlocking = false;
     int flags = fcntl(fd, F_GETFL);
     if (flags != -1) {
@@ -48,82 +51,107 @@ bool ConnectionIO::SharedState::Register(ClientInterface *client, int fd) {
         }
     }
     if (!switchedToNonBlocking) {
+        Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
+            + ", could not switch fd to non-blocking"; });
         return false;
     }
 
-    while (registrationRunning_ && !error_) {
+    Log::Print(Log::Level::Debug, this, []{ return "waiting until ready for registration"; });
+    while (registrationOperationRunning_) {
+        if (error_) {
+            Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
+                + ", entered error state while waiting for other operation to finish"; });
+            return false;
+        }
         stateChanged_.wait(critical);
     }
-    if (error_) {
-        return false;
-    }
 
-    registrationInfo_    = RegistrationInfo(client, fd);
-    registrationRunning_ = true;
+    Log::Print(Log::Level::Debug, this, [&]{ return "registering client for fd " + to_string(fd); });
+    registrationInfo_             = RegistrationInfo(client, fd);
+    registrationOperationRunning_ = true;
     NotifyWorker();
-
-    while (!registrationInfo_.finished && !error_) {
+    while (!registrationInfo_.finished) {
+        if (error_) {
+            Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
+                + ", entered error state while waiting for registration to finish"; });
+            registrationOperationRunning_ = false;
+            return false;
+        }
         stateChanged_.wait(critical);
     }
-    if (error_) {
-        return false;
+
+    if (!registrationInfo_.success) {
+        Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
+            + ", worker reported failure"; });
     }
 
-    registrationRunning_ = false;
-
+    registrationOperationRunning_ = false;
     return registrationInfo_.success;
 }    // ......................................................................................... critical section, end.
 
-void ConnectionIO::SharedState::Unregister(ClientInterface *client, bool *outError)  {
+void ConnectionIO::SharedState::Unregister(ClientInterface *client, bool *outFinalStreamError)  {
     assert(client);
-    *outError = true;
+    *outFinalStreamError = true;
 
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (error_) {
-        DoShutDown(&critical);
-        return;
-    }
-
-    while (unregistrationRunning_ && !error_) {
+    Log::Print(Log::Level::Debug, this, []{ return "waiting until ready for deregistration"; });
+    while (registrationOperationRunning_) {
+        if (error_) {
+            Log::Print(Log::Level::Warning, this, []{
+                return "unregistered client, but entered error state while waiting for other operation to finish";
+            });
+            DoShutDown(&critical);
+            return;
+        }
         stateChanged_.wait(critical);
     }
-    if (error_) {
-        DoShutDown(&critical);
-        return;
-    }
 
-    unregistrationInfo_    = UnregistrationInfo(client);
-    unregistrationRunning_ = true;
+    Log::Print(Log::Level::Debug, this, []{ return "unregistering client"; });
+    unregistrationInfo_           = UnregistrationInfo(client);
+    registrationOperationRunning_ = true;
     NotifyWorker();
-
-    while (!unregistrationInfo_.finished && !error_) {
+    while (!unregistrationInfo_.finished) {
+        if (error_) {
+            Log::Print(Log::Level::Warning, this, []{
+                return "unregistered client, but entered error state while waiting for unregistration to finish";
+            });
+            DoShutDown(&critical);
+            registrationOperationRunning_ = true;
+            return;
+        }
         stateChanged_.wait(critical);
     }
-    if (error_) {
-        DoShutDown(&critical);
-        return;
-    }
 
-    *outError              = unregistrationInfo_.finalStreamError;
-    unregistrationRunning_ = false;
+    Log::Print(Log::Level::Debug, this, [&]{
+        return "unregistered client, final_stream_error=" + to_string(unregistrationInfo_.finalStreamError);
+    });
+
+    *outFinalStreamError          = unregistrationInfo_.finalStreamError;
+    registrationOperationRunning_ = false;
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::SetClientCanRead(ClientInterface *client) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    clientsReadyToRead_.push_back(client);
-    NotifyWorker();
+    if (!error_) {
+        clientsReadyToRead_.push_back(client);
+        NotifyWorker();
+    }
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::SetClientCanWrite(ClientInterface *client) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    clientsReadyToWrite_.push_back(client);
-    NotifyWorker();
+    if (!error_) {
+        clientsReadyToWrite_.push_back(client);
+        NotifyWorker();
+    }
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::RequestCustomCall(ClientInterface *client) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    clientsWithCustomCallRequested_.push_back(client);
-    NotifyWorker();
+    if (!error_) {
+        clientsWithCustomCallRequested_.push_back(client);
+        NotifyWorker();
+    }
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::ShutDown()  {
@@ -132,47 +160,45 @@ void ConnectionIO::SharedState::ShutDown()  {
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::GetWork(WorkInfo *outInfo) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-
     outInfo->Clear();
-
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     outInfo->shutDownRequested = shutDownRequested_;
 
-    if (registrationInfo_.client) {
-        outInfo->registrationInfo = registrationInfo_;
-        registrationInfo_ = RegistrationInfo();
-    }
+    if (!error_) {
+        if (registrationInfo_.client && !registrationInfo_.acceptedByWorker) {
+            registrationInfo_.acceptedByWorker = true;
+            outInfo->registrationInfo = registrationInfo_;
+        }
 
-    if (unregistrationInfo_.client) {
-        outInfo->unregistrationInfo = unregistrationInfo_;
-        unregistrationInfo_ = UnregistrationInfo();
-    }
+        if (unregistrationInfo_.client && !unregistrationInfo_.acceptedByWorker) {
+            unregistrationInfo_.acceptedByWorker = true;
+            outInfo->unregistrationInfo = unregistrationInfo_;
+        }
 
-    for (ClientInterface *client : clientsReadyToRead_) {
-        outInfo->clientsReadyToRead.push_back(client);
-    }
-    clientsReadyToRead_.clear();
+        for (ClientInterface *client : clientsReadyToRead_) {
+            outInfo->clientsReadyToRead.push_back(client);
+        }
+        clientsReadyToRead_.clear();
 
-    for (ClientInterface *client : clientsReadyToWrite_) {
-        outInfo->clientsReadyToWrite.push_back(client);
-    }
-    clientsReadyToWrite_.clear();
+        for (ClientInterface *client : clientsReadyToWrite_) {
+            outInfo->clientsReadyToWrite.push_back(client);
+        }
+        clientsReadyToWrite_.clear();
 
-    for (ClientInterface *client : clientsWithCustomCallRequested_) {
-        outInfo->clientsWithCustomCallRequested.push_back(client);
+        for (ClientInterface *client : clientsWithCustomCallRequested_) {
+            outInfo->clientsWithCustomCallRequested.push_back(client);
+        }
+        clientsWithCustomCallRequested_.clear();
     }
-    clientsWithCustomCallRequested_.clear();
-
 }    // ......................................................................................... critical section, end.
 
-void ConnectionIO::SharedState::SetErrorState() {
+void ConnectionIO::SharedState::OnErrorState() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_) {
-        Log::Print(Log::Level::Critical, this, []{ return "entering error state"; });
+        error_ = true;
+        stateChanged_.notify_all();
+        Log::Print(Log::Level::Error, this, []{ return "entered error state"; });
     }
-    error_ = true;
-    stateChanged_.notify_all();
-
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::OnClientRegistered(bool success) {
@@ -191,7 +217,6 @@ void ConnectionIO::SharedState::OnClientUnregistered(bool finalStreamError) {
 
 void ConnectionIO::SharedState::OnCompletion(int completionId) {
     (void)completionId;
-
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     workerFinished_ = true;
     stateChanged_.notify_all();
@@ -220,11 +245,15 @@ void ConnectionIO::SharedState::NotifyWorker() {
 
 // Lock assumed to be held.
 void ConnectionIO::SharedState::DoShutDown(unique_lock<mutex> *critical) {
+    Log::Print(Log::Level::Debug, this, []{ return "waiting for worker to finish..."; });
+
     shutDownRequested_ = true;
     NotifyWorker();
     while (!workerFinished_) {
         stateChanged_.wait(*critical);
     }
+
+    Log::Print(Log::Level::Debug, this, []{ return "worker has finished"; });
 }
 
 }    // Namespace IO.

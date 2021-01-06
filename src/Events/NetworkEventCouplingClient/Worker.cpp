@@ -46,7 +46,8 @@ void NetworkEventCouplingClient::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
     shared_ptr<NetworkEventCoupling> coupling;
-    shared_ptr<TcpConnection> tcpConnection = TcpConnection::ConnectToHost(hostIp4Address_, hostPort_, connectionIO_);
+    shared_ptr<TcpConnection> tcpConnection = TcpConnection::ConnectToHost(hostIp4Address_, hostPort_, connectionIO_,
+                                                                           this);
     if (tcpConnection) {
         if (onConnectedAction_) {
             onConnectedAction_->ExecuteAction();

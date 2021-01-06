@@ -1,12 +1,15 @@
 #include "Worker.h"
 
 #include <unistd.h>
+#include <signal.h>
 #include <K/Core/Log.h>
+#include <K/IO/IOTools.h>
 #include "SharedState.h"
 
 using std::shared_ptr;
 using std::to_string;
 using K::Core::Log;
+using K::IO::IOTools;
 
 namespace K {
 namespace IO {
@@ -20,7 +23,7 @@ ConnectionIO::Worker::Worker(int pipe, shared_ptr<SharedState> sharedState)
 
 ConnectionIO::Worker::~Worker() {
     if (pipe_ != -1) {
-        close (pipe_);
+        (void)IOTools::CloseFileDescriptor(pipe_, this);
     }
 }
 
@@ -29,42 +32,67 @@ void ConnectionIO::Worker::ExecuteAction() {
 
     if (pipe_ != -1) {
         ClientInfo pipeInfo(pipe_, nullptr);
-        bool done = false;
-        while (!done) {
-            SetUpSelectSets();
-
-            Log::Print(Log::Level::DebugDebug, this, []{ return "sleeping..."; });
-            int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, nullptr, nullptr);
-            if (result > 0) {
-                DoIO();
-                UnregisterClients();
-                if (FD_ISSET(pipe_, &readSet_)) {
-                    Read(&pipeInfo);
-                    if (pipeInfo.error || pipeInfo.eof) {
-                        sharedState_->SetErrorState();
-                        done = true;
-                    }
-                    else {
-                        if (!ProcessClientRequests()) {
-                            Log::Print(Log::Level::Debug, this, []{ return "shutdown requested"; });
+        if (BlockSigPipe()) {
+            bool done = false;
+            while (!done) {
+                SetUpSelectSets();
+                Log::Print(Log::Level::DebugDebug, this, []{ return "sleeping..."; });
+                int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, nullptr, nullptr);
+                Log::Print(Log::Level::DebugDebug, this, [&]{ return "woken up, select_result=" + to_string(result); });
+                if (result > 0) {
+                    clientsToUnregister_.clear();
+                    DoIO();
+                    if (FD_ISSET(pipe_, &readSet_)) {
+                        Read(&pipeInfo);
+                        if (pipeInfo.error || pipeInfo.eof) {
                             done = true;
                         }
+                        else {
+                            if (!ProcessClientRequests()) {
+                                Log::Print(Log::Level::Debug, this, []{ return "shutdown requested"; });
+                                done = true;
+                            }
+                        }
                     }
+                    UnregisterClients();
                 }
-            }
-            else if (result < 0) {
-                if (errno == EINTR) {
-                    // Nop.
-                }
-                else {
-                    sharedState_->SetErrorState();
-                    done = true;
+                else if (result < 0) {
+                    if (errno == EINTR) {
+                        // Nop.
+                    }
+                    else {
+                        Log::Print(Log::Level::Warning, this, []{ return "select() call failed"; });
+                        done = true;
+                    }
                 }
             }
         }
     }
+    else {
+        Log::Print(Log::Level::Warning, this, []{ return "bad pipe"; });
+    }
+
+    for (auto &pair : clients_) {
+        ClientInfo &clientInfo = pair.second;
+        if (!clientInfo.error) {
+            clientInfo.client->OnError();
+        }
+    }
+    sharedState_->OnErrorState();
 
     Log::Print(Log::Level::Debug, this, []{ return "terminating"; });
+}
+
+bool ConnectionIO::Worker::BlockSigPipe() {
+    sigset_t signalsToBlock;
+    sigemptyset(&signalsToBlock);
+    sigaddset(&signalsToBlock, SIGPIPE);
+    if (!pthread_sigmask(SIG_BLOCK, &signalsToBlock, nullptr)) {
+        return true;
+    }
+
+    Log::Print(Log::Level::Warning, this, []{ return "failed to block SIGPIPE"; });
+    return false;
 }
 
 void ConnectionIO::Worker::SetUpSelectSets() {
@@ -96,7 +124,6 @@ void ConnectionIO::Worker::UpdateHighestFileDescriptor(int fileDescriptor) {
 }
 
 void ConnectionIO::Worker::DoIO() {
-    clientsToUnregister_.clear();
     for (auto &pair : clients_) {
         ClientInfo &clientInfo = pair.second;
         if (!clientInfo.error) {
@@ -118,6 +145,7 @@ void ConnectionIO::Worker::UnregisterClients() {
             int  fd               = clientInfo.fileDescriptor;
             bool finalStreamError = clientInfo.error;
             clients_.erase(client);
+            fileDescriptors_.erase(fd);
             sharedState_->OnClientUnregistered(finalStreamError);
 
             Log::Print(Log::Level::Debug, this, [&]{ return "unregistered client, fd=" + to_string(fd)
@@ -138,13 +166,23 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
     if (workInfo_.registrationInfo.client) {
         bool success = false;
         if (clients_.find(workInfo_.registrationInfo.client) == clients_.end()) {
-            clients_[workInfo_.registrationInfo.client]
-                 = ClientInfo(workInfo_.registrationInfo.fileDescriptor, workInfo_.registrationInfo.client);
-            Log::Print(Log::Level::Debug, this, [&]{
-                return "registered client, fd=" + to_string(workInfo_.registrationInfo.fileDescriptor)
-                     + ", num=" + to_string(clients_.size());
-            });
-            success = true;
+            if (fileDescriptors_.find(workInfo_.registrationInfo.fileDescriptor) == fileDescriptors_.end()) {
+                clients_[workInfo_.registrationInfo.client]
+                     = ClientInfo(workInfo_.registrationInfo.fileDescriptor, workInfo_.registrationInfo.client);
+                fileDescriptors_.insert(workInfo_.registrationInfo.fileDescriptor);
+                Log::Print(Log::Level::Debug, this, [&]{
+                    return "registered client, fd=" + to_string(workInfo_.registrationInfo.fileDescriptor)
+                         + ", num=" + to_string(clients_.size());
+                });
+                success = true;
+            }
+            else {
+                Log::Print(Log::Level::Warning, this, [&]{
+                    return "fd " + to_string(workInfo_.registrationInfo.fileDescriptor) + " already registered"; });
+            }
+        }
+        else {
+            Log::Print(Log::Level::Warning, this, []{ return "client already registered"; });
         }
         sharedState_->OnClientRegistered(success);
     }
@@ -156,10 +194,15 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
             clientInfo.unregistering = true;
             clientInfo.canWrite      = true;
             Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
-                + " scheduled for deregistration";
+                + " requested deregistration";
             });
+
+            if (clientInfo.error) {
+                ScheduleClientDeregistration(clientInfo);
+            }
         }
         else {
+            Log::Print(Log::Level::Warning, this, [&]{ return "no such client to unregister"; });
             sharedState_->OnClientUnregistered(true);
         }
     }
@@ -212,17 +255,13 @@ void ConnectionIO::Worker::Read(ClientInfo *clientInfo) {
             if (errno == EINTR) {
                 continue;
             }
-
             if (errno != EAGAIN) {
-                clientInfo->error = true;
-                if (clientInfo->client) {
-                    clientInfo->client->OnError();
-                }
+                SetClientError(clientInfo);
             }
-
             return;
         }
         else {
+            Log::Print(Log::Level::Debug, this, [&]{ return "EOF on fd " + to_string(clientInfo->fileDescriptor); });
             clientInfo->eof = true;
             if (clientInfo->client) {
                 clientInfo->client->OnEof();
@@ -239,10 +278,7 @@ void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
         if (!numToWrite) {
             clientInfo->canWrite = false;
             if (clientInfo->unregistering) {
-                clientsToUnregister_.push_back(clientInfo->client);
-                Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo->fileDescriptor)
-                    + " ready for deregistration";
-                });
+                ScheduleClientDeregistration(*clientInfo);
             }
             return;
         }
@@ -266,13 +302,15 @@ void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
                     }
 
                     if (errno == EAGAIN) {
+                        Log::Print(Log::Level::Debug, this, [&]{
+                            return "incomplete write on fd " + to_string(clientInfo->fileDescriptor)
+                                + ", put back " + to_string(numLeft) + " bytes";
+                        });
+
                         clientInfo->client->OnIncompleteWrite(data, numLeft);
                     }
                     else {
-                        clientInfo->error = true;
-                        if (clientInfo->client) {
-                            clientInfo->client->OnError();
-                        }
+                        SetClientError(clientInfo);
                     }
 
                     return;
@@ -280,6 +318,30 @@ void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
             }
         }
     }
+}
+
+void ConnectionIO::Worker::SetClientError(ClientInfo *clientInfo) {
+    if (!clientInfo->error) {
+        Log::Print(Log::Level::Warning, this, [&]{
+            return "error state entered for fd " + to_string(clientInfo->fileDescriptor);
+        });
+
+        clientInfo->error = true;
+        if (clientInfo->client) {
+            clientInfo->client->OnError();
+        }
+
+        if (clientInfo->unregistering) {
+            ScheduleClientDeregistration(*clientInfo);
+        }
+    }
+}
+
+void ConnectionIO::Worker::ScheduleClientDeregistration(const ClientInfo &clientInfo) {
+    clientsToUnregister_.push_back(clientInfo.client);
+    Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
+        + " scheduled for deregistration";
+    });
 }
 
 }    // Namespace IO.

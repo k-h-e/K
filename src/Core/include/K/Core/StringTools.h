@@ -12,11 +12,10 @@ class Interface;
 
 class StringTools {
   public:
-    static void Tokenize(const std::string &text, char separator, std::vector<std::string> *outTokens);
-    static void Tokenize(const std::string &text, const std::string &separators, bool suppressEmptyTokens,
-                         std::vector<std::string> *outTokens);
-    static void Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString,
-                            std::string *outResult);
+    static std::vector<std::string> Tokenize(const std::string &text, char separator);
+    static std::vector<std::string> Tokenize(const std::string &text, const std::string &separators,
+                                             bool suppressEmptyTokens);
+    static std::string Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString);
     static void Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters);
     static bool Parse(const std::string &text, int *outValue);
     static bool Parse(const std::string &text, float *outValue);

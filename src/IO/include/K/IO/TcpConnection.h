@@ -24,15 +24,17 @@ class TcpConnection : public BufferedConnection {
      *  \return
      *  <c>null</c> handle in case of failure.
      */
-    static std::shared_ptr<TcpConnection> ConnectToHost(const std::string &host,
-                                                        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    static std::shared_ptr<TcpConnection> ConnectToHost(
+        const std::string &host, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+        K::Core::Interface *loggingObject);
     //! Establishes a TCP network connection to the specified host.
     /*!
      *  \return
      *  <c>null</c> handle in case of failure.
      */
-    static std::shared_ptr<TcpConnection> ConnectToHost(uint32_t ip4Address, int port,
-                                                        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    static std::shared_ptr<TcpConnection> ConnectToHost(
+        uint32_t ip4Address, int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+        K::Core::Interface *loggingObject);
 };
 
 }    // Namespace IO.
