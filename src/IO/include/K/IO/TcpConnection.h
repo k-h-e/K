@@ -12,29 +12,18 @@ class ConnectionIO;
 //! TCP connection.
 class TcpConnection : public BufferedConnection {
   public:
-    //! The connection takes ownership over the UNIX file descriptor.
+    //! Establishes a TCP network connection to the specified host, given by name and port, separated by a <c>':'</c>.
+    TcpConnection(const std::string &host, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    //! Establishes a TCP network connection to the specified host.
+    TcpConnection(uint32_t ip4Address, int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     TcpConnection(int fd, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     TcpConnection(const TcpConnection &other)             = delete;
     TcpConnection &operator=(const TcpConnection &other)  = delete;
     TcpConnection(const TcpConnection &&other)            = delete;
     TcpConnection &operator=(const TcpConnection &&other) = delete;
 
-    //! Establishes a TCP network connection to a host given by name and port, separated by a <c>':'</c>.
-    /*!
-     *  \return
-     *  <c>null</c> handle in case of failure.
-     */
-    static std::shared_ptr<TcpConnection> ConnectToHost(
-        const std::string &host, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-        K::Core::Interface *loggingObject);
-    //! Establishes a TCP network connection to the specified host.
-    /*!
-     *  \return
-     *  <c>null</c> handle in case of failure.
-     */
-    static std::shared_ptr<TcpConnection> ConnectToHost(
-        uint32_t ip4Address, int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-        K::Core::Interface *loggingObject);
+  private:
+    static const int bufferSizeThreshold = 4096;
 };
 
 }    // Namespace IO.

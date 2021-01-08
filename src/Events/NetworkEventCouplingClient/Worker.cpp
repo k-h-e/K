@@ -45,10 +45,8 @@ void NetworkEventCouplingClient::Worker::SetHost(uint32_t ip4Address, int port) 
 void NetworkEventCouplingClient::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
-    shared_ptr<NetworkEventCoupling> coupling;
-    shared_ptr<TcpConnection> tcpConnection = TcpConnection::ConnectToHost(hostIp4Address_, hostPort_, connectionIO_,
-                                                                           this);
-    if (tcpConnection) {
+    shared_ptr<TcpConnection> tcpConnection = make_shared<TcpConnection>(hostIp4Address_, hostPort_, connectionIO_);
+    if (!tcpConnection->ErrorState()) {
         if (onConnectedAction_) {
             onConnectedAction_->ExecuteAction();
         }
@@ -56,7 +54,7 @@ void NetworkEventCouplingClient::Worker::ExecuteAction() {
         if (onDisconnectedAction_) {
             handler = make_shared<CompletionActionAdapter>(onDisconnectedAction_);
         }
-        coupling = make_shared<NetworkEventCoupling>(tcpConnection, hub_, handler, 0, threadPool_);
+        auto coupling = make_shared<NetworkEventCoupling>(tcpConnection, hub_, handler, 0, threadPool_);
         sharedState_->OnCouplingCreated(coupling);
     }
     else {

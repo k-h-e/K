@@ -17,7 +17,6 @@ namespace IO {
 
 BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
         : connectionIO_(connectionIO),
-          handler_(nullptr),
           handlerCalledInitially_(false),
           bufferSizeThreshold_(bufferSizeThreshold),
           canNotWrite_(true),
@@ -28,17 +27,33 @@ BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shar
 
 void BufferedConnection::SharedState::SetError() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    error_ = true;
-    Log::Print(Log::Level::Warning, this, []{ return "error state was set"; });
+    if (!error_) {
+        error_ = true;
+        Log::Print(Log::Level::Warning, this, []{ return "error state was set"; });
+    }
 }    // ......................................................................................... critical section, end.
 
-void BufferedConnection::SharedState::Register(HandlerInterface *handler) {
+bool BufferedConnection::SharedState::Register(const shared_ptr<HandlerInterface> &handler) {
+    assert(handler);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    handler_                = handler;
-    handlerCalledInitially_ = false;
-    if (handler_ && !error_) {
+    if (!error_) {
+        handler_                = handler;
+        handlerCalledInitially_ = false;
         connectionIO_->RequestCustomCall(this);
         connectionIO_->SetClientCanRead(this);
+        return true;
+    }
+    else {
+        return false;
+    }
+}    // ......................................................................................... critical section, end.
+
+void BufferedConnection::SharedState::Unregister(const shared_ptr<HandlerInterface> &handler) {
+    assert(handler);
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    if (handler == handler_) {
+        handler_.reset();
+        handlerCalledInitially_ = false;
     }
 }    // ......................................................................................... critical section, end.
 

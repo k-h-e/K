@@ -48,11 +48,11 @@ ConnectionIO::~ConnectionIO() {
     sharedState_->ShutDown();
 }
 
-bool ConnectionIO::Register(ClientInterface *client, int fd) {
+bool ConnectionIO::Register(const shared_ptr<ClientInterface> &client, int fd) {
     return sharedState_->Register(client, fd);
 }
 
-void ConnectionIO::Unregister(ClientInterface *client, bool *outFinalStreamError) {
+void ConnectionIO::Unregister(const shared_ptr<ClientInterface> &client, bool *outFinalStreamError) {
     sharedState_->Unregister(client, outFinalStreamError);
 }
 

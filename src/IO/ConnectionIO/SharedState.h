@@ -26,8 +26,8 @@ class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInter
     SharedState &operator=(SharedState &&other)      = delete;
     ~SharedState();
 
-    bool Register(ClientInterface *client, int fd);
-    void Unregister(ClientInterface *client, bool *outFinalStreamError);
+    bool Register(const std::shared_ptr<ClientInterface> &client, int fd);
+    void Unregister(const std::shared_ptr<ClientInterface> &client, bool *outFinalStreamError);
     void SetClientCanRead(ClientInterface *client);
     void SetClientCanWrite(ClientInterface *client);
     void RequestCustomCall(ClientInterface *client);

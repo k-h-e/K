@@ -15,8 +15,7 @@ class Log {
     enum class Level { DebugDebug,
                        Debug,
                        Info,
-                       Warning,
-                       Error       };
+                       Warning     };
 
     //! Thread-safe.
     static void Print(Level level, Interface *source, const std::function<std::string()> &generateLogLine);

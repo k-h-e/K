@@ -24,40 +24,39 @@ NetworkEventCoupling::Writer::Writer(
           readHandler_(readHandler),
           tcpConnection_(tcpConnection),
           hubClientId_(hubClientId) {
-    tcpConnection_->Register(readHandler_.get());
+    // Nop.
 }
 
 void NetworkEventCoupling::Writer::ExecuteAction() {
-    if (!tcpConnection_) {
-        return;
-    }
-
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
-    unique_ptr<Buffer> buffer(new Buffer());
-    bool done = false;
-    while (!done) {
-        if (tcpConnection_->ErrorState()) {
-            Log::Print(Log::Level::Debug, this, []{ return "TCP connection down"; });
-            done = true;
-        }
-        else {
-            if (hub_->GetEvents(hubClientId_, &buffer, false)) {
-                int dataSize = buffer->DataSize();
-                if (dataSize > 0) {    // Defensive, shouldn't be necessary.
-                    uint32_t size = dataSize;
-                    tcpConnection_->WriteItem(&size, sizeof(size));
-                    tcpConnection_->WriteItem(buffer->Data(), dataSize);
-                }
-            }
-            else {
-                Log::Print(Log::Level::Debug, this, []{ return "event hub issued shutdown"; });
+    if (tcpConnection_ && tcpConnection_->Register(readHandler_)) {
+        unique_ptr<Buffer> buffer(new Buffer());
+        bool done = false;
+        while (!done) {
+            if (tcpConnection_->ErrorState()) {
+                Log::Print(Log::Level::Debug, this, []{ return "TCP connection down"; });
                 done = true;
             }
+            else {
+                if (hub_->GetEvents(hubClientId_, &buffer, false)) {
+                    int dataSize = buffer->DataSize();
+                    if (dataSize > 0) {    // Defensive, shouldn't be necessary.
+                        uint32_t size = dataSize;
+                        tcpConnection_->WriteItem(&size, sizeof(size));
+                        tcpConnection_->WriteItem(buffer->Data(), dataSize);
+                    }
+                }
+                else {
+                    Log::Print(Log::Level::Debug, this, []{ return "event hub issued shutdown"; });
+                    done = true;
+                }
+            }
         }
+
+        tcpConnection_->Unregister(readHandler_);
     }
 
-    tcpConnection_->Register(nullptr);
     tcpConnection_.reset();
 
     Log::Print(Log::Level::Debug, this, []{ return "terminating"; });

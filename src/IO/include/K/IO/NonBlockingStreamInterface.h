@@ -1,6 +1,7 @@
 #ifndef K_IO_NONBLOCKINGSTREAMINTERFACE_H_
 #define K_IO_NONBLOCKINGSTREAMINTERFACE_H_
 
+#include <memory>
 #include <K/IO/StreamInterface.h>
 #include <K/IO/GenericReadInterface.h>
 #include <K/IO/GenericWriteInterface.h>
@@ -30,12 +31,14 @@ class NonBlockingStreamInterface : public virtual StreamInterface,
 
     //! Registers the specified handler.
     /*!
-     *  Pass <c>nullptr</c> to unregister a previously registered handler. In this case, when the method returns, it
-     *  is guaranteed that the handler will not be called again.
-     *
      *  The handler methods will get called on an arbitrary thread and must not call back into the stream.
      */
-    virtual void Register(HandlerInterface *handler) = 0;
+    virtual bool Register(const std::shared_ptr<HandlerInterface> &handler) = 0;
+    //! Unregisters the specified handler if it was registered.
+    /*!
+     *  When the method returns, it is guaranteed that the handler will not be called again.
+     */
+    virtual void Unregister(const std::shared_ptr<HandlerInterface> &handler) = 0;
 };
 
 }    // Namespace IO.

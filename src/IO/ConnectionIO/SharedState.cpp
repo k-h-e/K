@@ -33,7 +33,7 @@ ConnectionIO::SharedState::~SharedState() {
     }
 }
 
-bool ConnectionIO::SharedState::Register(ClientInterface *client, int fd) {
+bool ConnectionIO::SharedState::Register(const shared_ptr<ClientInterface> &client, int fd) {
     assert(client);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (error_ || (fd < 0)) {
@@ -75,21 +75,25 @@ bool ConnectionIO::SharedState::Register(ClientInterface *client, int fd) {
             Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
                 + ", entered error state while waiting for registration to finish"; });
             registrationOperationRunning_ = false;
+            registrationInfo_             = RegistrationInfo();
             return false;
         }
         stateChanged_.wait(critical);
     }
 
-    if (!registrationInfo_.success) {
+    bool success = registrationInfo_.success;
+
+    registrationOperationRunning_ = false;
+    registrationInfo_             = RegistrationInfo();
+
+    if (!success) {
         Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
             + ", worker reported failure"; });
     }
-
-    registrationOperationRunning_ = false;
-    return registrationInfo_.success;
+    return success;
 }    // ......................................................................................... critical section, end.
 
-void ConnectionIO::SharedState::Unregister(ClientInterface *client, bool *outFinalStreamError)  {
+void ConnectionIO::SharedState::Unregister(const shared_ptr<ClientInterface> &client, bool *outFinalStreamError)  {
     assert(client);
     *outFinalStreamError = true;
 
@@ -116,6 +120,7 @@ void ConnectionIO::SharedState::Unregister(ClientInterface *client, bool *outFin
                 return "unregistered client, but entered error state while waiting for unregistration to finish";
             });
             DoShutDown(&critical);
+            unregistrationInfo_           = UnregistrationInfo();
             registrationOperationRunning_ = true;
             return;
         }
@@ -127,6 +132,8 @@ void ConnectionIO::SharedState::Unregister(ClientInterface *client, bool *outFin
     });
 
     *outFinalStreamError          = unregistrationInfo_.finalStreamError;
+
+    unregistrationInfo_           = UnregistrationInfo();
     registrationOperationRunning_ = false;
 }    // ......................................................................................... critical section, end.
 
@@ -197,7 +204,7 @@ void ConnectionIO::SharedState::OnErrorState() {
     if (!error_) {
         error_ = true;
         stateChanged_.notify_all();
-        Log::Print(Log::Level::Error, this, []{ return "entered error state"; });
+        Log::Print(Log::Level::Warning, this, []{ return "entered error state"; });
     }
 }    // ......................................................................................... critical section, end.
 

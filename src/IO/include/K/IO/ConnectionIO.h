@@ -55,13 +55,13 @@ class ConnectionIO : public virtual K::Core::Interface {
      *  \return
      *  <c>false</c> in case the file descriptor could not be registered.
      */
-    bool Register(ClientInterface *client, int fd);
+    bool Register(const std::shared_ptr<ClientInterface> &client, int fd);
     //! Unregisters the respective client, if it was registered.
     /*!
      *  When the method returns it is guaranteed that the cient will not be called again, and that the associated file
      *  descriptor will no longer be used.
      */
-    void Unregister(ClientInterface *client, bool *outFinalStreamError);
+    void Unregister(const std::shared_ptr<ClientInterface> &client, bool *outFinalStreamError);
     //! Informs the I/O mechanism that the specified client can read.
     void SetClientCanRead(ClientInterface *client);
     //! Informs the I/O mechanism that the specified client can write.

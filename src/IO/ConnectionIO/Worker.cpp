@@ -158,81 +158,85 @@ void ConnectionIO::Worker::UnregisterClients() {
 }
 
 bool ConnectionIO::Worker::ProcessClientRequests() {
+    bool shutDownRequested = false;
+
     sharedState_->GetWork(&workInfo_);
     if (workInfo_.shutDownRequested) {
-        return false;
+        shutDownRequested = true;
     }
-
-    if (workInfo_.registrationInfo.client) {
-        bool success = false;
-        if (clients_.find(workInfo_.registrationInfo.client) == clients_.end()) {
-            if (fileDescriptors_.find(workInfo_.registrationInfo.fileDescriptor) == fileDescriptors_.end()) {
-                clients_[workInfo_.registrationInfo.client]
-                     = ClientInfo(workInfo_.registrationInfo.fileDescriptor, workInfo_.registrationInfo.client);
-                fileDescriptors_.insert(workInfo_.registrationInfo.fileDescriptor);
-                Log::Print(Log::Level::Debug, this, [&]{
-                    return "registered client, fd=" + to_string(workInfo_.registrationInfo.fileDescriptor)
-                         + ", num=" + to_string(clients_.size());
-                });
-                success = true;
+    else {
+        if (workInfo_.registrationInfo.client) {
+            bool success = false;
+            if (clients_.find(workInfo_.registrationInfo.client.get()) == clients_.end()) {
+                if (fileDescriptors_.find(workInfo_.registrationInfo.fileDescriptor) == fileDescriptors_.end()) {
+                    clients_[workInfo_.registrationInfo.client.get()]
+                         = ClientInfo(workInfo_.registrationInfo.fileDescriptor, workInfo_.registrationInfo.client);
+                    fileDescriptors_.insert(workInfo_.registrationInfo.fileDescriptor);
+                    Log::Print(Log::Level::Debug, this, [&]{
+                        return "registered client, fd=" + to_string(workInfo_.registrationInfo.fileDescriptor)
+                             + ", num=" + to_string(clients_.size());
+                    });
+                    success = true;
+                }
+                else {
+                    Log::Print(Log::Level::Warning, this, [&]{
+                        return "fd " + to_string(workInfo_.registrationInfo.fileDescriptor) + " already registered"; });
+                }
             }
             else {
-                Log::Print(Log::Level::Warning, this, [&]{
-                    return "fd " + to_string(workInfo_.registrationInfo.fileDescriptor) + " already registered"; });
+                Log::Print(Log::Level::Warning, this, []{ return "client already registered"; });
+            }
+            sharedState_->OnClientRegistered(success);
+        }
+
+        if (workInfo_.unregistrationInfo.client) {
+            auto iter = clients_.find(workInfo_.unregistrationInfo.client.get());
+            if (iter != clients_.end()) {
+                ClientInfo &clientInfo = iter->second;
+                clientInfo.unregistering = true;
+                clientInfo.canWrite      = true;
+                Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
+                    + " requested deregistration";
+                });
+
+                if (clientInfo.error) {
+                    ScheduleClientDeregistration(clientInfo);
+                }
+            }
+            else {
+                Log::Print(Log::Level::Warning, this, [&]{ return "no such client to unregister"; });
+                sharedState_->OnClientUnregistered(true);
             }
         }
-        else {
-            Log::Print(Log::Level::Warning, this, []{ return "client already registered"; });
-        }
-        sharedState_->OnClientRegistered(success);
-    }
 
-    if (workInfo_.unregistrationInfo.client) {
-        auto iter = clients_.find(workInfo_.unregistrationInfo.client);
-        if (iter != clients_.end()) {
-            ClientInfo &clientInfo = iter->second;
-            clientInfo.unregistering = true;
-            clientInfo.canWrite      = true;
-            Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
-                + " requested deregistration";
-            });
-
-            if (clientInfo.error) {
-                ScheduleClientDeregistration(clientInfo);
+        for (ClientInterface *client : workInfo_.clientsReadyToRead) {
+            auto iter = clients_.find(client);
+            if (iter != clients_.end()) {
+                iter->second.canRead = true;
+                Log::Print(Log::Level::DebugDebug, this, [&]{
+                    return "client can read, fd=" + to_string(iter->second.fileDescriptor); });
             }
         }
-        else {
-            Log::Print(Log::Level::Warning, this, [&]{ return "no such client to unregister"; });
-            sharedState_->OnClientUnregistered(true);
+
+        for (ClientInterface *client : workInfo_.clientsReadyToWrite) {
+            auto iter = clients_.find(client);
+            if (iter != clients_.end()) {
+                iter->second.canWrite = true;
+                Log::Print(Log::Level::DebugDebug, this, [&]{
+                    return "client can write, fd=" + to_string(iter->second.fileDescriptor); });
+            }
+        }
+
+        for (ClientInterface *client : workInfo_.clientsWithCustomCallRequested) {
+            auto iter = clients_.find(client);
+            if (iter != clients_.end()) {
+                iter->second.client->OnCustomCall();
+            }
         }
     }
 
-    for (ClientInterface *client : workInfo_.clientsReadyToRead) {
-        auto iter = clients_.find(client);
-        if (iter != clients_.end()) {
-            iter->second.canRead = true;
-            Log::Print(Log::Level::DebugDebug, this, [&]{
-                return "client can read, fd=" + to_string(iter->second.fileDescriptor); });
-        }
-    }
-
-    for (ClientInterface *client : workInfo_.clientsReadyToWrite) {
-        auto iter = clients_.find(client);
-        if (iter != clients_.end()) {
-            iter->second.canWrite = true;
-            Log::Print(Log::Level::DebugDebug, this, [&]{
-                return "client can write, fd=" + to_string(iter->second.fileDescriptor); });
-        }
-    }
-
-    for (ClientInterface *client : workInfo_.clientsWithCustomCallRequested) {
-        auto iter = clients_.find(client);
-        if (iter != clients_.end()) {
-            iter->second.client->OnCustomCall();
-        }
-    }
-
-    return true;
+    workInfo_.Clear();
+    return !shutDownRequested;
 }
 
 void ConnectionIO::Worker::Read(ClientInfo *clientInfo) {
@@ -338,7 +342,7 @@ void ConnectionIO::Worker::SetClientError(ClientInfo *clientInfo) {
 }
 
 void ConnectionIO::Worker::ScheduleClientDeregistration(const ClientInfo &clientInfo) {
-    clientsToUnregister_.push_back(clientInfo.client);
+    clientsToUnregister_.push_back(clientInfo.client.get());
     Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
         + " scheduled for deregistration";
     });

@@ -21,7 +21,8 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     SharedState &operator=(const SharedState &&other) = delete;
 
     void SetError();
-    void Register(HandlerInterface *handler);
+    bool Register(const std::shared_ptr<HandlerInterface> &handler);
+    void Unregister(const std::shared_ptr<HandlerInterface> &handler);
     bool WriteItem(const void *item, int itemSize);
     bool Eof();
     bool Error();
@@ -40,15 +41,15 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
 
     std::mutex                    lock_;    // Protects everything below...
 
-    std::condition_variable       writeCanContinue_;
-    std::shared_ptr<ConnectionIO> connectionIO_;
-    HandlerInterface              *handler_;
-    bool                          handlerCalledInitially_;
-    Core::RingBuffer              writeBuffer_;
-    int                           bufferSizeThreshold_;
-    bool                          canNotWrite_;
-    bool                          eof_;
-    bool                          error_;
+    std::condition_variable           writeCanContinue_;
+    std::shared_ptr<ConnectionIO>     connectionIO_;
+    std::shared_ptr<HandlerInterface> handler_;
+    bool                              handlerCalledInitially_;
+    Core::RingBuffer                  writeBuffer_;
+    int                               bufferSizeThreshold_;
+    bool                              canNotWrite_;
+    bool                              eof_;
+    bool                              error_;
 };
 
 }    // Namespace IO.

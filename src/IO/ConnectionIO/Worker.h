@@ -26,17 +26,16 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
     static const int bufferSize = 8192;
 
     struct ClientInfo {
-        int                            fileDescriptor;
-        ConnectionIO::ClientInterface  *client;
-        bool                           canRead;
-        bool                           canWrite;
-        bool                           eof;
-        bool                           error;
-        bool                           unregistering;
+        int                                            fileDescriptor;
+        std::shared_ptr<ConnectionIO::ClientInterface> client;
+        bool                                           canRead;
+        bool                                           canWrite;
+        bool                                           eof;
+        bool                                           error;
+        bool                                           unregistering;
 
         ClientInfo()
             : fileDescriptor(-1),
-              client(nullptr),
               canRead(false),
               canWrite(false),
               eof(false),
@@ -45,7 +44,7 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
             // Nop.
         }
 
-        ClientInfo(int aFileDescriptor, ConnectionIO::ClientInterface *aClient)
+        ClientInfo(int aFileDescriptor, const std::shared_ptr<ConnectionIO::ClientInterface> &aClient)
             : fileDescriptor(aFileDescriptor),
               client(aClient),
               canRead(false),
