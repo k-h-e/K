@@ -12,8 +12,12 @@ class ConnectionIO;
 //! UART (serial) connection.
 class UartConnection : public BufferedConnection {
   public:
+    enum class BaudRate { Baud4800,
+                          Baud9600  };
+
     //! Establishes a UART (serial) connection via the specified serial device.
-    UartConnection(const std::string &deviceFileName, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    UartConnection(const std::string &deviceFileName, BaudRate baudRate,
+                   const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     UartConnection(const UartConnection &other)             = delete;
     UartConnection &operator=(const UartConnection &other)  = delete;
     UartConnection(const UartConnection &&other)            = delete;
@@ -22,7 +26,7 @@ class UartConnection : public BufferedConnection {
   private:
     static const int bufferSizeThreshold = 4096;
 
-    static int OpenUart(const std::string &deviceFileName);
+    static int OpenUart(const std::string &deviceFileName, BaudRate baudRate);
 };
 
 }    // Namespace IO.
