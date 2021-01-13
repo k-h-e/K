@@ -7,7 +7,7 @@
 namespace K {
 namespace IO {
 
-struct RegistrationInfo {
+struct ConnectionIO::RegistrationInfo {
     std::shared_ptr<ConnectionIO::ClientInterface> client;
     int                                            fileDescriptor;
     bool                                           acceptedByWorker;
@@ -32,7 +32,7 @@ struct RegistrationInfo {
     // Default copy/move, okay.
 };
 
-struct UnregistrationInfo {
+struct ConnectionIO::UnregistrationInfo {
     std::shared_ptr<ConnectionIO::ClientInterface> client;
     bool                                           acceptedByWorker;
     bool                                           finalStreamError;
@@ -55,7 +55,7 @@ struct UnregistrationInfo {
 };
 
 //! Describes work for the I/O worker.
-struct WorkInfo {
+struct ConnectionIO::WorkInfo {
     bool                                         shutDownRequested;
     RegistrationInfo                             registrationInfo;
     UnregistrationInfo                           unregistrationInfo;

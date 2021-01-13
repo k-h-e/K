@@ -1,4 +1,4 @@
-#include <K/IO/SocketStream.h>
+#include <K/IO/Socket.h>
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -21,7 +21,7 @@ using K::IO::NetworkTools;
 namespace K {
 namespace IO {
 
-SocketStream::SocketStream(int fd)
+Socket::Socket(int fd)
         : socketDown_(false),
           eof_(false),
           error_(false) {
@@ -35,7 +35,7 @@ SocketStream::SocketStream(int fd)
     fd_ = fd;
 }
 
-SocketStream::~SocketStream() {
+Socket::~Socket() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     ShutDownSocket();
     if (fd_ != -1) {
@@ -44,7 +44,7 @@ SocketStream::~SocketStream() {
     }
 }    // ......................................................................................... critical section, end.
 
-void SocketStream::ShutDown() {
+void Socket::ShutDown() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     ShutDownSocket();
     if (!error_) {
@@ -52,7 +52,7 @@ void SocketStream::ShutDown() {
     }
 }    // ......................................................................................... critical section, end.
 
-int SocketStream::Read(void *outBuffer, int bufferSize) {
+int Socket::Read(void *outBuffer, int bufferSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
@@ -87,7 +87,7 @@ int SocketStream::Read(void *outBuffer, int bufferSize) {
     }
 }
 
-int SocketStream::Write(const void *data, int dataSize) {
+int Socket::Write(const void *data, int dataSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
@@ -117,28 +117,28 @@ int SocketStream::Write(const void *data, int dataSize) {
     }
 }
 
-bool SocketStream::Eof() {
+bool Socket::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return eof_;
 }    // ......................................................................................... critical section, end.
 
-bool SocketStream::ErrorState() {
+bool Socket::ErrorState() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
 }    // ......................................................................................... critical section, end.
 
-shared_ptr<SocketStream> SocketStream::ConnectToHost(const string &host, Core::Interface *loggingObject) {
+shared_ptr<Socket> Socket::ConnectTcp(const string &host, Core::Interface *loggingObject) {
     int fd = NetworkTools::ConnectTcp(host, loggingObject);
-    return (fd >= 0) ? make_shared<SocketStream>(fd) : nullptr;
+    return (fd >= 0) ? make_shared<Socket>(fd) : nullptr;
 }
 
-shared_ptr<SocketStream> SocketStream::ConnectToHost(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
+shared_ptr<Socket> Socket::ConnectTcp(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
     int fd = NetworkTools::ConnectTcp(ip4Address, port, loggingObject);
-    return (fd >= 0) ? make_shared<SocketStream>(fd) : nullptr;
+    return (fd >= 0) ? make_shared<Socket>(fd) : nullptr;
 }
 
 // Expects the lock to be held.
-void SocketStream::ShutDownSocket() {
+void Socket::ShutDownSocket() {
     if (fd_ != -1) {
         if (!socketDown_) {
             if (!shutdown(fd_, SHUT_RDWR)) {

@@ -8,7 +8,7 @@
 namespace K {
 namespace IO {
 
-class SocketStream;
+class Socket;
 class TcpConnection;
 class ConnectionIO;
 
@@ -30,7 +30,7 @@ class ListenSocket : public virtual K::Core::ErrorStateInterface {
      *  \return
      *  <c>null</c> handle in case of failure.
      */
-    std::shared_ptr<SocketStream> Accept();
+    std::shared_ptr<Socket> Accept();
     //! Accepts a new connection from the listen socket.
     /*!
      *  \return

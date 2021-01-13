@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <K/Core/Log.h>
-#include <K/IO/SocketStream.h>
+#include <K/IO/Socket.h>
 #include <K/IO/TcpConnection.h>
 
 using std::shared_ptr;
@@ -51,9 +51,9 @@ ListenSocket::~ListenSocket() {
     Close();
 }
 
-shared_ptr<SocketStream> ListenSocket::Accept() {
+shared_ptr<Socket> ListenSocket::Accept() {
     int fd = DoAccept();
-    return (fd >= 0) ? make_shared<SocketStream>(fd) : nullptr;
+    return (fd >= 0) ? make_shared<Socket>(fd) : nullptr;
 }
 
 shared_ptr<TcpConnection> ListenSocket::AcceptConnection() {

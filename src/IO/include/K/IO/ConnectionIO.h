@@ -72,6 +72,9 @@ class ConnectionIO : public virtual K::Core::Interface {
   private:
     class SharedState;
     class Worker;
+    struct WorkInfo;
+    struct RegistrationInfo;
+    struct UnregistrationInfo;
 
     std::shared_ptr<SharedState> sharedState_;
     std::shared_ptr<Worker>      worker_;
