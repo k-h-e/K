@@ -1,6 +1,7 @@
 #ifndef K_IO_FILE_H_
 #define K_IO_FILE_H_
 
+#include <string>
 #include <K/IO/BlockingStreamCore.h>
 #include <K/IO/SeekableBlockingStreamInterface.h>
 
@@ -11,7 +12,7 @@ namespace IO {
 class File : public BlockingStreamCore,
              public virtual SeekableBlockingStreamInterface {
   public:
-    File();
+    File(const std::string &fileName);
     File(const File &other)             = delete;
     File &operator=(const File &other)  = delete;
     File(const File &&other)            = delete;
@@ -26,9 +27,10 @@ class File : public BlockingStreamCore,
     bool ErrorState() override;
 
   private:
-    int  fd_;
-    bool eof_;
-    bool error_;
+    int     fd_;
+    int64_t position_;
+    bool    eof_;
+    bool    error_;
 };
 
 }    // Namespace IO.
