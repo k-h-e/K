@@ -103,9 +103,13 @@ int File::Write(const void *data, int dataSize) {
 }
 
 bool File::Seek(int64_t position) {
+    assert(position >= 0);
     bool success = false;
     if (!error_) {
-
+        if (lseek(fd_, static_cast<off_t>(position), SEEK_SET) == static_cast<off_t>(position)) {
+            position_ = position;
+            success   = true;
+        }
     }
 
     return success;
