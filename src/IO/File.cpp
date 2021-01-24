@@ -14,14 +14,19 @@ using K::Core::Log;
 namespace K {
 namespace IO {
 
-File::File(const string &fileName)
+File::File(const string &fileName, bool truncate)
         : fd_(-1),
           position_(0),
           eof_(false),
           error_(true) {
+    int flags = O_RDWR | O_CREAT;
+    if (truncate) {
+        flags |= O_TRUNC;
+    }
+
     bool done = false;
     while (!done) {
-        int fd = open(fileName.c_str(), O_RDWR | O_CREAT);
+        int fd = open(fileName.c_str(), flags, 0600);
         if (fd >= 0) {
             fd_    = fd;
             error_ = false;
@@ -85,6 +90,7 @@ int File::Write(const void *data, int dataSize) {
             numWritten = write(fd_, data, dataSize);
             if (numWritten >= 0) {
                 position_ += numWritten;
+                eof_       = false;
                 done       = true;
             }
             else {
@@ -108,7 +114,13 @@ bool File::Seek(int64_t position) {
     if (!error_) {
         if (lseek(fd_, static_cast<off_t>(position), SEEK_SET) == static_cast<off_t>(position)) {
             position_ = position;
+            eof_      = false;
             success   = true;
+        }
+        else {
+            error_ = true;
+            Log::Print(Log::Level::Warning, this, [&]{
+                return "error encountered while seeking in fd " + to_string(fd_); });
         }
     }
 

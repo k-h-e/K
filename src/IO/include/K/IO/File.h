@@ -12,7 +12,7 @@ namespace IO {
 class File : public BlockingStreamCore,
              public virtual SeekableBlockingStreamInterface {
   public:
-    File(const std::string &fileName);
+    File(const std::string &fileName, bool truncate);
     File(const File &other)             = delete;
     File &operator=(const File &other)  = delete;
     File(const File &&other)            = delete;
