@@ -12,7 +12,13 @@ namespace IO {
 class File : public BlockingStreamCore,
              public virtual SeekableBlockingStreamInterface {
   public:
-    File(const std::string &fileName, bool truncate);
+    enum class AccessMode { ReadOnly,
+                            WriteOnly,
+                            ReadWrite };
+
+    File(const std::string &fileName, AccessMode accessMode, bool truncate);
+    File(const std::string &fileName, AccessMode accessMode, bool truncate,
+         const std::shared_ptr<Core::Result> &resultAcceptor);
     File(const File &other)             = delete;
     File &operator=(const File &other)  = delete;
     File(const File &&other)            = delete;
@@ -25,12 +31,18 @@ class File : public BlockingStreamCore,
     int64_t StreamPosition() override;
     bool Eof() override;
     bool ErrorState() override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
+
+    static void AccessModeToFlags(AccessMode accessMode, bool *outReadable, bool *outWritable);
 
   private:
-    int     fd_;
-    int64_t position_;
-    bool    eof_;
-    bool    error_;
+    int                           fd_;
+    bool                          readable_;
+    bool                          writable_;
+    int64_t                       position_;
+    bool                          eof_;
+    bool                          error_;
+    std::shared_ptr<Core::Result> finalResultAcceptor_;
 };
 
 }    // Namespace IO.

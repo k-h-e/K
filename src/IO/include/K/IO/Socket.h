@@ -16,6 +16,8 @@ class Socket : public BlockingStreamCore {
   public:
     //! The socket takes ownership over the UNIX file descriptor.
     Socket(int fd);
+    //! The socket takes ownership over the UNIX file descriptor.
+    Socket(int fd, const std::shared_ptr<Core::Result> &resultAcceptor);
     Socket(const Socket &other)             = delete;
     Socket &operator=(const Socket &other)  = delete;
     Socket(const Socket &&other)            = delete;
@@ -29,6 +31,7 @@ class Socket : public BlockingStreamCore {
     int Write(const void *data, int dataSize) override;
     bool Eof() override;
     bool ErrorState() override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
     //! Establishes a TCP network stream connection to a host given by name and port, separated by a <c>':'</c>.
     /*!
@@ -46,11 +49,13 @@ class Socket : public BlockingStreamCore {
   private:
     void ShutDownSocket();
 
-    std::mutex lock_;
-    int        fd_;
-    bool       socketDown_;
-    bool       eof_;
-    bool       error_;
+    std::mutex                    lock_;
+    int                           fd_;
+    bool                          socketDown_;
+    bool                          eof_;
+    bool                          error_;
+    std::shared_ptr<Core::Result> finalResultAcceptor_;
+
 };
 
 }    // Namespace IO.

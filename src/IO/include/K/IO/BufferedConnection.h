@@ -16,7 +16,8 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     /*!
      *  Bad file descriptors < 0 are accepted, with the connection being initialized to error state right away.
      */
-    BufferedConnection(int fd, int bufferSizeThreshold, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    BufferedConnection(int fd, int bufferSizeThreshold, const std::shared_ptr<Core::Result> &resultAcceptor,
+                       const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     BufferedConnection(const BufferedConnection &other)             = delete;
     BufferedConnection &operator=(const BufferedConnection &other)  = delete;
     BufferedConnection(const BufferedConnection &&other)            = delete;
@@ -28,6 +29,7 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     bool WriteItem(const void *item, int itemSize) override;
     bool Eof() override;
     bool ErrorState() override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
   private:
     class SharedState;
@@ -36,6 +38,7 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
 
     std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
     int                                  fd_;
+    std::shared_ptr<Core::Result>        finalResultAcceptor_;
 };
 
 }    // Namespace IO.

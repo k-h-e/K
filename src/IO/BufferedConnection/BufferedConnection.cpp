@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <cassert>
+#include <K/Core/Result.h>
 #include <K/Core/Log.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/IOTools.h>
@@ -10,14 +11,17 @@
 using std::shared_ptr;
 using std::make_shared;
 using std::to_string;
+using K::Core::Result;
 using K::Core::Log;
 
 namespace K {
 namespace IO {
 
-BufferedConnection::BufferedConnection(int fd, int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
+BufferedConnection::BufferedConnection(int fd, int bufferSizeThreshold, const shared_ptr<Result> &resultAcceptor,
+                                       const shared_ptr<ConnectionIO> &connectionIO)
         : connectionIO_(connectionIO),
-          fd_(fd) {
+          fd_(fd),
+          finalResultAcceptor_(resultAcceptor) {
     bool success = false;
 
     sharedState_ = make_shared<SharedState>(bufferSizeThreshold, connectionIO_);
@@ -58,6 +62,9 @@ BufferedConnection::~BufferedConnection() {
         error = true;
     }
 
+    if (finalResultAcceptor_) {
+        finalResultAcceptor_->Set(!error);
+    }
     Log::Print(Log::Level::Debug, this, [&]{ return "stream for fd " + to_string(fd_) + " closed, error="
         + to_string(error); });
 }
@@ -80,6 +87,10 @@ bool BufferedConnection::Eof() {
 
 bool BufferedConnection::ErrorState() {
     return sharedState_->Error();
+}
+
+void BufferedConnection::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor) {
+    finalResultAcceptor_ = resultAcceptor;
 }
 
 }    // Namesapce IO.

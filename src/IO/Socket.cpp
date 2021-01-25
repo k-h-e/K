@@ -4,7 +4,9 @@
 #include <sys/socket.h>
 #include <vector>
 #include <K/Core/StringTools.h>
+#include <K/Core/Result.h>
 #include <K/Core/Log.h>
+#include <K/IO/IOTools.h>
 #include <K/IO/NetworkTools.h>
 
 using std::shared_ptr;
@@ -14,17 +16,22 @@ using std::mutex;
 using std::unique_lock;
 using std::string;
 using std::vector;
+using K::Core::Result;
 using K::Core::StringTools;
 using K::Core::Log;
+using K::IO::IOTools;
 using K::IO::NetworkTools;
 
 namespace K {
 namespace IO {
 
-Socket::Socket(int fd)
+Socket::Socket(int fd) : Socket(fd, nullptr) {}
+
+Socket::Socket(int fd, const shared_ptr<Result> &resultAcceptor)
         : socketDown_(false),
           eof_(false),
-          error_(false) {
+          error_(false),
+          finalResultAcceptor_(resultAcceptor) {
     Log::Print(Log::Level::Debug, this, [=]{ return "fd=" + to_string(fd); });
     if (fd < 0) {
         fd          = -1;
@@ -39,8 +46,13 @@ Socket::~Socket() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     ShutDownSocket();
     if (fd_ != -1) {
-        close(fd_);
-        Log::Print(Log::Level::Debug, this, [=]{ return "socket " + to_string(fd_) + " closed"; });
+        if (!IOTools::CloseFileDescriptor(fd_, this)) {
+            error_ = true;
+        }
+    }
+
+    if (finalResultAcceptor_) {
+        finalResultAcceptor_->Set(!error_);
     }
 }    // ......................................................................................... critical section, end.
 
@@ -125,6 +137,11 @@ bool Socket::Eof() {
 bool Socket::ErrorState() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
+}    // ......................................................................................... critical section, end.
+
+void Socket::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    finalResultAcceptor_ = resultAcceptor;
 }    // ......................................................................................... critical section, end.
 
 shared_ptr<Socket> Socket::ConnectTcp(const string &host, Core::Interface *loggingObject) {
