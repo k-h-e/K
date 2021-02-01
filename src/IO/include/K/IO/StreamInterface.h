@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <K/Core/ErrorStateInterface.h>
+#include <K/IO/EofInterface.h>
 
 namespace K {
 
@@ -14,10 +15,9 @@ namespace Core {
 namespace IO {
 
 //! Interface to entities providing stream I/O.
-class StreamInterface : public virtual K::Core::ErrorStateInterface {
+class StreamInterface : public virtual K::Core::ErrorStateInterface,
+                        public virtual K::IO::EofInterface {
   public:
-    //! Tells whether or not reading has reached the end of the stream.
-    virtual bool Eof() = 0;
     //! If a result acceptor is set, the stream will use it to report a final result upon destruction (think RAII).
     /*!
      *  Pass <c>nullptr</c> to unregister a previously registered result acceptor.

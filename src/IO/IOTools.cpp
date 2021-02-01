@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <K/Core/Log.h>
+#include <K/IO/BlockingStreamInterface.h>
 
 using std::string;
 using std::to_string;
@@ -24,6 +25,38 @@ bool IOTools::CloseFileDescriptor(int fd, Core::Interface *loggingObject) {
             if (errno != EINTR) {
                 return false;
             }
+        }
+    }
+}
+
+bool Read(ItemReadInterface *reader, int *outValue) {
+    return reader->ReadItem(outValue, sizeof(*outValue));
+}
+
+bool Read(ItemReadInterface *reader, char delimiter, string *outString) {
+    outString->clear();
+    char character;
+    while (true) {
+        if (!reader->ReadItem(&character, sizeof(character))) {
+            return (reader->Eof() && !reader->ErrorState());
+        }
+        else if (character == delimiter) {
+            return true;
+        }
+        else {
+            outString->push_back(character);
+        }
+    }
+}
+
+bool SkipTo(ItemReadInterface *reader, char delimiter) {
+    char character;
+    while (true) {
+        if (!reader->ReadItem(&character, sizeof(character))) {
+            return false;
+        }
+        else if (character == delimiter) {
+            return true;
         }
     }
 }
