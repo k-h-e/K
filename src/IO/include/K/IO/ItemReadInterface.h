@@ -2,14 +2,12 @@
 #define K_IO_ITEMREADINTERFACE_H_
 
 #include <K/Core/ErrorStateInterface.h>
-#include <K/IO/EofInterface.h>
 
 namespace K {
 namespace IO {
 
 //! Interface to entities providing blocking item reading.
-class ItemReadInterface : public virtual K::Core::ErrorStateInterface,
-                          public virtual K::IO::EofInterface {
+class ItemReadInterface : public virtual K::Core::ErrorStateInterface {
   public:
     //! Reads a binary item of specified size (in bytes).
     /*!
