@@ -12,6 +12,7 @@ namespace Core {
 namespace K {
 namespace IO {
 
+class StreamInterface;
 class ItemReadInterface;
 class ItemWriteInterface;
 class BlockingStreamInterface;
@@ -29,49 +30,52 @@ class IOTools {
     static bool CloseFileDescriptor(int fd, K::Core::Interface *loggingObject);
 };
 
+//! Returns <c>true</c> iff neither error nor EOF state are set on the specified stream.
+bool CanRead(StreamInterface *stream);
+
 //! Reads an integer.
 /*!
- *  Blocks until either the read is complete or it fails.
- *
- * \return
+ *  \return
  *  <c>false</c> in case of failure. The output item will then be undefined, and error state or EOF will be raised
  *  on the stream.
  */
 bool Read(ItemReadInterface *stream, int *outValue);
 //! Reads a string.
 /*!
- *  Blocks until either the read is complete or it fails. The read is complete when the specified delimiter or EOF is
- *  reached.
- *
- * \return
+ *  \return
  *  <c>false</c> in case of failure. The output item will then be undefined, and error state or EOF will be raised
- *  on the stream.
+ *  on the stream (or both).
  */
 bool Read(BlockingStreamInterface *stream, char delimiter, std::string *outString);
 //! Reads a string.
 /*!
- *  Blocks until either the read is complete or it fails. The read is complete when one of the specified delimiters has
- *  been reached.
+ *  The read is (only) successful when one of the specified delimiters has been reached.
+ *
+ *  \param outEncounteredDelimiter
+ *  If given will accept the delimiter that was encountered.
+ *
+ *  \return
+ *  <c>false</c> in case of failure. The output items will then be undefined, and error state or EOF will be raised
+ *  on the stream (or both).
+ */
+bool ReadUntil(ItemReadInterface *stream, const std::string &delimiters, std::string *outString,
+               char *outEncounteredDelimiter);
+//! Skips (ignores) bytes until a character other than those specified is encountered.
+/*!
+ *  \param outCharacter
+ *  If given will accept the (not-skippable) character that was encountered.
  *
  * \return
- *  <c>false</c> in case of failure. The output items will then be undefined, and error state or EOF will be raised
- *  on the stream.
+ *  <c>false</c> in case of failure. Error state or EOF will then be raised on the stream (or both). The output
+ *  parameter will then be undefined.
  */
-bool ReadUntil(BlockingStreamInterface *stream, const std::string &delimiters, std::string *outString,
-               char *outEncounteredDelimiter);
-//! Reads and skips (ignores) bytes until a character other than those specified is encountered.
+bool Skip(ItemReadInterface *stream, const std::string &charactersToSkip, char *outCharacter);
+//! Skips (ignores) bytes until the specified character is encountered.
 /*!
  * \return
- *  <c>false</c> in case of failure. Error state or EOF will then be raised on the stream. The output parameter will
- *  then be undefined.
+ *  <c>false</c> in case of failure. Error state or EOF will then be raised on the stream (or both).
  */
-bool Skip(SeekableBlockingStreamInterface *stream, const std::string &charactersToSkip, char *outNextCharacter);
-//! Reads and skips (ignores) bytes until the specified delimiter is encountered.
-/*!
- * \return
- *  <c>false</c> in case of failure. Error state or EOF will then be raised on the stream.
- */
-bool SkipTo(ItemReadInterface *stream, char delimiter);
+bool SkipUntil(ItemReadInterface *stream, char character);
 
 }    // Namespace IO.
 }    // namespace K.

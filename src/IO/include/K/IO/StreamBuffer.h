@@ -29,13 +29,14 @@ class StreamBuffer : public BlockingStreamCore,
     bool Seek(int64_t position) override;
     int64_t StreamPosition() override;
     bool Eof() override;
+    void ClearEof() override;
     bool ErrorState() override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
   private:
     int64_t BufferPositionFor(int64_t position);
-    bool Flush();
     bool SetUpBuffer(int64_t position);
+    bool Flush();
     bool FlushDirtyRange(int cursor, int numBytes);
 
     std::shared_ptr<SeekableBlockingStreamInterface> stream_;
@@ -48,6 +49,7 @@ class StreamBuffer : public BlockingStreamCore,
     int                                              fill_;
     std::vector<bool>                                dirtyBytes_;        // Only used in write-only mode.
     bool                                             dirty_;
+    bool                                             eof_;
     bool                                             error_;
     std::shared_ptr<Core::Result>                    finalResultAcceptor_;
 };

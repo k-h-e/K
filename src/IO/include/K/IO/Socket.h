@@ -30,6 +30,7 @@ class Socket : public BlockingStreamCore {
     int Read(void *outBuffer, int bufferSize) override;
     int Write(const void *data, int dataSize) override;
     bool Eof() override;
+    void ClearEof() override;
     bool ErrorState() override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 

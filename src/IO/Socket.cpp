@@ -59,18 +59,24 @@ Socket::~Socket() {
 void Socket::ShutDown() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     ShutDownSocket();
-    if (!error_) {
-        eof_ = true;
-    }
 }    // ......................................................................................... critical section, end.
 
 int Socket::Read(void *outBuffer, int bufferSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
-        if (socketDown_) {
+        if (error_) {
             return 0;
         }
+
+        if (socketDown_) {
+            eof_ = true;
+        }
+
+        if (eof_) {
+            return 0;
+        }
+
         fd = fd_;
     }    // ..................................................................................... critical section, end.
 
@@ -103,10 +109,15 @@ int Socket::Write(const void *data, int dataSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
+        if (error_) {
+            return 0;
+        }
+
         if (socketDown_) {
             error_ = true;
             return 0;
         }
+
         fd = fd_;
     }    // ..................................................................................... critical section, end.
 
@@ -132,6 +143,11 @@ int Socket::Write(const void *data, int dataSize) {
 bool Socket::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return eof_;
+}    // ......................................................................................... critical section, end.
+
+void Socket::ClearEof() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    eof_ = false;
 }    // ......................................................................................... critical section, end.
 
 bool Socket::ErrorState() {

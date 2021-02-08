@@ -82,7 +82,7 @@ File::~File() {
 
 int File::Read(void *outBuffer, int bufferSize) {
     assert(bufferSize > 0);
-    if (!error_) {
+    if (!error_ && !eof_) {
         if (readable_) {
             bool done = false;
             while (!done) {
@@ -121,7 +121,6 @@ int File::Write(const void *data, int dataSize) {
                 int numWritten = write(fd_, data, dataSize);
                 if (numWritten >= 0) {
                     position_ += numWritten;
-                    eof_       = false;
                     return numWritten;
                 }
                 else {
@@ -144,7 +143,6 @@ bool File::Seek(int64_t position) {
     if (!error_) {
         if (lseek(fd_, static_cast<off_t>(position), SEEK_SET) == static_cast<off_t>(position)) {
             position_ = position;
-            eof_      = false;
             return true;
         }
 
@@ -162,6 +160,10 @@ int64_t File::StreamPosition() {
 
 bool File::Eof() {
     return eof_;
+}
+
+void File::ClearEof() {
+    eof_ = false;
 }
 
 bool File::ErrorState() {

@@ -31,16 +31,20 @@ bool IOTools::CloseFileDescriptor(int fd, Core::Interface *loggingObject) {
     }
 }
 
+bool CanRead(StreamInterface *stream) {
+    return (!stream->ErrorState() && !stream->Eof());
+}
+
 bool Read(ItemReadInterface *stream, int *outValue) {
     return stream->ReadItem(outValue, sizeof(*outValue));
 }
 
 bool Read(BlockingStreamInterface *stream, char delimiter, string *outString) {
     outString->clear();
-    char character;
     while (true) {
+        char character;
         if (!stream->ReadItem(&character, sizeof(character))) {
-            return (stream->Eof() && !stream->ErrorState());
+            return (stream->Eof() && !stream->ErrorState() && !outString->empty());
         }
         else if (character == delimiter) {
             return true;
@@ -51,27 +55,48 @@ bool Read(BlockingStreamInterface *stream, char delimiter, string *outString) {
     }
 }
 
-bool Skip(SeekableBlockingStreamInterface *stream, const string &charactersToSkip, char *outNextCharacter) {
-    char character;
+bool ReadUntil(ItemReadInterface *stream, const std::string &delimiters, std::string *outString,
+               char *outEncounteredDelimiter) {
+    outString->clear();
     while (true) {
-        int64_t position = stream->StreamPosition();
+        char character;
         if (!stream->ReadItem(&character, sizeof(character))) {
             return false;
         }
-        else if (charactersToSkip.find(character) == string::npos) {
-            *outNextCharacter = character;
-            return stream->Seek(position);
+        else if (delimiters.find(character) != string::npos) {
+            if (outEncounteredDelimiter) {
+                *outEncounteredDelimiter = character;
+            }
+            return true;
+        }
+        else {
+            outString->push_back(character);
         }
     }
 }
 
-bool SkipTo(ItemReadInterface *reader, char delimiter) {
-    char character;
+bool Skip(ItemReadInterface *stream, const string &charactersToSkip, char *outCharacter) {
     while (true) {
-        if (!reader->ReadItem(&character, sizeof(character))) {
+        char character;
+        if (!stream->ReadItem(&character, sizeof(character))) {
             return false;
         }
-        else if (character == delimiter) {
+        else if (charactersToSkip.find(character) == string::npos) {
+            if (outCharacter) {
+                *outCharacter = character;
+            }
+            return true;
+        }
+    }
+}
+
+bool SkipUntil(ItemReadInterface *stream, char character) {
+    while (true) {
+        char aCharacter;
+        if (!stream->ReadItem(&aCharacter, sizeof(aCharacter))) {
+            return false;
+        }
+        else if (aCharacter == character) {
             return true;
         }
     }

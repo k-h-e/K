@@ -15,7 +15,7 @@ class ItemReadInterface : public virtual K::Core::ErrorStateInterface {
      *
      * \return
      *  <c>false</c> in case of failure. The output item will then be undefined, and error state or EOF will be raised
-     *  on the stream.
+     *  on the stream (or both).
      */
     virtual bool ReadItem(void *outItem, int itemSize) = 0;
 };

@@ -27,6 +27,7 @@ StreamBuffer::StreamBuffer(const shared_ptr<SeekableBlockingStreamInterface> &st
           cursor_(0),
           fill_(0),
           dirty_(false),
+          eof_(false),
           error_(false),
           finalResultAcceptor_(resultAcceptor) {
     if (bufferSize < 1) {
@@ -74,7 +75,7 @@ StreamBuffer::~StreamBuffer() {
 
 int StreamBuffer::Read(void *outBuffer, int bufferSize) {
     assert(bufferSize > 0);
-    if (!error_) {
+    if (!error_ && !eof_) {
         if (readable_) {
             int numToRead = fill_ > cursor_ ? fill_ - cursor_ : 0;
             if (bufferSize < numToRead) {
@@ -95,6 +96,7 @@ int StreamBuffer::Read(void *outBuffer, int bufferSize) {
                 }
             }
             else {
+                eof_ = true;
                 return 0;
             }
         }
@@ -171,7 +173,11 @@ int64_t StreamBuffer::StreamPosition() {
 }
 
 bool StreamBuffer::Eof() {
-    return (cursor_ >= fill_);
+    return eof_;
+}
+
+void StreamBuffer::ClearEof() {
+    eof_ = false;
 }
 
 bool StreamBuffer::ErrorState() {
@@ -184,6 +190,51 @@ void StreamBuffer::SetFinalResultAcceptor(const shared_ptr<Result> &resultAccept
 
 int64_t StreamBuffer::BufferPositionFor(int64_t position) {
     return (position / static_cast<int64_t>(bufferSize_)) * static_cast<int64_t>(bufferSize_);
+}
+
+bool StreamBuffer::SetUpBuffer(int64_t position) {
+    int64_t newBufferPosition = BufferPositionFor(position);
+    if (readable_) {
+        stream_->ClearEof();
+        if (stream_->Seek(newBufferPosition)) {
+            int numReadTotal = 0;
+            while (!stream_->ErrorState()) {
+                numReadTotal += stream_->Read(&buffer_[numReadTotal], bufferSize_ - numReadTotal);
+                if ((numReadTotal == bufferSize_) || stream_->Eof()) {
+                    if (numReadTotal < bufferSize_) {
+                        std::memset(&buffer_[numReadTotal], 0, bufferSize_ - numReadTotal);
+                    }
+                    bufferPosition_ = newBufferPosition;
+                    fill_           = numReadTotal;
+                    cursor_         = position - newBufferPosition;
+                    dirty_          = false;
+                    Log::Print(Log::Level::Debug, this, [&]{
+                        return "pre-loaded buffer with " + to_string(fill_) + " bytes from position "
+                            + to_string(bufferPosition_);
+                    });
+                    return true;
+                }
+            }
+        }
+    }
+    else {
+        bufferPosition_ = newBufferPosition;
+        fill_           = 0;
+        cursor_         = position - newBufferPosition;
+        dirty_          = false;
+        for (vector<bool>::reference bit : dirtyBytes_) {
+            bit = false;
+        }
+        Log::Print(Log::Level::Debug, this, [&]{
+            return "set up buffer for write-only access to position " + to_string(bufferPosition_);
+        });
+        return true;
+    }
+
+    Log::Print(Log::Level::Warning, this, [&]{
+        return "failed to set up buffer for position " + to_string(position);
+    });
+    return false;
 }
 
 bool StreamBuffer::Flush() {
@@ -236,50 +287,6 @@ bool StreamBuffer::Flush() {
         return true;
     }
 
-    return false;
-}
-
-bool StreamBuffer::SetUpBuffer(int64_t position) {
-    int64_t newBufferPosition = BufferPositionFor(position);
-    if (readable_) {
-        if (stream_->Seek(newBufferPosition)) {
-            int numReadTotal = 0;
-            while (!stream_->ErrorState()) {
-                numReadTotal += stream_->Read(&buffer_[numReadTotal], bufferSize_ - numReadTotal);
-                if ((numReadTotal == bufferSize_) || stream_->Eof()) {
-                    if (numReadTotal < bufferSize_) {
-                        std::memset(&buffer_[numReadTotal], 0, bufferSize_ - numReadTotal);
-                    }
-                    bufferPosition_ = newBufferPosition;
-                    fill_           = numReadTotal;
-                    cursor_         = position - newBufferPosition;
-                    dirty_          = false;
-                    Log::Print(Log::Level::Debug, this, [&]{
-                        return "pre-loaded buffer with " + to_string(fill_) + " bytes from position "
-                            + to_string(bufferPosition_);
-                    });
-                    return true;
-                }
-            }
-        }
-    }
-    else {
-        bufferPosition_ = newBufferPosition;
-        fill_           = 0;
-        cursor_         = position - newBufferPosition;
-        dirty_          = false;
-        for (vector<bool>::reference bit : dirtyBytes_) {
-            bit = false;
-        }
-        Log::Print(Log::Level::Debug, this, [&]{
-            return "set up buffer for write-only access to position " + to_string(bufferPosition_);
-        });
-        return true;
-    }
-
-    Log::Print(Log::Level::Warning, this, [&]{
-        return "failed to set up buffer for position " + to_string(position);
-    });
     return false;
 }
 

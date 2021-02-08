@@ -85,6 +85,10 @@ bool BufferedConnection::Eof() {
     return sharedState_->Eof();
 }
 
+void BufferedConnection::ClearEof() {
+    sharedState_->ClearEof();
+}
+
 bool BufferedConnection::ErrorState() {
     return sharedState_->Error();
 }
