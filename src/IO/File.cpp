@@ -75,9 +75,13 @@ File::~File() {
         }
     }
 
+    Result finalResult(!error_ && !eof_);
     if (finalResultAcceptor_) {
-        finalResultAcceptor_->Set(!error_);
+        *finalResultAcceptor_ = finalResult;
     }
+    Log::Print(Log::Level::Debug, this, [&]{
+        return "closed, fd=" + to_string(fd_) + ", final_result=" + finalResult.ToString();
+    });
 }
 
 int File::Read(void *outBuffer, int bufferSize) {

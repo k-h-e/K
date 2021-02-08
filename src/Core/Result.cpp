@@ -11,6 +11,12 @@ Result::Result()
     // Nop.
 }
 
+Result::Result(bool success)
+        : success_(success),
+          valid_(true) {
+    // Nop.
+}
+
 void Result::Set(bool success) {
     success_ = success;
     valid_   = true;

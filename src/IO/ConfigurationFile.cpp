@@ -1,21 +1,23 @@
-#include <K/Core/ConfigurationFile.h>
+#include <K/IO/ConfigurationFile.h>
 
-#include <fstream>
 #include <K/Core/StringTools.h>
+#include <K/Core/Result.h>
+#include <K/IO/File.h>
+#include <K/IO/StreamBuffer.h>
+#include <K/IO/IOTools.h>
 
-using std::endl;
-using std::getline;
-using std::ifstream;
-using std::ios;
-using std::ofstream;
 using std::string;
 using std::to_string;
 using std::unordered_set;
 using std::vector;
+using std::make_shared;
 using K::Core::StringTools;
+using K::Core::Result;
+using K::IO::File;
+using K::IO::StreamBuffer;
 
 namespace K {
-namespace Core {
+namespace IO {
 
 ConfigurationFile::ConfigurationFile() {
     for (char character : string("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_")) {
@@ -58,31 +60,35 @@ bool ConfigurationFile::GetValue(const std::string &section, const std::string &
 }
 
 bool ConfigurationFile::Save(const std::string &fileName) {
-    ofstream stream(fileName, ios::out | ios::binary | ios::trunc);
-    bool firstSection = true;
-    for (auto &pair : sections_) {
-        if (!firstSection) {
-            stream << endl;
+    auto result = make_shared<Result>();
+    {
+        StreamBuffer stream(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
+                            File::AccessMode::WriteOnly, 4 * 1024, result);
+        bool firstSection = true;
+        for (auto &pair : sections_) {
+            if (!firstSection) {
+                stream << "\n";
+            }
+            stream << "[" << pair.first << "]\n";
+            for (auto &keyValuePair : pair.second) {
+                stream << keyValuePair.first << " = " << keyValuePair.second << "\n";
+            }
+            firstSection = false;
         }
-        stream << "[" << pair.first << "]" << endl;
-        for (auto &keyValuePair : pair.second) {
-            stream << keyValuePair.first << "=" << keyValuePair.second << endl;
-        }
-        firstSection = false;
     }
-    stream.close();
 
-    return stream.good();
+    return result->Success();
 }
 
 bool ConfigurationFile::Load(const std::string &fileName) {
-    unordered_set<char> whiteSpace{ ' ', '\t' };
-
-    string currentSection;
+    StreamBuffer stream(make_shared<File>(fileName, File::AccessMode::ReadOnly, false),
+                        File::AccessMode::ReadOnly, 4 * 1024);
     sections_.clear();
-    ifstream stream(fileName, ios::in | ios::binary);
+
+    unordered_set<char> whiteSpace{ ' ', '\t' };
+    string currentSection;
     string line;
-    while (getline(stream, line)) {
+    while (Read(&stream, '\n', &line)) {
         if ((line.length() > 0u) && (line[0] == '[')) {
             StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
             currentSection = line;
@@ -107,12 +113,13 @@ bool ConfigurationFile::Load(const std::string &fileName) {
         }
     }
 
-    if (stream.eof()) {
+    if (stream.ErrorState()) {
+        sections_.clear();
+        return false;
+    }
+    else {
         return true;
     }
-
-    sections_.clear();
-    return false;
 }
 
 bool ConfigurationFile::isSectionName(const std::string &text) {
@@ -135,5 +142,5 @@ bool ConfigurationFile::isValue(const std::string &text) {
     return true;
 }
 
-}    // Namespace Core.
+}    // Namespace IO.
 }    // Namespace K.

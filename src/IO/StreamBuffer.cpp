@@ -1,6 +1,7 @@
 #include <K/IO/StreamBuffer.h>
 
 #include <cassert>
+#include <cstring>
 #include <K/Core/Result.h>
 #include <K/Core/Log.h>
 
@@ -58,19 +59,24 @@ StreamBuffer::~StreamBuffer() {
 
     delete[] buffer_;
 
-    if (finalResultAcceptor_) {
-        if (error_) {
-            finalResultAcceptor_->Set(false);
+    Result finalResult;
+    if (error_ || eof_) {
+        finalResult.Set(false);
+    }
+    else {
+        if (streamResult->Success()) {
+            finalResult.Set(true);
         }
-        else {
-            if (streamResult->Success()) {
-                finalResultAcceptor_->Set(true);
-            }
-            else if (streamResult->Failure()) {
-                finalResultAcceptor_->Set(false);
-            }
+        else if (streamResult->Failure()) {
+            finalResult.Set(false);
         }
     }
+    if (finalResultAcceptor_) {
+        *finalResultAcceptor_ = finalResult;
+    }
+    Log::Print(Log::Level::Debug, this, [&]{
+        return "closed, final_result=" + finalResult.ToString();
+    });
 }
 
 int StreamBuffer::Read(void *outBuffer, int bufferSize) {

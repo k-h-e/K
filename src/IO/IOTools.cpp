@@ -31,7 +31,12 @@ bool IOTools::CloseFileDescriptor(int fd, Core::Interface *loggingObject) {
     }
 }
 
-bool CanRead(StreamInterface *stream) {
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, const std::string &text) {
+    (void)Write(&stream, text);
+    return stream;
+}
+
+bool Good(StreamInterface *stream) {
     return (!stream->ErrorState() && !stream->Eof());
 }
 
@@ -99,6 +104,16 @@ bool SkipUntil(ItemReadInterface *stream, char character) {
         else if (aCharacter == character) {
             return true;
         }
+    }
+}
+
+bool Write(ItemWriteInterface *stream, const string &text) {
+    int size = static_cast<int>(text.size() * sizeof(string::value_type));
+    if (size > 0) {
+        return stream->WriteItem(&text[0], size);
+    }
+    else {
+        return true;
     }
 }
 

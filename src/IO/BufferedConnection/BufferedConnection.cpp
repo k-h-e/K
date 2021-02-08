@@ -62,11 +62,13 @@ BufferedConnection::~BufferedConnection() {
         error = true;
     }
 
+    Result finalResult(!error && !sharedState_->Eof());
     if (finalResultAcceptor_) {
-        finalResultAcceptor_->Set(!error);
+        *finalResultAcceptor_ = finalResult;
     }
-    Log::Print(Log::Level::Debug, this, [&]{ return "stream for fd " + to_string(fd_) + " closed, error="
-        + to_string(error); });
+    Log::Print(Log::Level::Debug, this, [&]{
+        return "closed, fd=" + to_string(fd_) + ", final_result=" + finalResult.ToString();
+    });
 }
 
 bool BufferedConnection::Register(const shared_ptr<HandlerInterface> &handler) {

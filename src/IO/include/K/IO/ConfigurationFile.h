@@ -1,5 +1,5 @@
-#ifndef K_CORE_CONFIGURATIONFILE_H_
-#define K_CORE_CONFIGURATIONFILE_H_
+#ifndef K_IO_CONFIGURATIONFILE_H_
+#define K_IO_CONFIGURATIONFILE_H_
 
 #include <string>
 #include <unordered_map>
@@ -7,10 +7,10 @@
 #include <K/Core/Interface.h>
 
 namespace K {
-namespace Core {
+namespace IO {
 
 //! In-RAM representation of a configuration file.
-class ConfigurationFile : public virtual Interface {
+class ConfigurationFile : public virtual Core::Interface {
   public:
     ConfigurationFile();
     ConfigurationFile(const ConfigurationFile &other)            = delete;
@@ -58,7 +58,7 @@ class ConfigurationFile : public virtual Interface {
     std::unordered_set<char>                                                      validCharacters_;
 };
 
-}    // Namespace Core.
+}    // Namespace IO.
 }    // Namespace K.
 
-#endif    // K_CORE_CONFIGURATIONFILE_H_
+#endif    // K_IO_CONFIGURATIONFILE_H_

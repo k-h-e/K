@@ -10,7 +10,10 @@ namespace Core {
 //! Holds a simple, tri-state operation result (success/failure/not set).
 class Result : public virtual Interface {
   public:
+    //! Initializes the result as not set.
     Result();
+    //! Initializes the result as either success or failure.
+    Result(bool success);
     // Default copy/move, okay.
 
     //! Sets the result as either success or failure.

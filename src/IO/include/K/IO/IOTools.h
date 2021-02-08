@@ -30,8 +30,10 @@ class IOTools {
     static bool CloseFileDescriptor(int fd, K::Core::Interface *loggingObject);
 };
 
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, const std::string &text);
+
 //! Returns <c>true</c> iff neither error nor EOF state are set on the specified stream.
-bool CanRead(StreamInterface *stream);
+bool Good(StreamInterface *stream);
 
 //! Reads an integer.
 /*!
@@ -76,6 +78,12 @@ bool Skip(ItemReadInterface *stream, const std::string &charactersToSkip, char *
  *  <c>false</c> in case of failure. Error state or EOF will then be raised on the stream (or both).
  */
 bool SkipUntil(ItemReadInterface *stream, char character);
+//! Writes the specified string.
+/*!
+ *  \return
+ *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ */
+bool Write(ItemWriteInterface *stream, const std::string &text);
 
 }    // Namespace IO.
 }    // namespace K.
