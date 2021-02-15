@@ -31,6 +31,10 @@ class IOTools {
 };
 
 ItemWriteInterface &operator<<(ItemWriteInterface &stream, const std::string &text);
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint8_t value);
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint32_t value);
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, float value);
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, double value);
 
 //! Returns <c>true</c> iff neither error nor EOF state are set on the specified stream.
 bool Good(StreamInterface *stream);
@@ -84,6 +88,30 @@ bool SkipUntil(ItemReadInterface *stream, char character);
  *  <c>false</c> in case of failure. Error state will then be raised on the stream.
  */
 bool Write(ItemWriteInterface *stream, const std::string &text);
+//! Writes the specified <c>uint8</c> value.
+/*!
+ *  \return
+ *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ */
+bool Write(ItemWriteInterface *stream, uint8_t value);
+//! Writes the specified <c>uint32</c> value.
+/*!
+ *  \return
+ *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ */
+bool Write(ItemWriteInterface *stream, uint32_t value);
+//! Writes the specified single-precision floating point number.
+/*!
+ *  \return
+ *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ */
+bool Write(ItemWriteInterface *stream, float value);
+//! Writes the specified double-precision floating point number.
+/*!
+ *  \return
+ *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ */
+bool Write(ItemWriteInterface *stream, double value);
 
 }    // Namespace IO.
 }    // namespace K.

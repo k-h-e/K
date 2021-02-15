@@ -36,6 +36,26 @@ ItemWriteInterface &operator<<(ItemWriteInterface &stream, const std::string &te
     return stream;
 }
 
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint8_t value) {
+    (void)Write(&stream, value);
+    return stream;
+}
+
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint32_t value) {
+    (void)Write(&stream, value);
+    return stream;
+}
+
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, float value) {
+    (void)Write(&stream, value);
+    return stream;
+}
+
+ItemWriteInterface &operator<<(ItemWriteInterface &stream, double value) {
+    (void)Write(&stream, value);
+    return stream;
+}
+
 bool Good(StreamInterface *stream) {
     return (!stream->ErrorState() && !stream->Eof());
 }
@@ -115,6 +135,22 @@ bool Write(ItemWriteInterface *stream, const string &text) {
     else {
         return true;
     }
+}
+
+bool Write(ItemWriteInterface *stream, uint8_t value) {
+    return stream->WriteItem(&value, sizeof(value));
+}
+
+bool Write(ItemWriteInterface *stream, uint32_t value) {
+    return stream->WriteItem(&value, sizeof(value));
+}
+
+bool Write(ItemWriteInterface *stream, float value) {
+    return stream->WriteItem(&value, sizeof(value));
+}
+
+bool Write(ItemWriteInterface *stream, double value) {
+    return stream->WriteItem(&value, sizeof(value));
 }
 
 }    // Namespace IO.

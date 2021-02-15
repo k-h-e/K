@@ -20,13 +20,13 @@ namespace K {
 namespace IO {
 
 ConfigurationFile::ConfigurationFile() {
-    for (char character : string("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_")) {
+    for (char character : string("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_/")) {
         validCharacters_.insert(character);
     }
 }
 
 bool ConfigurationFile::SetValue(const string &section, const string &key, const string &value) {
-    if (isSectionName(section) && isKey(key) && isValue(value)) {
+    if (IsSectionName(section) && IsKey(key) && IsValue(value)) {
         sections_[section][key] = value;
         return true;
     }
@@ -122,15 +122,15 @@ bool ConfigurationFile::Load(const std::string &fileName) {
     }
 }
 
-bool ConfigurationFile::isSectionName(const std::string &text) {
-    return isValue(text);
+bool ConfigurationFile::IsSectionName(const std::string &text) {
+    return IsValue(text);
 }
 
-bool ConfigurationFile::isKey(const std::string &text) {
-    return isValue(text);
+bool ConfigurationFile::IsKey(const std::string &text) {
+    return IsValue(text);
 }
 
-bool ConfigurationFile::isValue(const std::string &text) {
+bool ConfigurationFile::IsValue(const std::string &text) {
     if (text.length() > 80u) {
         return false;
     }

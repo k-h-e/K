@@ -50,9 +50,9 @@ class ConfigurationFile : public virtual Core::Interface {
     bool Load(const std::string &fileName);
 
   private:
-    bool isSectionName(const std::string &text);
-    bool isKey(const std::string &text);
-    bool isValue(const std::string &text);
+    bool IsSectionName(const std::string &text);
+    bool IsKey(const std::string &text);
+    bool IsValue(const std::string &text);
 
     std::unordered_map<std::string, std::unordered_map<std::string, std::string>> sections_;
     std::unordered_set<char>                                                      validCharacters_;
