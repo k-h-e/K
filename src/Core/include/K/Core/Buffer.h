@@ -12,25 +12,25 @@ class Buffer {
   public:
     //! Allows for iterative buffer readout.
 	/*!
-	 *  A reader may only be used as long as the associated buffer is alive. Reading from a buffer
-	 *  via a reader may be interleaved with adding data via \ref Append().
+     *  A reader may only be used as long as the associated buffer is alive. Reading from a buffer via a reader may be
+     *  interleaved with adding data via \ref Append().
 	 */
 
 	class Reader {
 	  public:
-	    //! Reads at most <c>targetBufferSize</c> bytes from the buffer and transfers them to the
-		//! specified memory location.
+        //! Reads at most <c>targetBufferSize</c> bytes from the buffer and transfers them to the specified memory
+        //! location.
 		/*!
-		 *  \return The number of bytes actually transferred. A short read (including the return
-         *          value of <c>0</c>) means there are currently no more bytes in the buffer to
-         *          read.
+         *  \return
+         *  The number of bytes actually transferred. A short read (including the return value of <c>0</c>) means there
+         *  are currently no more bytes in the buffer to read.
 		 */
 	    int Read(void *targetBuffer, int targetBufferSize);
         //! Convenience method reading an entire block of specified size.
         /*!
-         *  \return <c>false</c> in case the block could not be read entirely. This means there are
-         *          currently no more bytes in the buffer to read. The contents of the target buffer
-         *          are undefined.
+         *  \return
+         *  <c>false</c> in case the block could not be read entirely. This means there are currently no more bytes in
+         *  the buffer to read. The contents of the target buffer are undefined.
          */
         bool ReadBlock(void *targetBuffer, int targetBufferSize) {
             return (Read(targetBuffer, targetBufferSize) == targetBufferSize);
@@ -47,11 +47,11 @@ class Buffer {
     Buffer();
 	//! Creates a buffer of the given initial size, but does not initialize its contents.
 	Buffer(int initialSize);
-	//! Grants access to the buffer's data. Note that the handed-out memory location gets
-	//! invalidated by subsequent calls to \ref Append().
+    //! Grants access to the buffer's data. Note that the handed-out memory location gets invalidated by subsequent
+    //! calls to \ref Append().
 	void *Data();
-    //! Grants read access to the buffer's data. Note that the handed-out memory location gets
-    //! invalidated by subsequent calls to \ref Append().
+    //! Grants read access to the buffer's data. Note that the handed-out memory location gets invalidated by subsequent
+    //! calls to \ref Append().
     const void *Data() const;
 	//! Tells the current data size, in bytes.
     int DataSize() const;
@@ -69,17 +69,16 @@ class Buffer {
      *  This operation is fast and does not shrink the buffer's underlying capacity.
      */
     void Shrink(int size);
-    //! Appends a copy of the specified memory region to the buffer, potentially invalidating the
-    //! memory location handed out earlier via \ref Data().
+    //! Appends a copy of the specified memory region to the buffer, potentially invalidating the memory location handed
+    //! out earlier via \ref Data().
     /*!
-     *  If <c>data</c> is <c>0</c>, the buffer will still be grown, but no data will actually get
-     *  filled into the new space. Instead, the contents of that buffer region will be undefined.
+     *  If <c>data</c> is <c>0</c>, the buffer will still be grown, but no data will actually get filled into the new
+     *  space. Instead, the contents of that buffer region will be undefined.
      *
      *  If <c>dataSize</c> is <c>0</c>, nothing will happen.
      */
 	void Append(const void *data, int dataSize);
-	//! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's
-	//! underlying capacity.
+    //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
 	/*!
 	 *  The bytes potentially "appended" are undefined.
 	 *

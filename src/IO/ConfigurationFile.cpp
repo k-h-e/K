@@ -19,10 +19,9 @@ using K::IO::StreamBuffer;
 namespace K {
 namespace IO {
 
-ConfigurationFile::ConfigurationFile() {
-    for (char character : string("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_/")) {
-        validCharacters_.insert(character);
-    }
+ConfigurationFile::ConfigurationFile() :
+        validCharacters_("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_/") {
+    // Nop.
 }
 
 bool ConfigurationFile::SetValue(const string &section, const string &key, const string &value) {
@@ -131,15 +130,7 @@ bool ConfigurationFile::IsKey(const std::string &text) {
 }
 
 bool ConfigurationFile::IsValue(const std::string &text) {
-    if (text.length() > 80u) {
-        return false;
-    }
-    for (char character : text) {
-        if (validCharacters_.find(character) == validCharacters_.end()) {
-            return false;
-        }
-    }
-    return true;
+    return validCharacters_.IsValid(text);
 }
 
 }    // Namespace IO.

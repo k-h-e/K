@@ -1,5 +1,6 @@
 #include <K/IO/Directory.h>
 
+#include <sys/stat.h>
 #include <cerrno>
 
 using std::string;
@@ -38,6 +39,10 @@ bool Directory::GetNextEntry(std::string *outName, bool *outIsDirectory) {
 
 bool Directory::ErrorState() {
     return error_;
+}
+
+bool Directory::Create(const std::string &directory) {
+    return (mkdir(directory.c_str(), 0700) == 0);
 }
 
 }    // Namesapce IO.

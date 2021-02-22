@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <K/Core/ValidCharacters.h>
 #include <K/Core/Interface.h>
 
 namespace K {
@@ -55,7 +56,7 @@ class ConfigurationFile : public virtual Core::Interface {
     bool IsValue(const std::string &text);
 
     std::unordered_map<std::string, std::unordered_map<std::string, std::string>> sections_;
-    std::unordered_set<char>                                                      validCharacters_;
+    Core::ValidCharacters                                                         validCharacters_;
 };
 
 }    // Namespace IO.

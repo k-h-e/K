@@ -18,8 +18,8 @@ class Event : public virtual Core::Interface {
     //! Threadsafe.
     class EventType {
       public:
-        //! Pass a verbose name used to initially compute a hash value. Only pass C-style string
-        //! literals (must live forever and be safely accessible by multiple threads).
+        //! Pass a verbose name used to initially compute a hash value. Only pass C-style string literals (must live
+        //! forever and be safely accessible by multiple threads).
         EventType(const char *aName);
             // Copyable, movable.
         const char   *name;

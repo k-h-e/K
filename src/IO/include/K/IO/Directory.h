@@ -28,6 +28,13 @@ class Directory : public virtual K::Core::ErrorStateInterface {
     bool GetNextEntry(std::string *outName, bool *outIsDirectory);
     bool ErrorState();
 
+    //! Creates the specified directory.
+    /*!
+     *  \return
+     *  <c>false</c> in case of failure.
+     */
+    static bool Create(const std::string &directory);
+
   private:
     DIR  *directory_;
     bool error_;
