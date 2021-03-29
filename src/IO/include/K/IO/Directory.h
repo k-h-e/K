@@ -25,7 +25,7 @@ class Directory : public virtual K::Core::ErrorStateInterface {
      *  ErrorState() should be inspected to check whether or not directory reading finished because of an encountered
      *  error.
      */
-    bool GetNextEntry(std::string *outName, bool *outIsDirectory);
+    bool GetNextEntry(std::string *outName, bool *outIsDirectory, off_t *outSize);
     bool ErrorState();
 
     //! Creates the specified directory.
@@ -36,8 +36,10 @@ class Directory : public virtual K::Core::ErrorStateInterface {
     static bool Create(const std::string &directory);
 
   private:
-    DIR  *directory_;
-    bool error_;
+    std::string path_;
+    DIR         *directory_;
+    bool        atEnd_;
+    bool        error_;
 };
 
 }    // Namespace IO.

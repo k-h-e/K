@@ -9,8 +9,10 @@ namespace K {
 namespace IO {
 
 Directory::Directory(const string &path) {
+    path_      = path;
     directory_ = opendir(path.c_str());
     error_     = (directory_ == nullptr);
+    atEnd_     = error_;
 }
 
 Directory::~Directory() {
@@ -19,18 +21,30 @@ Directory::~Directory() {
     }
 }
 
-bool Directory::GetNextEntry(std::string *outName, bool *outIsDirectory) {
-    if (!error_) {
+bool Directory::GetNextEntry(std::string *outName, bool *outIsDirectory, off_t *outSize) {
+    if (!error_ && !atEnd_) {
+        errno = 0;
         struct dirent *entry = readdir(directory_);
         if (entry) {
             *outName        = entry->d_name;
             *outIsDirectory = (entry->d_type == DT_DIR);
-            return true;
-        }
-        else {
-            if (errno != ENOENT) {
-                error_ = true;
+
+            if (!*outIsDirectory) {
+                struct stat fileStats;
+                if (!stat((path_ + "/" + *outName).c_str(), &fileStats)) {
+                    *outSize = fileStats.st_size;
+                    return true;
+                }
             }
+            else {
+                *outSize = 0u;
+                return true;
+            }
+        }
+
+        atEnd_ = true;
+        if (errno != 0) {
+            error_ = true;
         }
     }
 
