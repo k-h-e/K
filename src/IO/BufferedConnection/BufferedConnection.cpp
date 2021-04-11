@@ -62,7 +62,7 @@ BufferedConnection::~BufferedConnection() {
         error = true;
     }
 
-    Result finalResult(!error && !sharedState_->Eof());
+    Result finalResult(!error);
     if (finalResultAcceptor_) {
         *finalResultAcceptor_ = finalResult;
     }

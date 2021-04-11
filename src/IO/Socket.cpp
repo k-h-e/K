@@ -51,7 +51,7 @@ Socket::~Socket() {
         }
     }
 
-    Result finalResult(!error_ && !eof_);
+    Result finalResult(!error_);
     if (finalResultAcceptor_) {
         *finalResultAcceptor_ = finalResult;
     }

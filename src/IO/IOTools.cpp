@@ -16,9 +16,7 @@ const char *IOTools::whiteSpace = " \t\r\n";
 
 bool IOTools::CloseFileDescriptor(int fd, Core::Interface *loggingObject) {
     while (true) {
-        Log::Print(Log::Level::Debug, loggingObject, [&]{ return "closing fd " + to_string(fd); });
         if (!close(fd)) {
-            Log::Print(Log::Level::Debug, loggingObject, [&]{ return "fd " + to_string(fd) + " closed"; });
             return true;
         }
         else {

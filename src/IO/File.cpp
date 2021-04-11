@@ -23,7 +23,8 @@ File::File(const string &fileName, AccessMode accessMode, bool truncate)
 }
 
 File::File(const string &fileName, AccessMode accessMode, bool truncate, const shared_ptr<Result> &resultAcceptor)
-        : fd_(-1),
+        : fileName_(fileName),
+          fd_(-1),
           position_(0),
           eof_(false),
           error_(true),
@@ -56,7 +57,7 @@ File::File(const string &fileName, AccessMode accessMode, bool truncate, const s
             error_ = false;
             done   = true;
             Log::Print(Log::Level::Debug, this, [&]{
-                return string("file \"") + fileName + "\" opened, fd=" + to_string(fd_); });
+                return string("opened file \"") + fileName + "\", fd=" + to_string(fd_); });
         }
         else {
             if (errno != EINTR) {
@@ -75,12 +76,12 @@ File::~File() {
         }
     }
 
-    Result finalResult(!error_ && !eof_);
+    Result finalResult(!error_);
     if (finalResultAcceptor_) {
         *finalResultAcceptor_ = finalResult;
     }
     Log::Print(Log::Level::Debug, this, [&]{
-        return "closed, fd=" + to_string(fd_) + ", final_result=" + finalResult.ToString();
+        return "closed file \"" + fileName_ + "\", fd=" + to_string(fd_) + ", final_result=" + finalResult.ToString();
     });
 }
 
@@ -98,7 +99,8 @@ int File::Read(void *outBuffer, int bufferSize) {
                 else if (numRead == 0) {
                     eof_ = true;
                     Log::Print(Log::Level::Debug, this, [&]{
-                        return "reading on fd " + to_string(fd_) + " reached EOF"; });
+                        return "EOF encountered, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
+                    });
                     return 0;
                 }
                 else {
@@ -110,7 +112,9 @@ int File::Read(void *outBuffer, int bufferSize) {
         }
 
         error_ = true;
-        Log::Print(Log::Level::Warning, this, [&]{ return "error while reading from fd " + to_string(fd_); });
+        Log::Print(Log::Level::Warning, this, [&]{
+            return "read error, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
+        });
     }
 
     return 0;
@@ -136,7 +140,9 @@ int File::Write(const void *data, int dataSize) {
         }
 
         error_ = true;
-        Log::Print(Log::Level::Warning, this, [&]{ return "error while writing on fd " + to_string(fd_); });
+        Log::Print(Log::Level::Warning, this, [&]{
+            return "write error, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
+        });
     }
 
     return 0;
@@ -152,7 +158,9 @@ bool File::Seek(int64_t position) {
 
         error_ = true;
         Log::Print(Log::Level::Warning, this, [&]{
-            return "error while seeking in fd " + to_string(fd_) + " to position " + to_string(position); });
+            return "seek error, file=\"" + fileName_ + "\", fd=" + to_string(fd_) + ", position="
+                + to_string(position);
+        });
     }
 
     return false;

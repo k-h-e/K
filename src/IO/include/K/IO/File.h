@@ -37,6 +37,7 @@ class File : public BlockingStreamCore,
     static void AccessModeToFlags(AccessMode accessMode, bool *outReadable, bool *outWritable);
 
   private:
+    std::string                   fileName_;
     int                           fd_;
     bool                          readable_;
     bool                          writable_;

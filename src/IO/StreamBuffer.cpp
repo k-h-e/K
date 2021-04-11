@@ -60,7 +60,7 @@ StreamBuffer::~StreamBuffer() {
     delete[] buffer_;
 
     Result finalResult;
-    if (error_ || eof_) {
+    if (error_) {
         finalResult.Set(false);
     }
     else {

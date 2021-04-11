@@ -2,6 +2,8 @@
 #define K_IO_DIRECTORY_H_
 
 #include <dirent.h>
+#include <memory>
+#include <unordered_map>
 #include <string>
 #include <K/Core/ErrorStateInterface.h>
 
@@ -34,6 +36,12 @@ class Directory : public virtual K::Core::ErrorStateInterface {
      *  <c>false</c> in case of failure.
      */
     static bool Create(const std::string &directory);
+    //! Reads the specified directory and returns information on all file-type entries.
+    /*!
+     * \return
+     * Map mapping file name to file size, <c>nullptr</c> in case of failure.
+     */
+    static std::shared_ptr<std::unordered_map<std::string, off_t>> GetFiles(const std::string &directory);
 
   private:
     std::string path_;

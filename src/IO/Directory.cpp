@@ -4,6 +4,9 @@
 #include <cerrno>
 
 using std::string;
+using std::shared_ptr;
+using std::make_shared;
+using std::unordered_map;
 
 namespace K {
 namespace IO {
@@ -57,6 +60,26 @@ bool Directory::ErrorState() {
 
 bool Directory::Create(const std::string &directory) {
     return (mkdir(directory.c_str(), 0700) == 0);
+}
+
+shared_ptr<unordered_map<std::string, off_t>> Directory::GetFiles(const std::string &directory) {
+    auto result = make_shared<unordered_map<std::string, off_t>>();
+
+    string name;
+    bool   isDirectory;
+    off_t  size;
+    Directory reader(directory);
+    while (reader.GetNextEntry(&name, &isDirectory, &size)) {
+        if (!isDirectory) {
+            (*result)[name] = size;
+        }
+    }
+
+    if (reader.ErrorState()) {
+        result.reset();
+    }
+
+    return result;
 }
 
 }    // Namesapce IO.

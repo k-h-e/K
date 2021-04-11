@@ -20,8 +20,8 @@ class StreamInterface : public virtual K::Core::ErrorStateInterface,
   public:
     //! If a result acceptor is set, the stream will use it to report a final result upon destruction (think RAII).
     /*!
-     *  In case neither error nor EOF state is set upon stream destruction, the result acceptor will be set to success,
-     *  otherwise to failure.
+     *  In case error state is not set upon stream destruction, the result acceptor will be set to success, otherwise to
+     *  failure.
      *
      *  Pass <c>nullptr</c> to unregister a previously registered result acceptor.
      *
