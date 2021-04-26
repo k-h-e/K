@@ -1,5 +1,5 @@
-#ifndef K_EVENTS_IO_WORKER_H_
-#define K_EVENTS_IO_WORKER_H_
+#ifndef K_IO_CONNECTIONIO_WORKER_H_
+#define K_IO_CONNECTIONIO_WORKER_H_
 
 #include <sys/select.h>
 #include <unordered_map>
@@ -84,4 +84,4 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
 }    // Namespace IO.
 }    // Namespace K.
 
-#endif    // K_EVENTS_IO_WORKER_H_
+#endif    // K_IO_CONNECTIONIO_WORKER_H_

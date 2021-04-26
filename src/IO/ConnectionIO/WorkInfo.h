@@ -1,5 +1,5 @@
-#ifndef K_EVENTS_IO_WORKINFO_H_
-#define K_EVENTS_IO_WORKINFO_H_
+#ifndef K_IO_CONNECTIONIO_WORKINFO_H_
+#define K_IO_CONNECTIONIO_WORKINFO_H_
 
 #include <vector>
 #include <K/IO/ConnectionIO.h>
@@ -81,4 +81,4 @@ struct ConnectionIO::WorkInfo {
 }    // Namespace IO.
 }    // Namespace K.
 
-#endif    // K_EVENTS_IO_WORKINFO_H_
+#endif    // K_IO_CONNECTIONIO_WORKINFO_H_

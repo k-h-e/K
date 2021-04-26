@@ -1,5 +1,5 @@
-#ifndef K_IO_IO_SHAREDSTATE_H_
-#define K_IO_IO_SHAREDSTATE_H_
+#ifndef K_IO_CONNECTIONIO_SHAREDSTATE_H_
+#define K_IO_CONNECTIONIO_SHAREDSTATE_H_
 
 #include <vector>
 #include <mutex>
@@ -61,4 +61,4 @@ class ConnectionIO::SharedState : public virtual K::Core::CompletionHandlerInter
 }    // Namespace IO.
 }    // Namespace K.
 
-#endif    // K_IO_IO_SHAREDSTATE_H
+#endif    // K_IO_CONNECTIONIO_SHAREDSTATE_H_
