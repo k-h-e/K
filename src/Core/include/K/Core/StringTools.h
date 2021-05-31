@@ -21,6 +21,7 @@ class StringTools {
     static bool Parse(const std::string &text, float *outValue);
     static bool Parse(const std::string &text, double *outValue);
     static std::string GetCleanClassName(Interface *instance);
+    static std::string GetCleanClassName(Interface *instance, int maxNumSegments);
 };
 
 }    // Namespace Core.

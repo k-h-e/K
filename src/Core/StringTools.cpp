@@ -3,6 +3,7 @@
 #include <sstream>
 #include <typeinfo>
 #include <K/Core/Interface.h>
+#include <K/Core/NumberTools.h>
 
 using std::string;
 using std::istringstream;
@@ -10,6 +11,8 @@ using std::ostringstream;
 using std::vector;
 using std::invalid_argument;
 using std::out_of_range;
+using std::numeric_limits;
+using K::Core::NumberTools;
 
 namespace K {
 namespace Core {
@@ -111,6 +114,12 @@ bool StringTools::Parse(const std::string &text, double *outValue) {
 }
 
 string StringTools::GetCleanClassName(Interface *instance) {
+    return GetCleanClassName(instance, numeric_limits<int>::max());
+}
+
+string StringTools::GetCleanClassName(Interface *instance, int maxNumSegments) {
+    NumberTools::ClampMin(&maxNumSegments, 1);
+
     string className = instance ? typeid(*instance).name() : "";
     if (className.length() && (className[0] == 'N')) {
         className.erase(0, 1);
@@ -118,7 +127,17 @@ string StringTools::GetCleanClassName(Interface *instance) {
     if (className.length() && (className[className.length() - 1u] == 'E')) {
         className.erase(className.length() - 1u, 1);
     }
-    return StringTools::Concatenate(StringTools::Tokenize(className, "1234567890", true), "::");
+    vector<string> tokens = StringTools::Tokenize(className, "1234567890", true);
+    int numTokens = static_cast<int>(tokens.size());
+    if (numTokens > maxNumSegments) {
+        vector<string> newTokens;
+        for (int i = numTokens - maxNumSegments; i < numTokens; ++i) {
+            newTokens.push_back(tokens[i]);
+        }
+        tokens = newTokens;
+    }
+
+    return StringTools::Concatenate(tokens, "::");
 }
 
 }    // Namespace Core.
