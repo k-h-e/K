@@ -1,5 +1,6 @@
 #include <K/Core/StringTools.h>
 
+#include <limits>
 #include <sstream>
 #include <typeinfo>
 #include <K/Core/Interface.h>
