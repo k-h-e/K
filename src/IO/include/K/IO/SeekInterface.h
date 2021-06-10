@@ -12,10 +12,9 @@ class SeekInterface : public virtual K::Core::Interface {
   public:
     //! Sets the read/write position as specified.
     /*!
-     *  \return
-     *  <c>false</c> in case of failure. The stream will then have entered error state.
+     *  In case of failure, the stream will enter error state.
      */
-    virtual bool Seek(int64_t position) = 0;
+    virtual void Seek(int64_t position) = 0;
     //! Returns the stream's current read/write position.
     virtual int64_t StreamPosition() = 0;
 };

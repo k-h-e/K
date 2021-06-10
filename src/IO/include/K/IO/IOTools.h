@@ -13,8 +13,6 @@ namespace K {
 namespace IO {
 
 class StreamInterface;
-class ItemReadInterface;
-class ItemWriteInterface;
 class BlockingStreamInterface;
 class SeekableBlockingStreamInterface;
 
@@ -30,88 +28,99 @@ class IOTools {
     static bool CloseFileDescriptor(int fd, K::Core::Interface *loggingObject);
 };
 
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, const std::string &text);
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint8_t value);
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint32_t value);
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, float value);
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, double value);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, uint8_t &value);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, uint32_t &value);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, float &value);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, double &value);
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, const std::string &text);
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, uint8_t value);
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, uint32_t value);
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, float value);
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, double value);
 
 //! Returns <c>true</c> iff neither error nor EOF state are set on the specified stream.
 bool Good(StreamInterface *stream);
 
 //! Reads an integer.
 /*!
- *  \return
- *  <c>false</c> in case of failure. The output item will then be undefined, and error state or EOF will be raised
- *  on the stream.
+ *  In case of failure, the output item will be undefined and error state or EOF will be raised on the stream.
  */
-bool Read(ItemReadInterface *stream, int *outValue);
+void Read(BlockingStreamInterface *stream, int *outValue);
+//! Reads an 8-bit unsigned integer.
+/*!
+ *  In case of failure, the output item will be undefined and error state or EOF will be raised on the stream.
+ */
+void Read(BlockingStreamInterface *stream, uint8_t *outValue);
+//! Reads a 32-bit unsigned integer.
+/*!
+ *  In case of failure, the output item will be undefined and error state or EOF will be raised on the stream.
+ */
+void Read(BlockingStreamInterface *stream, uint32_t *outValue);
+//! Reads a single precision floating point number.
+/*!
+ *  In case of failure, the output item will be undefined and error state or EOF will be raised on the stream.
+ */
+void Read(BlockingStreamInterface *stream, float *outValue);
+//! Reads a double precision floating point number.
+/*!
+ *  In case of failure, the output item will be undefined and error state or EOF will be raised on the stream.
+ */
+void Read(BlockingStreamInterface *stream, double *outValue);
 //! Reads a string.
 /*!
- *  \return
- *  <c>false</c> in case of failure. The output item will then be undefined, and error state or EOF will be raised
- *  on the stream (or both).
+ *  Encountering the specified delimiter or EOF will terminate reading.
+ *
+ *  In case of failure, the output item will be undefined, and error state will be raised on the stream.
  */
-bool Read(BlockingStreamInterface *stream, char delimiter, std::string *outString);
+void Read(BlockingStreamInterface *stream, char delimiter, std::string *outString);
 //! Reads a string.
 /*!
- *  The read is (only) successful when one of the specified delimiters has been reached.
+ *  Encountering a character not in the specified valid set or EOF will terminate reading. The next read on the stream
+ *  will happen at the offending position.
  *
- *  \param outEncounteredDelimiter
- *  If given will accept the delimiter that was encountered.
+ *  In case of failure, the output string will be undefined and error state will be raised on the stream.
  *
- *  \return
- *  <c>false</c> in case of failure. The output items will then be undefined, and error state or EOF will be raised
- *  on the stream (or both).
+ *  \param readOther
+ *  If set, the complement of the specified set will be treated as the valid characters.
  */
-bool ReadUntil(ItemReadInterface *stream, const std::string &delimiters, std::string *outString,
-               char *outEncounteredDelimiter);
-//! Skips (ignores) bytes until a character other than those specified is encountered.
+void Read(SeekableBlockingStreamInterface *stream, const std::string &validCharacters, bool readOther,
+           std::string *outString);
+//! Skips the specified characters.
 /*!
- *  \param outCharacter
- *  If given will accept the (not-skippable) character that was encountered.
+ *  Encountering a character not in the specified skip set or EOF will terminate reading. The next read on the stream
+ *  will happen at the offending position.
  *
- * \return
- *  <c>false</c> in case of failure. Error state or EOF will then be raised on the stream (or both). The output
- *  parameter will then be undefined.
+ *  In case of failure, error state will be raised on the stream.
+ *
+ *  \param skipOther
+ *  If set, the complement of the specified set will be treated as the characters to skip.
  */
-bool Skip(ItemReadInterface *stream, const std::string &charactersToSkip, char *outCharacter);
-//! Skips (ignores) bytes until the specified character is encountered.
-/*!
- * \return
- *  <c>false</c> in case of failure. Error state or EOF will then be raised on the stream (or both).
- */
-bool SkipUntil(ItemReadInterface *stream, char character);
-//! Writes the specified string.
-/*!
- *  \return
- *  <c>false</c> in case of failure. Error state will then be raised on the stream.
- */
-bool Write(ItemWriteInterface *stream, const std::string &text);
+void Skip(SeekableBlockingStreamInterface *stream, const std::string &charactersToSkip, bool skipOther);
 //! Writes the specified <c>uint8</c> value.
 /*!
- *  \return
- *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ *  In case of failure, error state will be raised on the stream.
  */
-bool Write(ItemWriteInterface *stream, uint8_t value);
+void Write(BlockingStreamInterface *stream, uint8_t value);
 //! Writes the specified <c>uint32</c> value.
 /*!
- *  \return
- *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ *  In case of failure, error state will be raised on the stream.
  */
-bool Write(ItemWriteInterface *stream, uint32_t value);
+void Write(BlockingStreamInterface *stream, uint32_t value);
 //! Writes the specified single-precision floating point number.
 /*!
- *  \return
- *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ *  In case of failure, error state will be raised on the stream.
  */
-bool Write(ItemWriteInterface *stream, float value);
+void Write(BlockingStreamInterface *stream, float value);
 //! Writes the specified double-precision floating point number.
 /*!
- *  \return
- *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+ *  In case of failure, error state will be raised on the stream.
  */
-bool Write(ItemWriteInterface *stream, double value);
+void Write(BlockingStreamInterface *stream, double value);
+//! Writes the specified string.
+/*!
+ *  In case of failure, error state will be raised on the stream.
+ */
+void Write(BlockingStreamInterface *stream, const std::string &text);
 
 }    // Namespace IO.
 }    // namespace K.

@@ -9,8 +9,8 @@ namespace IO {
 //! Base class to blocking streams.
 class BlockingStreamCore : public virtual BlockingStreamInterface {
   public:
-    bool ReadItem(void *outItem, int itemSize) override;
-    bool WriteItem(const void *item, int itemSize) override;
+    void ReadItem(void *outItem, int itemSize) override;
+    void WriteItem(const void *item, int itemSize) override;
 };
 
 }    // Namespace IO.

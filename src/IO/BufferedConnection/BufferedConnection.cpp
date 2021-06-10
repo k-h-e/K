@@ -79,8 +79,8 @@ void BufferedConnection::Unregister(const shared_ptr<HandlerInterface> &handler)
     sharedState_->Unregister(handler);
 }
 
-bool BufferedConnection::WriteItem(const void *item, int itemSize) {
-    return sharedState_->WriteItem(item, itemSize);
+void BufferedConnection::WriteItem(const void *item, int itemSize) {
+    sharedState_->WriteItem(item, itemSize);
 }
 
 bool BufferedConnection::Eof() {

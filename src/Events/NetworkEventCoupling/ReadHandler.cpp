@@ -83,9 +83,6 @@ void NetworkEventCoupling::ReadHandler::CopyDown() {
         }
         buffer_.Shrink(numRemaining);
         cursor_ = 0;
-
-        Log::Print(Log::Level::Debug, this, [&]{ return "copied remainder down, fill=" + to_string(buffer_.DataSize())
-            + ", cursor=" + to_string(cursor_); });
     }
 }
 

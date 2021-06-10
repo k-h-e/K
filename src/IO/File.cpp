@@ -148,12 +148,12 @@ int File::Write(const void *data, int dataSize) {
     return 0;
 }
 
-bool File::Seek(int64_t position) {
+void File::Seek(int64_t position) {
     assert(position >= 0);
     if (!error_) {
         if (lseek(fd_, static_cast<off_t>(position), SEEK_SET) == static_cast<off_t>(position)) {
             position_ = position;
-            return true;
+            return;
         }
 
         error_ = true;
@@ -162,8 +162,6 @@ bool File::Seek(int64_t position) {
                 + to_string(position);
         });
     }
-
-    return false;
 }
 
 int64_t File::StreamPosition() {

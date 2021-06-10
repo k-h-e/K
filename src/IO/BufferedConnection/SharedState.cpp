@@ -59,14 +59,14 @@ void BufferedConnection::SharedState::Unregister(const shared_ptr<HandlerInterfa
     }
 }    // ......................................................................................... critical section, end.
 
-bool BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) {
+void BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) {
     assert(itemSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     const uint8_t *data   = static_cast<const uint8_t *>(item);
     int           numLeft = itemSize;
     while (!error_) {
         if (!numLeft) {
-            return true;
+            return;
         }
 
         int bufferFill = writeBuffer_.Fill();
@@ -84,8 +84,6 @@ bool BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) 
             }
         }
     }
-
-    return false;
 }    // ......................................................................................... critical section, end.
 
 

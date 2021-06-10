@@ -4,6 +4,7 @@
 #include <cstring>
 #include <K/Core/Result.h>
 #include <K/Core/Log.h>
+#include <K/IO/IOTools.h>
 
 using std::shared_ptr;
 using std::make_shared;
@@ -92,7 +93,8 @@ int StreamBuffer::Read(void *outBuffer, int bufferSize) {
                 std::memcpy(outBuffer, &buffer_[cursor_], numToRead);
                 int newCursor = cursor_ + numToRead;
                 if (newCursor == bufferSize_) {
-                    if (Seek(bufferPosition_ + bufferSize_)) {
+                    Seek(bufferPosition_ + bufferSize_);
+                    if (!ErrorState()) {
                         return numToRead;
                     }
                 }
@@ -133,7 +135,8 @@ int StreamBuffer::Write(const void *data, int dataSize) {
             }
 
             if (newCursor == bufferSize_) {
-                if (Seek(bufferPosition_ + bufferSize_)) {
+                Seek(bufferPosition_ + bufferSize_);
+                if (!ErrorState()) {
                     return numToWrite;
                 }
             }
@@ -150,28 +153,26 @@ int StreamBuffer::Write(const void *data, int dataSize) {
     return 0;
 }
 
-bool StreamBuffer::Seek(int64_t position) {
+void StreamBuffer::Seek(int64_t position) {
     assert(position >= 0);
     if (!error_) {
         int newBufferPosition = BufferPositionFor(position);
         if (newBufferPosition != bufferPosition_) {
             if (Flush()) {
                 if (SetUpBuffer(position)) {
-                    return true;
+                    return;
                 }
             }
         }
         else {
             cursor_ = position - bufferPosition_;
-            return true;
+            return;
         }
 
         error_ = true;
         Log::Print(Log::Level::Warning, this, [&]{
             return "error while seeking to position " + to_string(position); });
     }
-
-    return false;
 }
 
 int64_t StreamBuffer::StreamPosition() {
@@ -201,25 +202,24 @@ int64_t StreamBuffer::BufferPositionFor(int64_t position) {
 bool StreamBuffer::SetUpBuffer(int64_t position) {
     int64_t newBufferPosition = BufferPositionFor(position);
     if (readable_) {
+        int numReadTotal = 0;
         stream_->ClearEof();
-        if (stream_->Seek(newBufferPosition)) {
-            int numReadTotal = 0;
-            while (!stream_->ErrorState()) {
-                numReadTotal += stream_->Read(&buffer_[numReadTotal], bufferSize_ - numReadTotal);
-                if ((numReadTotal == bufferSize_) || stream_->Eof()) {
-                    if (numReadTotal < bufferSize_) {
-                        std::memset(&buffer_[numReadTotal], 0, bufferSize_ - numReadTotal);
-                    }
-                    bufferPosition_ = newBufferPosition;
-                    fill_           = numReadTotal;
-                    cursor_         = position - newBufferPosition;
-                    dirty_          = false;
-                    Log::Print(Log::Level::Debug, this, [&]{
-                        return "pre-loaded buffer with " + to_string(fill_) + " bytes from position "
-                            + to_string(bufferPosition_);
-                    });
-                    return true;
+        stream_->Seek(newBufferPosition);
+        while (!stream_->ErrorState()) {
+            numReadTotal += stream_->Read(&buffer_[numReadTotal], bufferSize_ - numReadTotal);
+            if ((numReadTotal == bufferSize_) || stream_->Eof()) {
+                if (numReadTotal < bufferSize_) {
+                    std::memset(&buffer_[numReadTotal], 0, bufferSize_ - numReadTotal);
                 }
+                bufferPosition_ = newBufferPosition;
+                fill_           = numReadTotal;
+                cursor_         = position - newBufferPosition;
+                dirty_          = false;
+                Log::Print(Log::Level::Debug, this, [&]{
+                    return "pre-loaded buffer with " + to_string(fill_) + " bytes from position "
+                        + to_string(bufferPosition_);
+                });
+                return true;
             }
         }
     }
@@ -297,21 +297,22 @@ bool StreamBuffer::Flush() {
 }
 
 bool StreamBuffer::FlushDirtyRange(int cursor, int numBytes) {
-    if (stream_->Seek(bufferPosition_ + cursor)) {
-        if (stream_->WriteItem(&buffer_[cursor], numBytes)) {
-            Log::Print(Log::Level::Debug, this, [&]{
-                return "flushed " + to_string(numBytes) + " dirty bytes to position "
-                    + to_string(bufferPosition_ + cursor);
-            });
-            return true;
-        }
+    stream_->Seek(bufferPosition_ + cursor);
+    stream_->WriteItem(&buffer_[cursor], numBytes);
+    if (!stream_->ErrorState()) {
+        Log::Print(Log::Level::Debug, this, [&]{
+            return "flushed " + to_string(numBytes) + " dirty bytes to position "
+                + to_string(bufferPosition_ + cursor);
+        });
+        return true;
     }
-
-    Log::Print(Log::Level::Warning, this, [&]{
-        return ("failed to flush " + to_string(numBytes) + " dirty bytes to position "
-            + to_string(bufferPosition_ + cursor));
-    });
-    return false;
+    else {
+        Log::Print(Log::Level::Warning, this, [&]{
+            return ("failed to flush " + to_string(numBytes) + " dirty bytes to position "
+                + to_string(bufferPosition_ + cursor));
+        });
+        return false;
+    }
 }
 
 }    // Namesapce IO.

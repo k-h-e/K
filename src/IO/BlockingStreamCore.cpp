@@ -5,7 +5,7 @@
 namespace K {
 namespace IO {
 
-bool BlockingStreamCore::ReadItem(void *outItem, int itemSize) {
+void BlockingStreamCore::ReadItem(void *outItem, int itemSize) {
     uint8_t *target      = static_cast<uint8_t *>(outItem);
     int     numRemaining = itemSize;
     while (numRemaining > 0) {
@@ -16,14 +16,13 @@ bool BlockingStreamCore::ReadItem(void *outItem, int itemSize) {
         }
         else {
             if (ErrorState() || Eof()) {
-                return false;
+                return;
             }
         }
     }
-    return true;
 }
 
-bool BlockingStreamCore::WriteItem(const void *item, int itemSize) {
+void BlockingStreamCore::WriteItem(const void *item, int itemSize) {
     const uint8_t *source      = static_cast<const uint8_t *>(item);
     int           numRemaining = itemSize;
     while (numRemaining > 0) {
@@ -34,11 +33,10 @@ bool BlockingStreamCore::WriteItem(const void *item, int itemSize) {
         }
         else {
             if (ErrorState()) {
-                return false;
+                return;
             }
         }
     }
-    return true;
 }
 
 }    // Namespace IO.

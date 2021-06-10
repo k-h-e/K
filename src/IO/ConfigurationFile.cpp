@@ -87,26 +87,29 @@ bool ConfigurationFile::Load(const std::string &fileName) {
     unordered_set<char> whiteSpace{ ' ', '\t' };
     string currentSection;
     string line;
-    while (Read(&stream, '\n', &line)) {
-        if ((line.length() > 0u) && (line[0] == '[')) {
-            StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
-            currentSection = line;
-        }
-        else {
-            vector<string> tokens = StringTools::Tokenize(line, '=');
-            if (tokens.size() == 2u) {
-                StringTools::Trim(&tokens[0], whiteSpace);
-                StringTools::Trim(&tokens[1], whiteSpace);
-                if (!SetValue(currentSection, tokens[0], tokens[1])) {
-                    sections_.clear();
-                    return false;
-                }
+    while (Good(&stream)) {
+        Read(&stream, '\n', &line);
+        if (Good(&stream)) {
+            if ((line.length() > 0u) && (line[0] == '[')) {
+                StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
+                currentSection = line;
             }
             else {
-                StringTools::Trim(&line, whiteSpace);
-                if (!line.empty()) {
-                    sections_.clear();
-                    return false;
+                vector<string> tokens = StringTools::Tokenize(line, '=');
+                if (tokens.size() == 2u) {
+                    StringTools::Trim(&tokens[0], whiteSpace);
+                    StringTools::Trim(&tokens[1], whiteSpace);
+                    if (!SetValue(currentSection, tokens[0], tokens[1])) {
+                        sections_.clear();
+                        return false;
+                    }
+                }
+                else {
+                    StringTools::Trim(&line, whiteSpace);
+                    if (!line.empty()) {
+                        sections_.clear();
+                        return false;
+                    }
                 }
             }
         }

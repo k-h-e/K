@@ -29,48 +29,85 @@ bool IOTools::CloseFileDescriptor(int fd, Core::Interface *loggingObject) {
     }
 }
 
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, const std::string &text) {
-    (void)Write(&stream, text);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, uint8_t &value) {
+    Read(&stream, &value);
     return stream;
 }
 
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint8_t value) {
-    (void)Write(&stream, value);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, uint32_t &value) {
+    Read(&stream, &value);
     return stream;
 }
 
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, uint32_t value) {
-    (void)Write(&stream, value);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, float &value) {
+    Read(&stream, &value);
     return stream;
 }
 
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, float value) {
-    (void)Write(&stream, value);
+BlockingStreamInterface &operator>>(BlockingStreamInterface &stream, double &value) {
+    Read(&stream, &value);
     return stream;
 }
 
-ItemWriteInterface &operator<<(ItemWriteInterface &stream, double value) {
-    (void)Write(&stream, value);
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, const std::string &text) {
+    Write(&stream, text);
+    return stream;
+}
+
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, uint8_t value) {
+    Write(&stream, value);
+    return stream;
+}
+
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, uint32_t value) {
+    Write(&stream, value);
+    return stream;
+}
+
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, float value) {
+    Write(&stream, value);
+    return stream;
+}
+
+BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, double value) {
+    Write(&stream, value);
     return stream;
 }
 
 bool Good(StreamInterface *stream) {
-    return (!stream->ErrorState() && !stream->Eof());
+    return !stream->ErrorState() && !stream->Eof();
 }
 
-bool Read(ItemReadInterface *stream, int *outValue) {
-    return stream->ReadItem(outValue, sizeof(*outValue));
+void Read(BlockingStreamInterface *stream, int *outValue) {
+    stream->ReadItem(outValue, sizeof(*outValue));
 }
 
-bool Read(BlockingStreamInterface *stream, char delimiter, string *outString) {
+void Read(BlockingStreamInterface *stream, uint8_t *outValue) {
+    stream->ReadItem(outValue, sizeof(*outValue));
+}
+
+void Read(BlockingStreamInterface *stream, uint32_t *outValue) {
+    stream->ReadItem(outValue, sizeof(*outValue));
+}
+
+void Read(BlockingStreamInterface *stream, float *outValue) {
+    stream->ReadItem(outValue, sizeof(*outValue));
+}
+
+void Read(BlockingStreamInterface *stream, double *outValue) {
+    stream->ReadItem(outValue, sizeof(*outValue));
+}
+
+void Read(BlockingStreamInterface *stream, char delimiter, string *outString) {
     outString->clear();
     while (true) {
         char character;
-        if (!stream->ReadItem(&character, sizeof(character))) {
-            return (stream->Eof() && !stream->ErrorState() && !outString->empty());
+        stream->ReadItem(&character, sizeof(character));
+        if (!Good(stream)) {
+            return;
         }
         else if (character == delimiter) {
-            return true;
+            return;
         }
         else {
             outString->push_back(character);
@@ -78,19 +115,25 @@ bool Read(BlockingStreamInterface *stream, char delimiter, string *outString) {
     }
 }
 
-bool ReadUntil(ItemReadInterface *stream, const std::string &delimiters, std::string *outString,
-               char *outEncounteredDelimiter) {
+void Read(SeekableBlockingStreamInterface *stream, const string &validCharacters, bool readOther, string *outString) {
     outString->clear();
     while (true) {
+        int64_t position = stream->StreamPosition();
+
         char character;
-        if (!stream->ReadItem(&character, sizeof(character))) {
-            return false;
+        stream->ReadItem(&character, sizeof(character));
+        if (!Good(stream)) {
+            return;
         }
-        else if (delimiters.find(character) != string::npos) {
-            if (outEncounteredDelimiter) {
-                *outEncounteredDelimiter = character;
-            }
-            return true;
+
+        bool characterValid = (validCharacters.find(character) != string::npos);
+        if (readOther) {
+            characterValid = !characterValid;
+        }
+
+        if (!characterValid) {
+            stream->Seek(position);
+            return;
         }
         else {
             outString->push_back(character);
@@ -98,57 +141,49 @@ bool ReadUntil(ItemReadInterface *stream, const std::string &delimiters, std::st
     }
 }
 
-bool Skip(ItemReadInterface *stream, const string &charactersToSkip, char *outCharacter) {
+void Skip(SeekableBlockingStreamInterface *stream, const string &charactersToSkip, bool skipOther) {
     while (true) {
+        int64_t position = stream->StreamPosition();
+
         char character;
-        if (!stream->ReadItem(&character, sizeof(character))) {
-            return false;
+        stream->ReadItem(&character, sizeof(character));
+        if (!Good(stream)) {
+            return;
         }
-        else if (charactersToSkip.find(character) == string::npos) {
-            if (outCharacter) {
-                *outCharacter = character;
-            }
-            return true;
+
+        bool skipCharacter = (charactersToSkip.find(character) != string::npos);
+        if (skipOther) {
+            skipCharacter = !skipCharacter;
+        }
+
+        if (!skipCharacter) {
+            stream->Seek(position);
+            return;
         }
     }
 }
 
-bool SkipUntil(ItemReadInterface *stream, char character) {
-    while (true) {
-        char aCharacter;
-        if (!stream->ReadItem(&aCharacter, sizeof(aCharacter))) {
-            return false;
-        }
-        else if (aCharacter == character) {
-            return true;
-        }
-    }
+void Write(BlockingStreamInterface *stream, uint8_t value) {
+    stream->WriteItem(&value, sizeof(value));
 }
 
-bool Write(ItemWriteInterface *stream, const string &text) {
+void Write(BlockingStreamInterface *stream, uint32_t value) {
+    stream->WriteItem(&value, sizeof(value));
+}
+
+void Write(BlockingStreamInterface *stream, float value) {
+    stream->WriteItem(&value, sizeof(value));
+}
+
+void Write(BlockingStreamInterface *stream, double value) {
+    stream->WriteItem(&value, sizeof(value));
+}
+
+void Write(BlockingStreamInterface *stream, const string &text) {
     int size = static_cast<int>(text.size() * sizeof(string::value_type));
     if (size > 0) {
-        return stream->WriteItem(&text[0], size);
+        stream->WriteItem(&text[0], size);
     }
-    else {
-        return true;
-    }
-}
-
-bool Write(ItemWriteInterface *stream, uint8_t value) {
-    return stream->WriteItem(&value, sizeof(value));
-}
-
-bool Write(ItemWriteInterface *stream, uint32_t value) {
-    return stream->WriteItem(&value, sizeof(value));
-}
-
-bool Write(ItemWriteInterface *stream, float value) {
-    return stream->WriteItem(&value, sizeof(value));
-}
-
-bool Write(ItemWriteInterface *stream, double value) {
-    return stream->WriteItem(&value, sizeof(value));
 }
 
 }    // Namespace IO.

@@ -26,7 +26,7 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
 
     bool Register(const std::shared_ptr<HandlerInterface> &handler) override;
     void Unregister(const std::shared_ptr<HandlerInterface> &handler) override;
-    bool WriteItem(const void *item, int itemSize) override;
+    void WriteItem(const void *item, int itemSize) override;
     bool Eof() override;
     void ClearEof() override;
     bool ErrorState() override;

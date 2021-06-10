@@ -11,13 +11,10 @@ class ItemReadInterface : public virtual K::Core::ErrorStateInterface {
   public:
     //! Reads a binary item of specified size (in bytes).
     /*!
-     *  Blocks until either the read is complete or it fails.
-     *
-     * \return
-     *  <c>false</c> in case of failure. The output item will then be undefined, and error state or EOF will be raised
-     *  on the stream (or both).
+     *  Blocks until either the read is complete or it fails. In case of failure, the output item will be undefined and
+     *  error state or EOF will be raised on the stream (or both).
      */
-    virtual bool ReadItem(void *outItem, int itemSize) = 0;
+    virtual void ReadItem(void *outItem, int itemSize) = 0;
 };
 
 }    // Namespace IO.

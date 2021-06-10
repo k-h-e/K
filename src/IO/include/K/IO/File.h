@@ -27,7 +27,7 @@ class File : public BlockingStreamCore,
 
     int Read(void *outBuffer, int bufferSize) override;
     int Write(const void *data, int dataSize) override;
-    bool Seek(int64_t position) override;
+    void Seek(int64_t position) override;
     int64_t StreamPosition() override;
     bool Eof() override;
     void ClearEof() override;

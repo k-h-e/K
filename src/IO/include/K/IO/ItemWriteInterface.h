@@ -11,12 +11,10 @@ class ItemWriteInterface : public virtual K::Core::Interface {
   public:
     //! Writes a binary item of specified size (in bytes).
     /*!
-     *  Blocks until either the write is complete or it fails.
-     *
-     *  \return
-     *  <c>false</c> in case of failure. Error state will then be raised on the stream.
+     *  Blocks until either the write is complete or it fails. In case of failure, error state will be raised on the
+     *  stream.
      */
-    virtual bool WriteItem(const void *item, int itemSize) = 0;
+    virtual void WriteItem(const void *item, int itemSize) = 0;
 };
 
 }    // Namespace IO.
