@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <cstdio>
 #include <cerrno>
 #include <cassert>
 #include <K/Core/Result.h>
@@ -200,6 +201,10 @@ void File::AccessModeToFlags(AccessMode accessMode, bool *outReadable, bool *out
             *outWritable = true;
             break;
     }
+}
+
+bool File::Rename(const std::string &oldFileName, const std::string &newFileName) {
+    return (std::rename(oldFileName.c_str(), newFileName.c_str()) == 0);
 }
 
 }    // Namesapce IO.

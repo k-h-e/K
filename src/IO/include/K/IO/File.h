@@ -35,6 +35,11 @@ class File : public BlockingStreamCore,
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
     static void AccessModeToFlags(AccessMode accessMode, bool *outReadable, bool *outWritable);
+    //! Renames the specified file, moving it between directories if required.
+    /*!
+     *  Can also be used on directories.
+     */
+    static bool Rename(const std::string &oldFileName, const std::string &newFileName);
 
   private:
     std::string                   fileName_;
