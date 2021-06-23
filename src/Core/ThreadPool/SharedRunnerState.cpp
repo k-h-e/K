@@ -16,16 +16,15 @@ ThreadPool::SharedRunnerState::SharedRunnerState()
 }
 
 bool ThreadPool::SharedRunnerState::WaitForWork(
-        shared_ptr<ActionInterface> *outAction, shared_ptr<CompletionHandlerInterface> *outCompletionHandler,
-        int *outCompletionId) {
+        ActionInterface **outAction, CompletionHandlerInterface **outCompletionHandler, int *outCompletionId) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     while (!shutDownRequested_) {
         if (action_) {
             *outAction            = action_;
             *outCompletionHandler = completionHandler_;
             *outCompletionId      = completionId_;
-            action_.reset();
-            completionHandler_.reset();
+            action_            = nullptr;
+            completionHandler_ = nullptr;
             return true;
         }
 
@@ -36,8 +35,7 @@ bool ThreadPool::SharedRunnerState::WaitForWork(
 }    // ......................................................................................... critical section, end.
 
 void ThreadPool::SharedRunnerState::Execute(
-        const shared_ptr<ActionInterface> &action, const shared_ptr<CompletionHandlerInterface> &completionHandler,
-        int completionId) {
+        ActionInterface *action, CompletionHandlerInterface *completionHandler, int completionId) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     action_            = action;
     completionHandler_ = completionHandler;

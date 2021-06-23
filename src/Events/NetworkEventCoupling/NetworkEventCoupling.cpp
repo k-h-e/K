@@ -32,14 +32,14 @@ NetworkEventCoupling::NetworkEventCoupling(
     auto readHandler = make_shared<ReadHandler>(hub_, hubClientId_);
 
     writer_ = make_shared<Writer>(tcpConnection, hub_, hubClientId_, readHandler, sharedState_);
-    threadPool->Run(writer_, sharedState_, writerCompletionId);    
+    threadPool->Run(writer_.get(), sharedState_.get(), writerCompletionId);
 }
 
 NetworkEventCoupling::~NetworkEventCoupling() {
     Log::Print(Log::Level::Debug, this, []{ return "shutting down..."; });
 
     hub_->RequestShutDown(hubClientId_);
-    sharedState_->WaitForThreadsFinished();
+    sharedState_->WaitForWriterFinished();
 
     hub_->UnregisterEventLoop(hubClientId_);
 }

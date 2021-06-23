@@ -41,7 +41,7 @@ ConnectionIO::ConnectionIO(const shared_ptr<ThreadPool> &threadPool) {
     sharedState_ = make_shared<SharedState>(fileDescriptors[1]);
     worker_      = make_shared<Worker>(fileDescriptors[0], sharedState_);
 
-    threadPool->Run(worker_, sharedState_, 0);
+    threadPool->Run(worker_.get(), sharedState_.get(), 0);
 }
 
 ConnectionIO::~ConnectionIO() {

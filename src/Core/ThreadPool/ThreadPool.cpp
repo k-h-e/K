@@ -18,8 +18,7 @@ ThreadPool::~ThreadPool() {
     sharedState_->ShutDown();
 }
 
-void ThreadPool::Run(const shared_ptr<ActionInterface> &action,
-                     const shared_ptr<CompletionHandlerInterface> &completionHandler, int completionId) {
+void ThreadPool::Run(ActionInterface *action, CompletionHandlerInterface *completionHandler, int completionId) {
     sharedState_->Run(action, completionHandler, completionId);
 }
 

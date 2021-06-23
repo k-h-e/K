@@ -18,7 +18,7 @@ NetworkEventCoupling::SharedState::SharedState(const shared_ptr<CompletionHandle
     // Nop.
 }
 
-void NetworkEventCoupling::SharedState::WaitForThreadsFinished() {
+void NetworkEventCoupling::SharedState::WaitForWriterFinished() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     while (!writerFinished_) {
         stateChanged_.wait(critical);

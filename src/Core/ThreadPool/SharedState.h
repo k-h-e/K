@@ -21,8 +21,7 @@ class CompletionHandlerInterface;
  */
 class ThreadPool::SharedState : public virtual CompletionHandlerInterface {
   public:
-    void Run(const std::shared_ptr<ActionInterface> &action,
-             const std::shared_ptr<CompletionHandlerInterface> &completionHandler, int completionId);
+    void Run(ActionInterface *action, CompletionHandlerInterface *completionHandler, int completionId);
     void OnCompletion(int completionId);
     void ShutDown();
 

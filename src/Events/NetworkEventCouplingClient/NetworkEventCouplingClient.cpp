@@ -31,7 +31,7 @@ void NetworkEventCouplingClient::Connect(uint32_t ip4Address, int port) {
     sharedState_->WaitForWorker();
     sharedState_->PrepareToConnect();
     worker_->SetHost(ip4Address, port);
-    threadPool_->Run(worker_, sharedState_, workerCompletionId);
+    threadPool_->Run(worker_.get(), sharedState_.get(), workerCompletionId);
 }
 
 void NetworkEventCouplingClient::Disconnect() {

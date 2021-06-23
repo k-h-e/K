@@ -25,16 +25,13 @@ ThreadPool::Runner::Runner(int thread, CompletionHandlerInterface &completionHan
 void ThreadPool::Runner::Run() {
     Log::Print(Log::Level::Debug, this, [this]{ return "thread " + to_string(thread_) + " spawning..."; });
 
-    shared_ptr<ActionInterface>            action;
-    shared_ptr<CompletionHandlerInterface> completionHandler;
-    int                                    completionId;
-    while (sharedState_->WaitForWork(&action, &completionHandler, &completionId)) {
+    ActionInterface            *action;
+    CompletionHandlerInterface *actionCompletionHandler;
+    int                        completionId;
+    while (sharedState_->WaitForWork(&action, &actionCompletionHandler, &completionId)) {
         action->ExecuteAction();
-        action.reset();
-        if (completionHandler) {
-            completionHandler->OnCompletion(completionId);
-            completionHandler.reset();
-        }
+        actionCompletionHandler->OnCompletion(completionId);
+
         completionHandler_.OnCompletion(thread_);
     }
 

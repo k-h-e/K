@@ -17,8 +17,8 @@ using K::Core::Log;
 namespace K {
 namespace Core {
 
-void ThreadPool::SharedState::Run(const shared_ptr<ActionInterface> &action,
-                                  const shared_ptr<CompletionHandlerInterface> &completionHandler, int completionId) {
+void ThreadPool::SharedState::Run(ActionInterface *action, CompletionHandlerInterface *completionHandler,
+                                  int completionId) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     int slot;
     if (idleThreads_.size()) {

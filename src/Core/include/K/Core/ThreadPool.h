@@ -19,11 +19,17 @@ class ThreadPool {
     ~ThreadPool();
     //! Runs the specified action on an arbitrary pool thread.
     /*!
+     *  The caller is responsible for ensuring that both action and completion handler live until the thread pool calls
+     *  the completion handler to signal completion of the action.
+     *
      *  \param completionHandler
-     *  If given, the completion handler will get called on an arbitrary pool thread when the action has completed.
+     *  The completion handler will get called on an arbitrary pool thread when the action has completed.
+     *
+     *  \param completionId
+     *  Will get passed to the completion handler. Allows a single completion handler to be used with multiple requested
+     *  threads.
      */
-    void Run(const std::shared_ptr<ActionInterface> &action,
-             const std::shared_ptr<CompletionHandlerInterface> &completionHandler, int completionId);
+    void Run(ActionInterface *action, CompletionHandlerInterface *completionHandler, int completionId);
 
   private:
     class SharedState;

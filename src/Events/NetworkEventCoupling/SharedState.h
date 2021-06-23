@@ -17,7 +17,7 @@ class NetworkEventCoupling::SharedState : public virtual K::Core::CompletionHand
   public:
     SharedState(const std::shared_ptr<K::Core::CompletionHandlerInterface> &completionHandler,
                 int completionId);
-    void WaitForThreadsFinished();
+    void WaitForWriterFinished();
     void OnCompletion(int completionId) override;
 
   private:
