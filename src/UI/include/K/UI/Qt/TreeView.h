@@ -17,7 +17,9 @@ namespace SceneGraph {
 }
 
 namespace K {
+//! UI elements.
 namespace UI {
+//! <c>Qt</c>-based UI elements.
 namespace Qt {
 
 //! Simple tree view.

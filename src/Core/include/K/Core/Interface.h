@@ -1,9 +1,9 @@
 #ifndef K_CORE_INTERFACE_H_
 #define K_CORE_INTERFACE_H_
 
-//! Platform.
+//! Kai's re-usable C++ assets.
 namespace K {
-//! Platform core classes.
+//! Core classes.
 namespace Core {
 
 //! Base class to all hierarchy classes, basically providing the virtual destructor to allow for polymorphic object
