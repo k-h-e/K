@@ -110,7 +110,7 @@ int StreamBuffer::Read(void *outBuffer, int bufferSize) {
         }
 
         error_ = true;
-        Log::Print(Log::Level::Warning, this, []{ return "error while reading"; });
+        Log::Print(Log::Level::Error, this, []{ return "error while reading"; });
     }
 
     return 0;
@@ -147,7 +147,7 @@ int StreamBuffer::Write(const void *data, int dataSize) {
         }
 
         error_ = true;
-        Log::Print(Log::Level::Warning, this, []{ return "error while writing"; });
+        Log::Print(Log::Level::Error, this, []{ return "error while writing"; });
     }
 
     return 0;
@@ -170,7 +170,7 @@ void StreamBuffer::Seek(int64_t position) {
         }
 
         error_ = true;
-        Log::Print(Log::Level::Warning, this, [&]{
+        Log::Print(Log::Level::Error, this, [&]{
             return "error while seeking to position " + to_string(position); });
     }
 }
@@ -215,10 +215,6 @@ bool StreamBuffer::SetUpBuffer(int64_t position) {
                 fill_           = numReadTotal;
                 cursor_         = position - newBufferPosition;
                 dirty_          = false;
-                Log::Print(Log::Level::Debug, this, [&]{
-                    return "pre-loaded buffer with " + to_string(fill_) + " bytes from position "
-                        + to_string(bufferPosition_);
-                });
                 return true;
             }
         }
@@ -231,13 +227,10 @@ bool StreamBuffer::SetUpBuffer(int64_t position) {
         for (vector<bool>::reference bit : dirtyBytes_) {
             bit = false;
         }
-        Log::Print(Log::Level::Debug, this, [&]{
-            return "set up buffer for write-only access to position " + to_string(bufferPosition_);
-        });
         return true;
     }
 
-    Log::Print(Log::Level::Warning, this, [&]{
+    Log::Print(Log::Level::Error, this, [&]{
         return "failed to set up buffer for position " + to_string(position);
     });
     return false;
@@ -300,14 +293,10 @@ bool StreamBuffer::FlushDirtyRange(int cursor, int numBytes) {
     stream_->Seek(bufferPosition_ + cursor);
     stream_->WriteItem(&buffer_[cursor], numBytes);
     if (!stream_->ErrorState()) {
-        Log::Print(Log::Level::Debug, this, [&]{
-            return "flushed " + to_string(numBytes) + " dirty bytes to position "
-                + to_string(bufferPosition_ + cursor);
-        });
         return true;
     }
     else {
-        Log::Print(Log::Level::Warning, this, [&]{
+        Log::Print(Log::Level::Error, this, [&]{
             return ("failed to flush " + to_string(numBytes) + " dirty bytes to position "
                 + to_string(bufferPosition_ + cursor));
         });
