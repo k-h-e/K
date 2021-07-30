@@ -179,6 +179,10 @@ int64_t StreamBuffer::StreamPosition() {
     return bufferPosition_ + static_cast<int64_t>(cursor_);
 }
 
+bool StreamBuffer::Good() const {
+    return !error_ && !eof_;
+}
+
 bool StreamBuffer::Eof() {
     return eof_;
 }

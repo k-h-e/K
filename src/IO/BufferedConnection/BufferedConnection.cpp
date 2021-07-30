@@ -83,6 +83,10 @@ void BufferedConnection::WriteItem(const void *item, int itemSize) {
     sharedState_->WriteItem(item, itemSize);
 }
 
+bool BufferedConnection::Good() const {
+    return sharedState_->Good();
+}
+
 bool BufferedConnection::Eof() {
     return sharedState_->Eof();
 }

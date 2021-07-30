@@ -1,13 +1,13 @@
-#ifndef K_IO_ITEMWRITEINTERFACE_H_
-#define K_IO_ITEMWRITEINTERFACE_H_
+#ifndef K_CORE_ITEMWRITEINTERFACE_H_
+#define K_CORE_ITEMWRITEINTERFACE_H_
 
-#include <K/Core/Interface.h>
+#include <K/Core/StreamInterface.h>
 
 namespace K {
-namespace IO {
+namespace Core {
 
-//! Interface to entities providing blocking item writing.
-class ItemWriteInterface : public virtual K::Core::Interface {
+//! Interface to streams providing blocking item writing.
+class ItemWriteInterface : public virtual StreamInterface {
   public:
     //! Writes a binary item of specified size (in bytes).
     /*!
@@ -17,7 +17,7 @@ class ItemWriteInterface : public virtual K::Core::Interface {
     virtual void WriteItem(const void *item, int itemSize) = 0;
 };
 
-}    // Namespace IO.
+}    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_IO_ITEMWRITEINTERFACE_H_
+#endif    // K_CORE_ITEMWRITEINTERFACE_H_

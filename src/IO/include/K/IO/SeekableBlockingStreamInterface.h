@@ -2,14 +2,14 @@
 #define K_IO_SEEKABLEBLOCKINGSTREAMINTERFACE_H_
 
 #include <K/IO/BlockingStreamInterface.h>
-#include <K/IO/SeekInterface.h>
+#include <K/IO/SeekableInterface.h>
 
 namespace K {
 namespace IO {
 
-//! Interface to entities providing seekable blocking stream I/O.
+//! Interface to streams providing seekable blocking I/O.
 class SeekableBlockingStreamInterface : public virtual BlockingStreamInterface,
-                                        public virtual SeekInterface {
+                                        public virtual SeekableInterface {
 };
 
 }    // Namespace IO.

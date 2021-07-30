@@ -1,13 +1,13 @@
-#ifndef K_IO_ITEMREADINTERFACE_H_
-#define K_IO_ITEMREADINTERFACE_H_
+#ifndef K_CORE_ITEMREADINTERFACE_H_
+#define K_CORE_ITEMREADINTERFACE_H_
 
-#include <K/Core/ErrorStateInterface.h>
+#include <K/Core/ReadableStreamInterface.h>
 
 namespace K {
-namespace IO {
+namespace Core {
 
-//! Interface to entities providing blocking item reading.
-class ItemReadInterface : public virtual K::Core::ErrorStateInterface {
+//! Interface to streams providing blocking item reading.
+class ItemReadInterface : public virtual ReadableStreamInterface {
   public:
     //! Reads a binary item of specified size (in bytes).
     /*!
@@ -17,7 +17,7 @@ class ItemReadInterface : public virtual K::Core::ErrorStateInterface {
     virtual void ReadItem(void *outItem, int itemSize) = 0;
 };
 
-}    // Namespace IO.
+}    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_IO_ITEMREADINTERFACE_H_
+#endif    // K_CORE_ITEMREADINTERFACE_H_

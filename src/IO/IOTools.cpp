@@ -74,10 +74,6 @@ BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, double valu
     return stream;
 }
 
-bool Good(StreamInterface *stream) {
-    return !stream->ErrorState() && !stream->Eof();
-}
-
 void Read(BlockingStreamInterface *stream, int *outValue) {
     stream->ReadItem(outValue, sizeof(*outValue));
 }
@@ -103,7 +99,7 @@ void Read(BlockingStreamInterface *stream, char delimiter, string *outString) {
     while (true) {
         char character;
         stream->ReadItem(&character, sizeof(character));
-        if (!Good(stream)) {
+        if (!stream->Good()) {
             return;
         }
         else if (character == delimiter) {
@@ -122,7 +118,7 @@ void Read(SeekableBlockingStreamInterface *stream, const string &validCharacters
 
         char character;
         stream->ReadItem(&character, sizeof(character));
-        if (!Good(stream)) {
+        if (!stream->Good()) {
             return;
         }
 
@@ -147,7 +143,7 @@ void Skip(SeekableBlockingStreamInterface *stream, const string &charactersToSki
 
         char character;
         stream->ReadItem(&character, sizeof(character));
-        if (!Good(stream)) {
+        if (!stream->Good()) {
             return;
         }
 

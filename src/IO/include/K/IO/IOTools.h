@@ -6,13 +6,14 @@
 namespace K {
 namespace Core {
     class Interface;
+    class ReadableStreamInterface;
 }
 }
 
 namespace K {
+//! I/O.
 namespace IO {
 
-class StreamInterface;
 class BlockingStreamInterface;
 class SeekableBlockingStreamInterface;
 
@@ -37,9 +38,6 @@ BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, uint8_t val
 BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, uint32_t value);
 BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, float value);
 BlockingStreamInterface &operator<<(BlockingStreamInterface &stream, double value);
-
-//! Returns <c>true</c> iff neither error nor EOF state are set on the specified stream.
-bool Good(StreamInterface *stream);
 
 //! Reads an integer.
 /*!

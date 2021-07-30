@@ -1,15 +1,15 @@
-#ifndef K_IO_EOFINTERFACE_H_
-#define K_IO_EOFINTERFACE_H_
+#ifndef K_CORE_READABLESTREAMINTERFACE_H_
+#define K_CORE_READABLESTREAMINTERFACE_H_
 
-#include <K/Core/Interface.h>
+#include <K/Core/StreamInterface.h>
 
 namespace K {
-namespace IO {
+namespace Core {
 
-//! Interface to streams able to tell whether or not reading has reached the end of the stream.
-class EofInterface : public virtual K::Core::Interface {
+//! Interface to streams that are readable.
+class ReadableStreamInterface : public virtual StreamInterface {
   public:
-    //! Tells whether the stream is in EOF state because a read operation attempted earlier could not deliver any data
+    //! Tells whether the stream is in EOF state because a read operation attempted earlier could not deliver data
     //! because the end of the stream has been reached.
     /*!
      *  While the stream has EOF state set, read operations are disabled and respective methods report failure where
@@ -22,7 +22,7 @@ class EofInterface : public virtual K::Core::Interface {
     virtual void ClearEof() = 0;
 };
 
-}    // Namespace IO.
+}    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_IO_EOFINTERFACE_H_
+#endif    // K_CORE_READABLESTREAMINTERFACE_H_

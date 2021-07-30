@@ -2,13 +2,13 @@
 #define K_IO_ASYNCREADINTERFACE_H_
 
 #include <memory>
-#include <K/Core/Interface.h>
+#include <K/Core/ReadableStreamInterface.h>
 
 namespace K {
 namespace IO {
 
-//! Interface to entities providing asynchronous stream reading.
-class AsyncReadInterface : public virtual K::Core::Interface {
+//! Interface to streams providing asynchronous reading.
+class AsyncReadInterface : public virtual K::Core::ReadableStreamInterface {
   public:
     class HandlerInterface : public virtual K::Core::Interface {
       public:

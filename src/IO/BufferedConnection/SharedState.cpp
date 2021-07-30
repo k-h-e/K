@@ -86,6 +86,11 @@ void BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) 
     }
 }    // ......................................................................................... critical section, end.
 
+bool BufferedConnection::SharedState::Good() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    return !error_ && !eof_;
+}    // ......................................................................................... critical section, end.
+
 
 bool BufferedConnection::SharedState::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................

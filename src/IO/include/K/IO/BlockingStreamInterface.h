@@ -1,22 +1,20 @@
 #ifndef K_IO_BLOCKINGSTREAMINTERFACE_H_
 #define K_IO_BLOCKINGSTREAMINTERFACE_H_
 
-#include <K/IO/StreamInterface.h>
+#include <K/Core/ItemReadInterface.h>
+#include <K/Core/ItemWriteInterface.h>
 #include <K/IO/GenericReadInterface.h>
 #include <K/IO/GenericWriteInterface.h>
-#include <K/IO/ItemReadInterface.h>
-#include <K/IO/ItemWriteInterface.h>
 
 namespace K {
 //! I/O.
 namespace IO {
 
 //! Interface to entities providing blocking stream I/O.
-class BlockingStreamInterface : public virtual StreamInterface,
-                                public virtual GenericReadInterface,
+class BlockingStreamInterface : public virtual GenericReadInterface,
                                 public virtual GenericWriteInterface,
-                                public virtual ItemReadInterface,
-                                public virtual ItemWriteInterface {
+                                public virtual Core::ItemReadInterface,
+                                public virtual Core::ItemWriteInterface {
 };
 
 }    // Namespace IO.

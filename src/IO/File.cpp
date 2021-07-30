@@ -169,6 +169,10 @@ int64_t File::StreamPosition() {
     return position_;
 }
 
+bool File::Good() const {
+    return !error_ && !eof_;
+}
+
 bool File::Eof() {
     return eof_;
 }

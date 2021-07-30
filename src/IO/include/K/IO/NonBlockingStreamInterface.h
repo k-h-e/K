@@ -2,17 +2,14 @@
 #define K_IO_NONBLOCKINGSTREAMINTERFACE_H_
 
 #include <memory>
-#include <K/IO/StreamInterface.h>
 #include <K/IO/GenericReadInterface.h>
 #include <K/IO/GenericWriteInterface.h>
 
 namespace K {
-//! I/O.
 namespace IO {
 
-//! Interface to entities providing nonblocking stream I/O.
-class NonBlockingStreamInterface : public virtual StreamInterface,
-                                   public virtual GenericReadInterface,
+//! Interface to streams providing nonblocking stream I/O.
+class NonBlockingStreamInterface : public virtual GenericReadInterface,
                                    public virtual GenericWriteInterface {
   public:
     class HandlerInterface : public virtual K::Core::Interface {

@@ -9,6 +9,8 @@ namespace K {
 namespace Core {
 
 class Interface;
+class ItemReadInterface;
+class ItemWriteInterface;
 
 class StringTools {
   public:
@@ -22,6 +24,8 @@ class StringTools {
     static bool Parse(const std::string &text, double *outValue);
     static std::string GetCleanClassName(Interface *instance);
     static std::string GetCleanClassName(Interface *instance, int maxNumSegments);
+    static void Serialize(const std::string &text, ItemWriteInterface *stream);
+    static void Deserialize(std::string *text, ItemReadInterface *stream);
 };
 
 }    // Namespace Core.

@@ -3,12 +3,14 @@
 
 #include <stdint.h>
 #include <vector>
+#include <K/Core/ItemReadInterface.h>
+#include <K/Core/ItemWriteInterface.h>
 
 namespace K {
 namespace Core {
 
 //! Binary buffer, allowing iterative composition and readout.
-class Buffer {
+class Buffer : public virtual ItemWriteInterface {
   public:
     //! Allows for iterative buffer readout.
 	/*!
@@ -16,8 +18,14 @@ class Buffer {
      *  interleaved with adding data via \ref Append().
 	 */
 
-	class Reader {
+    class Reader : public virtual ItemReadInterface {
 	  public:
+        Reader(const Reader &other)            = default;
+        Reader &operator=(const Reader &other) = default;
+        Reader(Reader &&other)                 = default;
+        Reader &operator=(Reader &&other)      = default;
+        ~Reader();
+
         //! Reads at most <c>targetBufferSize</c> bytes from the buffer and transfers them to the specified memory
         //! location.
 		/*!
@@ -32,21 +40,36 @@ class Buffer {
          *  <c>false</c> in case the block could not be read entirely. This means there are currently no more bytes in
          *  the buffer to read. The contents of the target buffer are undefined.
          */
-        bool ReadBlock(void *targetBuffer, int targetBufferSize) {
-            return (Read(targetBuffer, targetBufferSize) == targetBufferSize);
-        }
-        
+        bool ReadBlock(void *targetBuffer, int targetBufferSize);
+
+        void ReadItem(void *outItem, int itemSize) override;
+        bool Good() const override;
+        bool ErrorState() override;
+        bool Eof() override;
+        void ClearEof() override;
+        void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
+
 	  private:
 		friend class Buffer;
+
 		Reader(const Buffer *buffer);
-		const Buffer *buffer_;
-		int          cursor_;
+
+        const Buffer                  *buffer_;
+        int                           cursor_;
+        bool                          eof_;
+        std::shared_ptr<Core::Result> finalResultAcceptor_;
 	};
 
     //! Creates an empty buffer.
     Buffer();
 	//! Creates a buffer of the given initial size, but does not initialize its contents.
 	Buffer(int initialSize);
+    Buffer(const Buffer &other)            = delete;
+    Buffer &operator=(const Buffer &other) = delete;
+    Buffer(Buffer &&other)                 = delete;
+    Buffer &operator=(Buffer &&other)      = delete;
+    ~Buffer();
+
     //! Grants access to the buffer's data. Note that the handed-out memory location gets invalidated by subsequent
     //! calls to \ref Append().
 	void *Data();
@@ -91,12 +114,15 @@ class Buffer {
 	 */
 	Reader GetReader() const;
 
-  private:
-	Buffer(const Buffer &other);
-	Buffer &operator=(const Buffer &other);
+    void WriteItem(const void *item, int itemSize) override;
+    bool Good() const override;
+    bool ErrorState() override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
-	std::vector<uint8_t> buffer_;
-	int                  bufferFill_;
+  private:
+    std::vector<uint8_t>          buffer_;
+    int                           bufferFill_;
+    std::shared_ptr<Core::Result> finalResultAcceptor_;
 };
 
 }    // Namespace Core.

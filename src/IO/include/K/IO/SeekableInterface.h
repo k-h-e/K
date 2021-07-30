@@ -1,14 +1,14 @@
-#ifndef K_IO_SEEKINTERFACE_H_
-#define K_IO_SEEKINTERFACE_H_
+#ifndef K_IO_SEEKABLEINTERFACE_H_
+#define K_IO_SEEKABLEINTERFACE_H_
 
 #include <cstdint>
-#include <K/Core/Interface.h>
+#include <K/Core/StreamInterface.h>
 
 namespace K {
 namespace IO {
 
-//! Interface to entities providing stream seeking.
-class SeekInterface : public virtual K::Core::Interface {
+//! Interface to streams providing seeking.
+class SeekableInterface : public virtual K::Core::StreamInterface {
   public:
     //! Sets the read/write position as specified.
     /*!
@@ -22,4 +22,4 @@ class SeekInterface : public virtual K::Core::Interface {
 }    // Namespace IO.
 }    // Namespace K.
 
-#endif    // K_IO_SEEKINTERFACE_H_
+#endif    // K_IO_SEEKABLEINTERFACE_H_

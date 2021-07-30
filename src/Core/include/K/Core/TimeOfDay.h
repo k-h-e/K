@@ -1,0 +1,41 @@
+#ifndef K_CORE_TIMEOFDAY_H_
+#define K_CORE_TIMEOFDAY_H_
+
+#include <string>
+#include <K/Core/SerializableInterface.h>
+
+namespace K {
+namespace Core {
+
+class ItemReadInterface;
+class ItemWriteInterface;
+
+//! Holds a time of day in 24h format.
+class TimeOfDay : public virtual SerializableInterface {
+  public:
+    //! Initializes to midnight.
+    TimeOfDay();
+    TimeOfDay(int hours, int minutes, int seconds, int milliSeconds);
+    TimeOfDay(const TimeOfDay &other)            = default;
+    TimeOfDay &operator=(const TimeOfDay &other) = default;
+    TimeOfDay(TimeOfDay &&other)                 = default;
+    TimeOfDay &operator=(TimeOfDay &&other)      = default;
+    std::string ToString() const;
+
+    void Serialize(ItemWriteInterface *stream) const override;
+    void Deserialize(ItemReadInterface *stream) override;
+
+    //! Returns the current time of day in UTC.
+    static TimeOfDay NowUtc();
+
+  private:
+    int hours_;
+    int minutes_;
+    int seconds_;
+    int milliSeconds_;
+};
+
+}    // Namespace Core.
+}    // Namespace K.
+
+#endif    // K_CORE_TIMEOFDAY_H_

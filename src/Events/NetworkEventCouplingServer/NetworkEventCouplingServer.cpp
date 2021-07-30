@@ -22,7 +22,7 @@ NetworkEventCouplingServer::NetworkEventCouplingServer(
     listenSocket_ = make_shared<ListenSocket>(port, connectionIO);
     worker_       = make_shared<Worker>(listenSocket_, hub, threadPool, sharedState_);
 
-    threadPool->Run(worker_, sharedState_, workerCompletionId);
+    threadPool->Run(worker_.get(), sharedState_.get(), workerCompletionId);
 }
 
 NetworkEventCouplingServer::~NetworkEventCouplingServer() {

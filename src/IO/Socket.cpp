@@ -144,6 +144,12 @@ int Socket::Write(const void *data, int dataSize) {
     }
 }
 
+bool Socket::Good() const {
+    unique_lock<mutex> critical(const_cast<mutex &>(lock_));    // Critical section..........................................................
+    return !error_ && !eof_;
+}    // ......................................................................................... critical section, end.
+
+
 bool Socket::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return eof_;

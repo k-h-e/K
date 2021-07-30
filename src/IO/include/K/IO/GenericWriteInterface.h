@@ -1,14 +1,13 @@
 #ifndef K_IO_GENERICWRITEINTERFACE_H_
 #define K_IO_GENERICWRITEINTERFACE_H_
 
-#include <K/Core/Interface.h>
+#include <K/Core/StreamInterface.h>
 
 namespace K {
-//! I/O.
 namespace IO {
 
-//! Interface to entities providing generic stream writing.
-class GenericWriteInterface : public virtual K::Core::Interface {
+//! Interface to streams providing generic stream writing.
+class GenericWriteInterface : public virtual K::Core::StreamInterface {
   public:
     //! Writes the specified data to the stream.
     /*!

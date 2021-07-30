@@ -87,9 +87,9 @@ bool ConfigurationFile::Load(const std::string &fileName) {
     unordered_set<char> whiteSpace{ ' ', '\t' };
     string currentSection;
     string line;
-    while (Good(&stream)) {
+    while (stream.Good()) {
         Read(&stream, '\n', &line);
-        if (Good(&stream)) {
+        if (stream.Good()) {
             if ((line.length() > 0u) && (line[0] == '[')) {
                 StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
                 currentSection = line;

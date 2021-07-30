@@ -24,6 +24,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     bool Register(const std::shared_ptr<HandlerInterface> &handler);
     void Unregister(const std::shared_ptr<HandlerInterface> &handler);
     void WriteItem(const void *item, int itemSize);
+    bool Good();
     bool Eof();
     void ClearEof();
     bool Error();

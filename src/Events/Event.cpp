@@ -10,11 +10,5 @@ Event::EventType::EventType(const char *aName)
           id(std::hash<const char *>()(aName)) {
 }
 
-void Event::Serialize(Core::Buffer *targetBuffer) const {
-}
-
-void Event::Deserialize(Core::Buffer::Reader *bufferReader) {
-}
-
 }    // Namespace Events.
 }    // Namespace K.

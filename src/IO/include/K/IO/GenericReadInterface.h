@@ -1,13 +1,13 @@
 #ifndef K_IO_GENERICREADINTERFACE_H_
 #define K_IO_GENERICREADINTERFACE_H_
 
-#include <K/Core/Interface.h>
+#include <K/Core/ReadableStreamInterface.h>
 
 namespace K {
 namespace IO {
 
-//! Interface to entities providing generic stream reading.
-class GenericReadInterface : public virtual K::Core::Interface {
+//! Interface to streams providing generic stream reading.
+class GenericReadInterface : public virtual K::Core::ReadableStreamInterface {
   public:
     //! Reads data into the specified buffer.
     /*!

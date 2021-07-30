@@ -29,6 +29,7 @@ class Socket : public BlockingStreamCore {
 
     int Read(void *outBuffer, int bufferSize) override;
     int Write(const void *data, int dataSize) override;
+    bool Good() const override;
     bool Eof() override;
     void ClearEof() override;
     bool ErrorState() override;
