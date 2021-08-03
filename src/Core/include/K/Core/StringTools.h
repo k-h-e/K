@@ -22,10 +22,15 @@ class StringTools {
     static bool Parse(const std::string &text, int *outValue);
     static bool Parse(const std::string &text, float *outValue);
     static bool Parse(const std::string &text, double *outValue);
-    static std::string GetCleanClassName(Interface *instance);
-    static std::string GetCleanClassName(Interface *instance, int maxNumSegments);
+    static std::string ToLower(const std::string &text);
+    static std::string ToBase64(const std::string &text);
+    static std::string GetCleanClassName(const Interface *instance);
+    static std::string GetCleanClassName(const Interface *instance, int maxNumSegments);
     static void Serialize(const std::string &text, ItemWriteInterface *stream);
     static void Deserialize(std::string *text, ItemReadInterface *stream);
+
+  private:
+    static const char * const base64EncodeTable;
 };
 
 }    // Namespace Core.

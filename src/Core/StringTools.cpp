@@ -20,6 +20,8 @@ using K::Core::NumberTools;
 namespace K {
 namespace Core {
 
+const char * const StringTools::base64EncodeTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 vector<string> StringTools::Tokenize(const string &text, char separator) {
     vector<string> tokens;
     istringstream  stream(text);
@@ -116,11 +118,53 @@ bool StringTools::Parse(const std::string &text, double *outValue) {
     return false;
 }
 
-string StringTools::GetCleanClassName(Interface *instance) {
+string StringTools::ToLower(const std::string &text) {
+    string result;
+    for (char character : text) {
+        result.push_back(tolower(character));
+    }
+    return result;
+}
+
+string StringTools::ToBase64(const std::string &text) {
+    string result;
+
+    uint8_t in[3];
+    char    out[4];
+
+    int cursor  = 0;
+    int numLeft = static_cast<int>(text.length());
+    while (numLeft) {
+        // Get next 3-byte block of binary input data...
+        int numBytes = 0;
+        for (int i = 0; i < 3; ++i) {
+            if (numLeft) {
+                in[i] = static_cast<uint8_t>(text[cursor++]);
+                --numLeft;
+                ++numBytes;
+            } else {
+                in[i] = 0;
+            }
+        }
+
+        // Generate corresponding 4-byte base64 block...
+        out[0] = base64EncodeTable[in[0] >> 2];
+        out[1] = base64EncodeTable[((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4)];
+        out[2] = (numBytes > 1) ? base64EncodeTable[((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6)] : '=';
+        out[3] = (numBytes > 2) ? base64EncodeTable[in[2] & 0x3f] : '=';
+        for (int i = 0; i < 4; ++i) {
+            result.push_back(static_cast<char>(out[i]));
+        }
+    }
+
+    return result;
+}
+
+string StringTools::GetCleanClassName(const Interface *instance) {
     return GetCleanClassName(instance, numeric_limits<int>::max());
 }
 
-string StringTools::GetCleanClassName(Interface *instance, int maxNumSegments) {
+string StringTools::GetCleanClassName(const Interface *instance, int maxNumSegments) {
     NumberTools::ClampMin(&maxNumSegments, 1);
 
     string className = instance ? typeid(*instance).name() : "";

@@ -19,7 +19,7 @@ class Log {
                        Error       };
 
     //! Thread-safe.
-    static void Print(Level level, Interface *source, const std::function<std::string()> &generateLogLine);
+    static void Print(Level level, const Interface *source, const std::function<std::string()> &generateLogLine);
 
   private:
     static uint64_t spacer;

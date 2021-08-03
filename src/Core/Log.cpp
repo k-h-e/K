@@ -12,7 +12,7 @@ namespace Core {
 
 Log::Level Log::currentLevel = Log::Level::Debug;
 
-void Log::Print(Level level, Interface *source, const std::function<std::string()> &generateLogLine) {
+void Log::Print(Level level, const Interface *source, const std::function<std::string()> &generateLogLine) {
     if (level >= currentLevel) {
         puts((string("[") + StringTools::GetCleanClassName(source) + "] " + generateLogLine()).c_str());
     }
