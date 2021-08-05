@@ -1,14 +1,15 @@
 #ifndef K_GEOPOSITIONING_RTCMMESSAGE_H_
 #define K_GEOPOSITIONING_RTCMMESSAGE_H_
 
+#include <cstdint>
 #include <vector>
-#include <K/Core/Interface.h>
+#include <K/Core/SerializableInterface.h>
 
 namespace K {
 namespace GeoPositioning {
 
 //! RTCM message.
-class RtcmMessage : public virtual K::Core::Interface {
+class RtcmMessage : public virtual K::Core::SerializableInterface {
   public:
     RtcmMessage();
     RtcmMessage(const RtcmMessage &other)            = default;
@@ -33,6 +34,9 @@ class RtcmMessage : public virtual K::Core::Interface {
     bool GetType(int *outType) const;
     //! Tells the payload size.
     int PayloadSize() const;
+
+    void Serialize(K::Core::ItemWriteInterface *stream) const override;
+    void Deserialize(K::Core::ItemReadInterface *stream) override;
 
   private:
     std::vector<uint8_t> image_;

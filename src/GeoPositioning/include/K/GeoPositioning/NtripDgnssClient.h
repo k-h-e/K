@@ -7,12 +7,16 @@
 namespace K {
 namespace GeoPositioning {
 
+class RtcmMessageHandlerInterface;
+
 //! Receives DGNSS correction data via NTRIP.
-class NtripDgnssClient : public K::Core::Interface {
+class NtripDgnssClient : public Core::Interface {
   public:
+    //! The message handler will be called from an encapsuled worker thread.
     NtripDgnssClient(
         const std::string &host, const std::string &mountPoint, const std::string &user, const std::string &passWord,
-        const std::string &positionGga, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+        const std::string &positionGga, const std::shared_ptr<RtcmMessageHandlerInterface> &messageHandler,
+        const std::shared_ptr<IO::ConnectionIO> &connectionIO);
     NtripDgnssClient(const NtripDgnssClient &other)            = delete;
     NtripDgnssClient &operator=(const NtripDgnssClient &other) = delete;
     NtripDgnssClient(NtripDgnssClient &&other)                 = delete;

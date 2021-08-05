@@ -1,6 +1,7 @@
 #include <K/GeoPositioning/RtcmParser.h>
 
 #include <K/Core/Log.h>
+#include <K/GeoPositioning/RtcmMessageHandlerInterface.h>
 
 using std::shared_ptr;
 using std::to_string;
@@ -39,17 +40,7 @@ void RtcmParser::OnDataRead(const void *data, int dataSize) {
             case State::AcceptingCrc:
                 message_.AppendToImage(&byte, 1);
                 if (message_.ImageSize() == payloadSize_ + 6) {
-                    int type;
-                    if (message_.GetType(&type)) {
-                        Log::Print(Log::Level::Debug, this, [&]{
-                            return "received RTCM message " + to_string(type) + ", size="
-                                + to_string(message_.ImageSize());
-                        });
-                    } else {
-                        Log::Print(Log::Level::Debug, this, [&]{
-                            return "received RTCM message, size=" + to_string(message_.ImageSize());
-                        });
-                    }
+                    handler_->Handle(message_);
                     message_.Reset();
                     payloadSize_ = 0;
                     state_ = State::BetweenMessages;

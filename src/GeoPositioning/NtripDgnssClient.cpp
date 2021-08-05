@@ -21,7 +21,7 @@ namespace GeoPositioning {
 
 class NtripDgnssClient::ReadHandler : public virtual AsyncReadInterface::HandlerInterface {
   public:
-    ReadHandler();
+    ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler);
     void OnDataRead(const void *data, int dataSize) override;
     void OnEof() override;
     void OnError() override;
@@ -32,9 +32,9 @@ class NtripDgnssClient::ReadHandler : public virtual AsyncReadInterface::Handler
 
 NtripDgnssClient::NtripDgnssClient(
     const string &host, const string &mountPoint, const string &user, const string &passWord, const string &positionGga,
-    const shared_ptr<ConnectionIO> &connectionIO)
+    const shared_ptr<RtcmMessageHandlerInterface> &messageHandler, const shared_ptr<ConnectionIO> &connectionIO)
         : connection_(host, connectionIO),
-          readHandler_(make_shared<ReadHandler>()) {
+          readHandler_(make_shared<ReadHandler>(messageHandler)) {
     connection_.Register(readHandler_);
 
     stringstream request;
@@ -54,8 +54,8 @@ NtripDgnssClient::~NtripDgnssClient() {
     connection_.Unregister(readHandler_);
 }
 
-NtripDgnssClient::ReadHandler::ReadHandler()
-        : parser_(nullptr) {
+NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler)
+        : parser_(messageHandler) {
     // Nop.
 }
 
