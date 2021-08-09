@@ -11,6 +11,8 @@
 namespace K {
 namespace IO {
 
+class StreamHandlerInterface;
+
 //! State shared between threads of the buffered connection.
 class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInterface {
   public:
@@ -21,8 +23,8 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     SharedState &operator=(const SharedState &&other) = delete;
 
     void SetError();
-    bool Register(const std::shared_ptr<HandlerInterface> &handler);
-    void Unregister(const std::shared_ptr<HandlerInterface> &handler);
+    bool Register(const std::shared_ptr<StreamHandlerInterface> &handler);
+    void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler);
     void WriteItem(const void *item, int itemSize);
     bool Good();
     bool Eof();
@@ -41,18 +43,18 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     // Expects lock to be held.
     void EnsureHandlerCalledInitially();
 
-    std::mutex                       lock_;    // Protects everything below...
+    std::mutex                              lock_;    // Protects everything below...
 
-    std::condition_variable           writeCanContinue_;
-    std::shared_ptr<ConnectionIO>     connectionIO_;
-    std::shared_ptr<HandlerInterface> handler_;
-    bool                              handlerCalledInitially_;
-    Core::RingBuffer                  writeBuffer_;
-    int                               bufferSizeThreshold_;
-    bool                              canNotWrite_;
-    bool                              customCallReportEof_;
-    bool                              eof_;
-    bool                              error_;
+    std::condition_variable                 writeCanContinue_;
+    std::shared_ptr<ConnectionIO>           connectionIO_;
+    std::shared_ptr<StreamHandlerInterface> handler_;
+    bool                                    handlerCalledInitially_;
+    Core::RingBuffer                        writeBuffer_;
+    int                                     bufferSizeThreshold_;
+    bool                                    canNotWrite_;
+    bool                                    customCallReportEof_;
+    bool                                    eof_;
+    bool                                    error_;
 };
 
 }    // Namespace IO.

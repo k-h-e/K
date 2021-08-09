@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <string>
-#include <K/IO/AsyncReadInterface.h>
+#include <K/IO/StreamHandlerInterface.h>
 #include <K/GeoPositioning/NmeaMessage.h>
 
 namespace K {
@@ -12,7 +12,7 @@ namespace GeoPositioning {
 class NmeaMessageHandlerInterface;
 
 //! Parses a binary stream into NMEA messages (sentences).
-class NmeaParser : public virtual K::IO::AsyncReadInterface::HandlerInterface {
+class NmeaParser : public virtual IO::StreamHandlerInterface {
   public:    
     NmeaParser(const std::shared_ptr<NmeaMessageHandlerInterface> &handler);
     NmeaParser(const NmeaParser &other)            = delete;
@@ -20,9 +20,9 @@ class NmeaParser : public virtual K::IO::AsyncReadInterface::HandlerInterface {
     NmeaParser(NmeaParser &&other)                 = delete;
     NmeaParser &operator=(NmeaParser &&other)      = delete;
 
-    void OnDataRead(const void *data, int dataSize) override;
-    void OnEof() override;
-    void OnError() override;
+    void HandleStreamData(const void *data, int dataSize) override;
+    void HandleEof() override;
+    void HandleError() override;
 
   private:
     enum class State { BetweenMessages,

@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <K/Core/ReadableStreamInterface.h>
-#include <K/IO/AsyncDataReceiverInterface.h>
+#include <K/IO/StreamHandlerInterface.h>
 
 namespace K {
 namespace IO {
@@ -11,24 +11,18 @@ namespace IO {
 //! Interface to streams providing asynchronous reading.
 class AsyncReadInterface : public virtual K::Core::ReadableStreamInterface {
   public:
-    class HandlerInterface : public virtual IO::AsyncDataReceiverInterface {
-      public:
-        //! Gets called to asynchronously deliver read data.
-        virtual void OnDataRead(const void *data, int dataSize) = 0;
-    };
-
-    //! Registers the specified asynchronous read handler.
+    //! Registers the specified read handler.
     /*!
      *  The handler methods will get called on an arbitrary thread and must not call back into the stream.
      */
-    virtual bool Register(const std::shared_ptr<HandlerInterface> &handler) = 0;
-    //! Unregisters the specified asynchronous read handler if it was registered.
+    virtual bool Register(const std::shared_ptr<StreamHandlerInterface> &handler) = 0;
+    //! Unregisters the specified read handler if it was registered.
     /*!
      *  When the method returns, it is guaranteed that the handler will not be called again. If registering another read
      *  handler later, read data might have been missed - with the exception of the initial time after stream
      *  construction, there is no garantee that the stream buffers read data while no read handler is registered.
      */
-    virtual void Unregister(const std::shared_ptr<HandlerInterface> &handler) = 0;
+    virtual void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) = 0;
 };
 
 }    // Namespace IO.

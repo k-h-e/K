@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <K/Core/Buffer.h>
-#include <K/IO/AsyncReadInterface.h>
+#include <K/IO/StreamHandlerInterface.h>
 #include <K/Events/NetworkEventCoupling.h>
 
 using std::shared_ptr;
@@ -14,12 +14,12 @@ namespace Events {
 class EventLoopHub;
 
 //! Asynchronous read handler for the network event coupling.
-class NetworkEventCoupling::ReadHandler : public virtual K::IO::AsyncReadInterface::HandlerInterface {
+class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterface {
   public:
     ReadHandler(const shared_ptr<EventLoopHub> &hub, int hubClientId);
-    void OnDataRead(const void *data, int dataSize) override;
-    void OnEof() override;
-    void OnError() override;
+    void HandleStreamData(const void *data, int dataSize) override;
+    void HandleEof() override;
+    void HandleError() override;
 
   private:
     enum class State { WaitingForDataSize,

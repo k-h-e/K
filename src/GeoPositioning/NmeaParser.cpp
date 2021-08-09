@@ -24,7 +24,7 @@ NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler)
     // Nop.
 }
 
-void NmeaParser::OnDataRead(const void *data, int dataSize) {
+void NmeaParser::HandleStreamData(const void *data, int dataSize) {
     if (!eof_ && !error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
         for (int i = 0; i < dataSize; ++i) {
@@ -101,16 +101,16 @@ void NmeaParser::OnDataRead(const void *data, int dataSize) {
     }
 }
 
-void NmeaParser::OnEof() {
+void NmeaParser::HandleEof() {
     if (!eof_) {
-        handler_->OnEof();
+        handler_->HandleEof();
         eof_ = true;
     }
 }
 
-void NmeaParser::OnError() {
+void NmeaParser::HandleError() {
     if (!error_) {
-        handler_->OnError();
+        handler_->HandleError();
         error_ = true;
     }
 }

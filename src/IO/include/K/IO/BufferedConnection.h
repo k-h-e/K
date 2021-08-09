@@ -8,6 +8,7 @@ namespace K {
 namespace IO {
 
 class ConnectionIO;
+class StreamHandlerInterface;
 
 //! Buffered connection.
 class BufferedConnection : public virtual ConnectionStreamInterface {
@@ -24,8 +25,8 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     BufferedConnection &operator=(const BufferedConnection &&other) = delete;
     ~BufferedConnection();
 
-    bool Register(const std::shared_ptr<HandlerInterface> &handler) override;
-    void Unregister(const std::shared_ptr<HandlerInterface> &handler) override;
+    bool Register(const std::shared_ptr<StreamHandlerInterface> &handler) override;
+    void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) override;
     void WriteItem(const void *item, int itemSize) override;
     bool Good() const override;
     bool Eof() override;

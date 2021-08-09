@@ -71,11 +71,11 @@ BufferedConnection::~BufferedConnection() {
     });
 }
 
-bool BufferedConnection::Register(const shared_ptr<HandlerInterface> &handler) {
+bool BufferedConnection::Register(const shared_ptr<StreamHandlerInterface> &handler) {
     return sharedState_->Register(handler);
 }
 
-void BufferedConnection::Unregister(const shared_ptr<HandlerInterface> &handler) {
+void BufferedConnection::Unregister(const shared_ptr<StreamHandlerInterface> &handler) {
     sharedState_->Unregister(handler);
 }
 

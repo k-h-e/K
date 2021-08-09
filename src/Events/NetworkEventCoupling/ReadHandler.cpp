@@ -21,7 +21,7 @@ NetworkEventCoupling::ReadHandler::ReadHandler(const shared_ptr<EventLoopHub> &h
     // Nop.
 }
 
-void NetworkEventCoupling::ReadHandler::OnDataRead(const void *data, int dataSize) {
+void NetworkEventCoupling::ReadHandler::HandleStreamData(const void *data, int dataSize) {
     if (!error_) {
         buffer_.Append(data, dataSize);
         uint8_t *buffer = static_cast<uint8_t *>(buffer_.Data());
@@ -65,12 +65,12 @@ void NetworkEventCoupling::ReadHandler::OnDataRead(const void *data, int dataSiz
     }
 }
 
-void NetworkEventCoupling::ReadHandler::OnEof() {
+void NetworkEventCoupling::ReadHandler::HandleEof() {
     Log::Print(Log::Level::Warning, this, []{ return "EOF"; });
     EnterErrorState();
 }
 
-void NetworkEventCoupling::ReadHandler::OnError() {
+void NetworkEventCoupling::ReadHandler::HandleError() {
     Log::Print(Log::Level::Warning, this, []{ return "I/O error"; });
     EnterErrorState();
 }

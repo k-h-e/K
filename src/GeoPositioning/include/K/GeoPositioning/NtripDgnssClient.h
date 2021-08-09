@@ -5,6 +5,11 @@
 #include <K/IO/TcpConnection.h>
 
 namespace K {
+
+namespace IO {
+    class StreamHandlerInterface;
+}
+
 namespace GeoPositioning {
 
 class RtcmMessageHandlerInterface;
@@ -26,8 +31,8 @@ class NtripDgnssClient : public Core::Interface {
   private:
     class ReadHandler;
 
-    K::IO::TcpConnection                                         connection_;
-    std::shared_ptr<K::IO::AsyncReadInterface::HandlerInterface> readHandler_;
+    K::IO::TcpConnection                        connection_;
+    std::shared_ptr<IO::StreamHandlerInterface> readHandler_;
 };
 
 }    // Namespace GeoPositioning.

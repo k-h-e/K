@@ -1,7 +1,7 @@
 #ifndef K_GEOPOSITIONING_NMEAMESSAGEHANDLERINTERFACE_H_
 #define K_GEOPOSITIONING_NMEAMESSAGEHANDLERINTERFACE_H_
 
-#include <K/IO/AsyncDataReceiverInterface.h>
+#include <K/IO/DataHandlerInterface.h>
 
 namespace K {
 namespace GeoPositioning {
@@ -9,7 +9,7 @@ namespace GeoPositioning {
 class NmeaMessage;
 
 //! Interface to entities receiving and processing NMEA messages.
-class NmeaMessageHandlerInterface : public virtual K::IO::AsyncDataReceiverInterface {
+class NmeaMessageHandlerInterface : public virtual IO::DataHandlerInterface {
   public:
     virtual void Handle(const NmeaMessage &message) = 0;
 };

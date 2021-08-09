@@ -13,18 +13,18 @@ using std::stringstream;
 using K::Core::Log;
 using K::Core::StringTools;
 using K::GeoPositioning::RtcmParser;
-using K::IO::AsyncReadInterface;
+using K::IO::StreamHandlerInterface;
 using K::IO::ConnectionIO;
 
 namespace K {
 namespace GeoPositioning {
 
-class NtripDgnssClient::ReadHandler : public virtual AsyncReadInterface::HandlerInterface {
+class NtripDgnssClient::ReadHandler : public virtual StreamHandlerInterface {
   public:
     ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler);
-    void OnDataRead(const void *data, int dataSize) override;
-    void OnEof() override;
-    void OnError() override;
+    void HandleStreamData(const void *data, int dataSize) override;
+    void HandleEof() override;
+    void HandleError() override;
 
   private:
     RtcmParser parser_;
@@ -59,16 +59,16 @@ NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerIn
     // Nop.
 }
 
-void NtripDgnssClient::ReadHandler::OnDataRead(const void *data, int dataSize) {
-    parser_.OnDataRead(data, dataSize);
+void NtripDgnssClient::ReadHandler::HandleStreamData(const void *data, int dataSize) {
+    parser_.HandleStreamData(data, dataSize);
 }
 
-void NtripDgnssClient::ReadHandler::OnEof() {
-    parser_.OnEof();
+void NtripDgnssClient::ReadHandler::HandleEof() {
+    parser_.HandleEof();
 }
 
-void NtripDgnssClient::ReadHandler::OnError() {
-    parser_.OnError();
+void NtripDgnssClient::ReadHandler::HandleError() {
+    parser_.HandleError();
 }
 
 }    // Namespace GeoPositioning.
