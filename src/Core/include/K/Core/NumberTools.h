@@ -1,6 +1,8 @@
 #ifndef K_CORE_NUMBERTOOLS_H_
 #define K_CORE_NUMBERTOOLS_H_
 
+#include <cstdint>
+
 namespace K {
 namespace Core {
 
@@ -37,6 +39,13 @@ class NumberTools {
         T temporary = *number;
         *number = *otherNumber;
         *otherNumber = temporary;
+    }
+
+    static void ToggleEndian(uint16_t *number) {
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(number);
+        uint8_t temp = ptr[0];
+        ptr[0] = ptr[1];
+        ptr[1] = temp;
     }
 };
 

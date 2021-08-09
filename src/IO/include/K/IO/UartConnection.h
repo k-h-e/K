@@ -13,7 +13,8 @@ class ConnectionIO;
 class UartConnection : public BufferedConnection {
   public:
     enum class BaudRate { Baud4800,
-                          Baud9600  };
+                          Baud9600,
+                          Baud38400 };
 
     //! Establishes a UART (serial) connection via the specified serial device.
     UartConnection(const std::string &deviceFileName, BaudRate baudRate,

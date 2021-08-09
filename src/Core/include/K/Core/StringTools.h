@@ -24,6 +24,7 @@ class StringTools {
     static bool Parse(const std::string &text, double *outValue);
     static std::string ToLower(const std::string &text);
     static std::string ToBase64(const std::string &text);
+    static std::string ToHex(const void *data, int dataSize);
     static std::string GetCleanClassName(const Interface *instance);
     static std::string GetCleanClassName(const Interface *instance, int maxNumSegments);
     static void Serialize(const std::string &text, ItemWriteInterface *stream);
@@ -31,6 +32,7 @@ class StringTools {
 
   private:
     static const char * const base64EncodeTable;
+    static const char * const hexEncodeTable;
 };
 
 }    // Namespace Core.

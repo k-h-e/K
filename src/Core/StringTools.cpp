@@ -21,6 +21,7 @@ namespace K {
 namespace Core {
 
 const char * const StringTools::base64EncodeTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const char * const StringTools::hexEncodeTable    = "0123456789abcdef";
 
 vector<string> StringTools::Tokenize(const string &text, char separator) {
     vector<string> tokens;
@@ -155,6 +156,19 @@ string StringTools::ToBase64(const std::string &text) {
         for (int i = 0; i < 4; ++i) {
             result.push_back(static_cast<char>(out[i]));
         }
+    }
+
+    return result;
+}
+
+string StringTools::ToHex(const void *data, int dataSize) {
+    string result;
+
+    const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
+    for (int i = 0; i < dataSize; ++i) {
+        uint8_t byte = *dataPtr++;
+        result.push_back(hexEncodeTable[byte >> 4]);
+        result.push_back(hexEncodeTable[byte & 0xfu]);
     }
 
     return result;

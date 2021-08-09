@@ -14,63 +14,73 @@ RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler)
         : handler_(handler),
           state_(State::BetweenMessages),
           payloadSize_(0),
-          numSkipped_(0) {
+          numSkipped_(0),
+          eof_(false),
+          error_(false) {
    // Nop.
 }
 
 void RtcmParser::OnDataRead(const void *data, int dataSize) {
-    const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
-    for (int i = 0; i < dataSize; ++i) {
-        uint8_t byte = *dataPtr++;
+    if (!eof_ && !error_) {
+        const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
+        for (int i = 0; i < dataSize; ++i) {
+            uint8_t byte = *dataPtr++;
 
-        switch (state_) {
-            case State::AcceptingHeader:
-                message_.AppendToImage(&byte, 1);
-                if (message_.ImageSize() == 3) {
-                    payloadSize_ = message_.PayloadSize();
-                    state_ = payloadSize_ ? State::AcceptingPayload : State::AcceptingCrc;
-                }
-                break;
-            case State::AcceptingPayload:
-                message_.AppendToImage(&byte, 1);
-                if (message_.ImageSize() == payloadSize_ + 3) {
-                    state_ = State::AcceptingCrc;
-                }
-                break;
-            case State::AcceptingCrc:
-                message_.AppendToImage(&byte, 1);
-                if (message_.ImageSize() == payloadSize_ + 6) {
-                    handler_->Handle(message_);
-                    message_.Reset();
-                    payloadSize_ = 0;
-                    state_ = State::BetweenMessages;
-                }
-                break;
-            case State::BetweenMessages:
-            default:
-                if (byte == 0xd3u) {
+            switch (state_) {
+                case State::AcceptingHeader:
                     message_.AppendToImage(&byte, 1);
-                    if (numSkipped_) {
-                        Log::Print(Log::Level::Warning, this, [&]{
-                            return "skipped " + to_string(numSkipped_) + " bytes between messages";
-                        });
-                        numSkipped_ = 0;
+                    if (message_.ImageSize() == 3) {
+                        payloadSize_ = message_.PayloadSize();
+                        state_ = payloadSize_ ? State::AcceptingPayload : State::AcceptingCrc;
                     }
-                    state_ = State::AcceptingHeader;
-                } else {
-                    ++numSkipped_;
-                }
-                break;
+                    break;
+                case State::AcceptingPayload:
+                    message_.AppendToImage(&byte, 1);
+                    if (message_.ImageSize() == payloadSize_ + 3) {
+                        state_ = State::AcceptingCrc;
+                    }
+                    break;
+                case State::AcceptingCrc:
+                    message_.AppendToImage(&byte, 1);
+                    if (message_.ImageSize() == payloadSize_ + 6) {
+                        handler_->Handle(message_);
+                        message_.Reset();
+                        payloadSize_ = 0;
+                        state_ = State::BetweenMessages;
+                    }
+                    break;
+                case State::BetweenMessages:
+                default:
+                    if (byte == 0xd3u) {
+                        message_.AppendToImage(&byte, 1);
+                        if (numSkipped_) {
+                            Log::Print(Log::Level::Warning, this, [&]{
+                                return "skipped " + to_string(numSkipped_) + " bytes between messages";
+                            });
+                            numSkipped_ = 0;
+                        }
+                        state_ = State::AcceptingHeader;
+                    } else {
+                        ++numSkipped_;
+                    }
+                    break;
+            }
         }
     }
 }
 
 void RtcmParser::OnEof() {
-
+    if (!eof_) {
+        handler_->OnEof();
+        eof_ = true;
+    }
 }
 
 void RtcmParser::OnError() {
-
+    if (!error_) {
+        handler_->OnError();
+        error_ = true;
+    }
 }
 
 }    // Namespace GeoPositioning.

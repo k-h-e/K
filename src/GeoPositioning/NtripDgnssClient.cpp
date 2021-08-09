@@ -64,11 +64,11 @@ void NtripDgnssClient::ReadHandler::OnDataRead(const void *data, int dataSize) {
 }
 
 void NtripDgnssClient::ReadHandler::OnEof() {
-    Log::Print(Log::Level::Debug, this, []{ return "EOF"; });
+    parser_.OnEof();
 }
 
 void NtripDgnssClient::ReadHandler::OnError() {
-    Log::Print(Log::Level::Error, this, []{ return "error"; });
+    parser_.OnError();
 }
 
 }    // Namespace GeoPositioning.

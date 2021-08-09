@@ -18,6 +18,17 @@ Buffer::Buffer(int initialSize)
 	    : buffer_(initialSize > 0 ? initialSize : 1),
 		  bufferFill_((int)buffer_.size()) {}
 
+Buffer::Buffer(const Buffer &other) {
+    *this = other;
+}
+
+Buffer &Buffer::operator=(const Buffer &other) {
+    buffer_     = other.buffer_;
+    bufferFill_ = other.bufferFill_;
+    finalResultAcceptor_.reset();
+    return *this;
+}
+
 Buffer::~Buffer() {
     if (finalResultAcceptor_) {
         finalResultAcceptor_->Set(true);

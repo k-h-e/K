@@ -35,6 +35,8 @@ class RtcmParser : public virtual K::IO::AsyncReadInterface::HandlerInterface {
     int                                          payloadSize_;
     int                                          numSkipped_;
     RtcmMessage                                  message_;
+    bool                                         eof_;
+    bool                                         error_;
 };
 
 }    // Namespace GeoPositioning.

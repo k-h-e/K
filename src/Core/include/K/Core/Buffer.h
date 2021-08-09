@@ -64,8 +64,10 @@ class Buffer : public virtual ItemWriteInterface {
     Buffer();
 	//! Creates a buffer of the given initial size, but does not initialize its contents.
 	Buffer(int initialSize);
-    Buffer(const Buffer &other)            = delete;
-    Buffer &operator=(const Buffer &other) = delete;
+    //! Will not copy the reference to a potentially set final result acceptor.
+    Buffer(const Buffer &other);
+    //! Will not copy the reference to a potentially set final result acceptor.
+    Buffer &operator=(const Buffer &other);
     Buffer(Buffer &&other)                 = delete;
     Buffer &operator=(Buffer &&other)      = delete;
     ~Buffer();

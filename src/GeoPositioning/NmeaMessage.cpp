@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <K/Core/ItemReadInterface.h>
 #include <K/Core/ItemWriteInterface.h>
 #include <K/Core/StringTools.h>
 
@@ -10,6 +11,7 @@ using std::stringstream;
 using std::hex;
 using std::setw;
 using std::setfill;
+using K::Core::ItemReadInterface;
 using K::Core::ItemWriteInterface;
 using K::Core::StringTools;
 
@@ -63,6 +65,29 @@ string NmeaMessage::ToString() const {
 void NmeaMessage::WriteTo(ItemWriteInterface *stream) const {
     string text = ToString() + "\r\n";
     stream->WriteItem(text.c_str(), static_cast<int>(text.length()));
+}
+
+void NmeaMessage::Serialize(K::Core::ItemWriteInterface *stream) const {
+    StringTools::Serialize(type_, stream);
+    uint32_t numFields = static_cast<uint32_t>(fields_.size());
+    stream->WriteItem(&numFields, sizeof(numFields));
+    for (uint32_t i = 0u; i < numFields; ++i) {
+        StringTools::Serialize(fields_[i], stream);
+    }
+}
+
+void NmeaMessage::Deserialize(K::Core::ItemReadInterface *stream) {
+    StringTools::Deserialize(&type_, stream);
+    uint32_t numFields;
+    stream->ReadItem(&numFields, sizeof(numFields));
+    if (stream->Good()) {
+        fields_.clear();
+        for (uint32_t i = 0u; i < numFields; ++i) {
+            string field;
+            StringTools::Deserialize(&field, stream);
+            fields_.push_back(field);
+        }
+    }
 }
 
 }    // Namespace GeoPositioning.

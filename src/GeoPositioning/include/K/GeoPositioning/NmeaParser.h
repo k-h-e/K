@@ -34,6 +34,10 @@ class NmeaParser : public virtual K::IO::AsyncReadInterface::HandlerInterface {
     State                                        state_;
     std::string                                  token_;
     NmeaMessage                                  message_;
+    int                                          numSkipped_;
+    std::string                                  skippedText_;
+    bool                                         eof_;
+    bool                                         error_;
 };
 
 }    // Namespace GeoPositioning.

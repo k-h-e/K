@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <K/Core/ReadableStreamInterface.h>
+#include <K/IO/AsyncDataReceiverInterface.h>
 
 namespace K {
 namespace IO {
@@ -10,14 +11,10 @@ namespace IO {
 //! Interface to streams providing asynchronous reading.
 class AsyncReadInterface : public virtual K::Core::ReadableStreamInterface {
   public:
-    class HandlerInterface : public virtual K::Core::Interface {
+    class HandlerInterface : public virtual IO::AsyncDataReceiverInterface {
       public:
         //! Gets called to asynchronously deliver read data.
         virtual void OnDataRead(const void *data, int dataSize) = 0;
-        //! Gets called once when reading reaches EOF.
-        virtual void OnEof() = 0;
-        //! Gets called once when the stream enters error state (see K::Core::ErrorInterface).
-        virtual void OnError() = 0;
     };
 
     //! Registers the specified asynchronous read handler.

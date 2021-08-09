@@ -37,6 +37,9 @@ int UartConnection::OpenUart(const string &deviceFileName, BaudRate baudRate) {
             case BaudRate::Baud9600:
                 baudRateFlag = B9600;
                 break;
+            case BaudRate::Baud38400:
+                baudRateFlag = B38400;
+                break;
             default:
                 baudRateFlag = B9600;
                 break;
