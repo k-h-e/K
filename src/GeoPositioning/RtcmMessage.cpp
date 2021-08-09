@@ -51,6 +51,12 @@ int RtcmMessage::PayloadSize() const {
     return 0;
 }
 
+void RtcmMessage::WriteTo(ItemWriteInterface *stream) const {
+    if (image_.size()) {
+        stream->WriteItem(&image_[0], static_cast<int>(image_.size()));
+    }
+}
+
 void RtcmMessage::Serialize(ItemWriteInterface *stream) const {
     uint32_t size = static_cast<uint32_t>(image_.size());
     stream->WriteItem(&size, sizeof(size));

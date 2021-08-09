@@ -34,6 +34,8 @@ class RtcmMessage : public virtual K::Core::SerializableInterface {
     bool GetType(int *outType) const;
     //! Tells the payload size.
     int PayloadSize() const;
+    //! Writes the RTCM message to the specified stream.
+    void WriteTo(Core::ItemWriteInterface *stream) const;
 
     void Serialize(K::Core::ItemWriteInterface *stream) const override;
     void Deserialize(K::Core::ItemReadInterface *stream) override;
