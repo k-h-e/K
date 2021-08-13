@@ -28,6 +28,8 @@ class NtripDgnssClient : public Core::Interface {
     NtripDgnssClient &operator=(NtripDgnssClient &&other)      = delete;
     ~NtripDgnssClient();
 
+    void SendGga(const std::string &gga);
+
   private:
     class ReadHandler;
 

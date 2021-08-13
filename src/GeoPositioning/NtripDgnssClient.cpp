@@ -43,15 +43,25 @@ NtripDgnssClient::NtripDgnssClient(
     request << "User-Agent: NTRIP EchoBot/0.1.0\r\n";
     request << "Authorization: Basic " << StringTools::ToBase64(user + ":" + passWord) << "\r\n";
     request << "\r\n";
-    request << positionGga << "\r\n";
 
     auto requestText = request.str();
     Log::Print(Log::Level::Debug, this, [&]{ return "sending request: " + requestText; });
     connection_.WriteItem(requestText.c_str(), static_cast<int>(requestText.length()));
+
+    SendGga(positionGga);
 }
 
 NtripDgnssClient::~NtripDgnssClient() {
     connection_.Unregister(readHandler_);
+}
+
+void NtripDgnssClient::SendGga(const std::string &gga) {
+    if (!gga.empty()) {
+        Log::Print(Log::Level::Debug, this, [&]{ return "sending position: " + gga; });
+        string lineBreak = "\r\n";
+        connection_.WriteItem(&gga[0], static_cast<int>(gga.size()));
+        connection_.WriteItem(&lineBreak[0], static_cast<int>(lineBreak.size()));
+    }
 }
 
 NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler)
