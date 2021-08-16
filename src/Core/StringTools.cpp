@@ -213,8 +213,9 @@ void StringTools::Deserialize(string *text, ItemReadInterface *stream) {
     uint32_t size;
     stream->ReadItem(&size, sizeof(size));
     if (stream->Good()) {
-        text->resize(size);
+        text->clear();
         if (size) {
+            text->resize(size);
             stream->ReadItem(&(*text)[0], size * sizeof(string::value_type));
         }
     }
