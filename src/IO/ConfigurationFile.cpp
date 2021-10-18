@@ -20,7 +20,7 @@ namespace K {
 namespace IO {
 
 ConfigurationFile::ConfigurationFile() :
-        validCharacters_("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_/") {
+        validCharacters_("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_/ ") {
     // Nop.
 }
 
