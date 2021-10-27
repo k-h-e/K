@@ -19,7 +19,7 @@ NetworkEventCouplingServer::NetworkEventCouplingServer(
         const shared_ptr<ThreadPool> &threadPool) {
     sharedState_  = make_shared<SharedState>();
 
-    listenSocket_ = make_shared<ListenSocket>(port, connectionIO);
+    listenSocket_ = make_shared<ListenSocket>(port, connectionIO, threadPool);
     worker_       = make_shared<Worker>(listenSocket_, hub, threadPool, sharedState_);
 
     threadPool->Run(worker_.get(), sharedState_.get(), workerCompletionId);

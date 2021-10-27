@@ -2,10 +2,14 @@
 #define K_IO_LISTENSOCKET_H_
 
 #include <memory>
-#include <mutex>
 #include <K/Core/ErrorStateInterface.h>
 
 namespace K {
+
+namespace Core {
+    class ThreadPool;
+}
+
 namespace IO {
 
 class Socket;
@@ -18,12 +22,12 @@ class ConnectionIO;
  */
 class ListenSocket : public virtual K::Core::ErrorStateInterface {
   public:
-    ListenSocket(int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    ListenSocket(int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+                 const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     ListenSocket(const ListenSocket &other)             = delete;
     ListenSocket &operator=(const ListenSocket &other)  = delete;
-    ListenSocket(const ListenSocket &&other)            = delete;
-    ListenSocket &operator=(const ListenSocket &&other) = delete;
-    ~ListenSocket();
+    ListenSocket(ListenSocket &&other)                  = delete;
+    ListenSocket &operator=(ListenSocket &&other)       = delete;
 
     //! Accepts a new connection from the listen socket.
     /*!
@@ -39,17 +43,13 @@ class ListenSocket : public virtual K::Core::ErrorStateInterface {
     std::shared_ptr<TcpConnection> AcceptConnection();
     //! Shuts down the listen socket, causing active <c>Accept()</c> calls to return and fail.
     void ShutDown();
-    bool ErrorState();
+    bool ErrorState() override;
 
   private:
-    int DoAccept();
-    void Close();
+    class Acceptor;
+    class SharedState;
 
-    std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
-
-    std::mutex lock_;
-    int        fd_;
-    bool       socketDown_;
+    std::shared_ptr<SharedState> shared_;
 };
 
 }    // Namespace IO.
