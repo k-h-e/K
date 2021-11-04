@@ -19,7 +19,13 @@ class NetworkTools {
      *  \return
      *  File descriptor of the created TCP socket, and <c>-1</c> in case of failure.
      */
-    static int ConnectTcp(const std::string &host, K::Core::Interface *loggingObject);
+    static int ConnectTcp(const std::string &hostAndPort, K::Core::Interface *loggingObject);
+    //! Establishes a network stream connection to the specified host.
+    /*!
+     *  \return
+     *  File descriptor of the created TCP socket, and <c>-1</c> in case of failure.
+     */
+    static int ConnectTcp(const std::string &host, int port, K::Core::Interface *loggingObject);
     //! Establishes a network stream connection to the specified host.
     /*!
      *  \return

@@ -4,8 +4,9 @@
 #include "SharedState.h"
 #include "Worker.h"
 
-using std::shared_ptr;
 using std::make_shared;
+using std::shared_ptr;
+using std::string;
 using K::Core::ThreadPool;
 using K::Core::ActionInterface;
 using K::IO::ConnectionIO;
@@ -27,10 +28,10 @@ NetworkEventCouplingClient::~NetworkEventCouplingClient() {
     Disconnect();
 }
 
-void NetworkEventCouplingClient::Connect(uint32_t ip4Address, int port) {
+void NetworkEventCouplingClient::Connect(const string &host, int port) {
     sharedState_->WaitForWorker();
     sharedState_->PrepareToConnect();
-    worker_->SetHost(ip4Address, port);
+    worker_->SetHost(host, port);
     threadPool_->Run(worker_.get(), sharedState_.get(), workerCompletionId);
 }
 

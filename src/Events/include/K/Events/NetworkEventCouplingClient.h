@@ -47,7 +47,7 @@ class NetworkEventCouplingClient {
      *  The connection is established in the background, so when this method returns this does not mean that the
      *  connection is already up.
      */
-    void Connect(uint32_t ip4Address, int port);
+    void Connect(const std::string &host, int port);
     //! Disconnects the network event coupling connection (if one is present or in the process of being established).
     void Disconnect();
 

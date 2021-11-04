@@ -18,16 +18,22 @@ using K::Core::Log;
 namespace K {
 namespace IO {
 
-int NetworkTools::ConnectTcp(const string &host, Core::Interface *loggingObject) {
-    vector<string> tokens = StringTools::Tokenize(host, ':');
+int NetworkTools::ConnectTcp(const string &hostAndPort, Core::Interface *loggingObject) {
+    vector<string> tokens = StringTools::Tokenize(hostAndPort, ':');
     if (tokens.size() == 2) {
         int port;
         if (StringTools::Parse(tokens[1], &port)) {
-            uint32_t ip4Address;
-            if (ResolveHostName(tokens[0], &ip4Address, loggingObject)) {
-                return ConnectTcp(ip4Address, port, loggingObject);
-            }
+            return ConnectTcp(tokens[0], port, loggingObject);
         }
+    }
+
+    return -1;
+}
+
+int NetworkTools::ConnectTcp(const string &host, int port, Core::Interface *loggingObject) {
+    uint32_t ip4Address;
+    if (ResolveHostName(host, &ip4Address, loggingObject)) {
+        return ConnectTcp(ip4Address, port, loggingObject);
     }
 
     return -1;

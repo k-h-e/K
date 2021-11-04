@@ -6,8 +6,9 @@
 #include <K/IO/TcpConnection.h>
 #include <K/Events/NetworkEventCoupling.h>
 
-using std::shared_ptr;
 using std::make_shared;
+using std::shared_ptr;
+using std::string;
 using std::unique_ptr;
 using K::Core::ThreadPool;
 using K::Core::CompletionHandlerInterface;
@@ -32,20 +33,19 @@ NetworkEventCouplingClient::Worker::Worker(
           onDisconnectedAction_(onDisconnectedAction),
           connectionIO_(connectionIO),
           threadPool_(threadPool),
-          hostIp4Address_(0u),
           hostPort_(0) {
     // Nop.
 }
 
-void NetworkEventCouplingClient::Worker::SetHost(uint32_t ip4Address, int port) {
-    hostIp4Address_ = ip4Address;
-    hostPort_       = port;
+void NetworkEventCouplingClient::Worker::SetHost(const string &host, int port) {
+    host_     = host;
+    hostPort_ = port;
 }
 
 void NetworkEventCouplingClient::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
-    shared_ptr<TcpConnection> tcpConnection = make_shared<TcpConnection>(hostIp4Address_, hostPort_, connectionIO_);
+    shared_ptr<TcpConnection> tcpConnection = make_shared<TcpConnection>(host_, hostPort_, connectionIO_);
     if (!tcpConnection->ErrorState()) {
         if (onConnectedAction_) {
             onConnectedAction_->ExecuteAction();

@@ -12,26 +12,41 @@ using K::IO::NetworkTools;
 namespace K {
 namespace IO {
 
-TcpConnection::TcpConnection(const string &host, const shared_ptr<ConnectionIO> &connectionIO)
-        : BufferedConnection(NetworkTools::ConnectTcp(host, this), bufferSizeThreshold, nullptr, connectionIO) {
+TcpConnection::TcpConnection(const string &hostAndPort, const shared_ptr<ConnectionIO> &connectionIO)
+        : BufferedConnection(NetworkTools::ConnectTcp(hostAndPort, nullptr), bufferSizeThreshold, nullptr,
+                             connectionIO) {
     // Nop.
 }
 
-TcpConnection::TcpConnection(const string &host, const shared_ptr<Result> &resultAcceptor,
+TcpConnection::TcpConnection(const string &hostAndPort, const shared_ptr<Result> &resultAcceptor,
                              const shared_ptr<ConnectionIO> &connectionIO)
-        : BufferedConnection(NetworkTools::ConnectTcp(host, this), bufferSizeThreshold, resultAcceptor, connectionIO) {
+        : BufferedConnection(NetworkTools::ConnectTcp(hostAndPort, nullptr), bufferSizeThreshold, resultAcceptor,
+                             connectionIO) {
+    // Nop.
+}
+
+TcpConnection::TcpConnection(const string &host, int port, const shared_ptr<ConnectionIO> &connectionIO)
+        : BufferedConnection(NetworkTools::ConnectTcp(host, port, nullptr), bufferSizeThreshold, nullptr,
+                             connectionIO) {
+    // Nop.
+}
+
+TcpConnection::TcpConnection(const string &host, int port, const shared_ptr<Result> &resultAcceptor,
+                             const shared_ptr<ConnectionIO> &connectionIO)
+        : BufferedConnection(NetworkTools::ConnectTcp(host, port, nullptr), bufferSizeThreshold, resultAcceptor,
+                             connectionIO) {
     // Nop.
 }
 
 TcpConnection::TcpConnection(uint32_t ip4Address, int port, const shared_ptr<ConnectionIO> &connectionIO)
-        : BufferedConnection(NetworkTools::ConnectTcp(ip4Address, port, this), bufferSizeThreshold, nullptr,
+        : BufferedConnection(NetworkTools::ConnectTcp(ip4Address, port, nullptr), bufferSizeThreshold, nullptr,
                              connectionIO) {
     // Nop.
 }
 
 TcpConnection::TcpConnection(uint32_t ip4Address, int port, const shared_ptr<Result> &resultAcceptor,
                              const shared_ptr<ConnectionIO> &connectionIO)
-        : BufferedConnection(NetworkTools::ConnectTcp(ip4Address, port, this), bufferSizeThreshold, resultAcceptor,
+        : BufferedConnection(NetworkTools::ConnectTcp(ip4Address, port, nullptr), bufferSizeThreshold, resultAcceptor,
                              connectionIO) {
     // Nop.
 }
