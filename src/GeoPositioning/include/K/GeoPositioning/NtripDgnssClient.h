@@ -29,6 +29,7 @@ class NtripDgnssClient : public Core::Interface {
     ~NtripDgnssClient();
 
     void SendGga(const std::string &gga);
+    void SendGgaHunsfelsHack();
 
   private:
     class ReadHandler;

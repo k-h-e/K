@@ -3,6 +3,7 @@
 #include <sstream>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
+#include <K/GeoPositioning/NmeaMessage.h>
 #include <K/GeoPositioning/RtcmParser.h>
 
 using std::shared_ptr;
@@ -12,6 +13,7 @@ using std::to_string;
 using std::stringstream;
 using K::Core::Log;
 using K::Core::StringTools;
+using K::GeoPositioning::NmeaMessage;
 using K::GeoPositioning::RtcmParser;
 using K::IO::StreamHandlerInterface;
 using K::IO::ConnectionIO;
@@ -56,10 +58,40 @@ NtripDgnssClient::~NtripDgnssClient() {
 }
 
 void NtripDgnssClient::SendGga(const std::string &gga) {
+    (void)gga;
+    SendGgaHunsfelsHack();
+ 
+    /*
     if (!gga.empty()) {
         Log::Print(Log::Level::Debug, this, [&]{ return "sending position: " + gga; });
         string lineBreak = "\r\n";
         connection_.WriteItem(&gga[0], static_cast<int>(gga.size()));
+        connection_.WriteItem(&lineBreak[0], static_cast<int>(lineBreak.size()));
+    }
+    */
+}
+
+void NtripDgnssClient::SendGgaHunsfelsHack() {	
+    NmeaMessage message("GNGGA");
+    message.AddField("161826.75");
+    message.AddField("4958.71500");
+    message.AddField("N");
+    message.AddField("00752.61000");
+    message.AddField("E");
+    message.AddField("1");
+    message.AddField("12");
+    message.AddField("0.62");
+    message.AddField("229.6");
+    message.AddField("M");
+    message.AddField("47.3");
+    message.AddField("M");
+    message.AddField("");
+    auto hackedGga = message.ToString();
+
+    if (!hackedGga.empty()) {
+        Log::Print(Log::Level::Debug, this, [&]{ return "sending position: " + hackedGga; });
+        string lineBreak = "\r\n";
+        connection_.WriteItem(&hackedGga[0], static_cast<int>(hackedGga.size()));
         connection_.WriteItem(&lineBreak[0], static_cast<int>(lineBreak.size()));
     }
 }
@@ -70,6 +102,18 @@ NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerIn
 }
 
 void NtripDgnssClient::ReadHandler::HandleStreamData(const void *data, int dataSize) {
+   
+    // Hunsfels hack...	
+    string response;
+    const char *character = static_cast<const char *>(data);
+    for (int i = 0; i < dataSize; ++i) {
+        response.push_back(*character++);
+    }
+    Log::Print(Log::Level::Debug, this, [&]{
+        return string("response=\"") + response + "\"";
+    });
+    // ... hack, end.
+
     parser_.HandleStreamData(data, dataSize);
 }
 
