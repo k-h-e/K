@@ -24,6 +24,12 @@ class NmeaMessage : public virtual K::Core::SerializableInterface {
 
     //! Resets the sentence.
     void Reset(const std::string &type);
+    //! Sets the message from the specified string representation.
+    /*!
+     * \return
+     * <c>false</c> in case of failure. The message state will then remain unchanged.
+     */
+    bool Set(const std::string &message);
     //! Tells the message type.
     std::string Type() const;
     //! Tells whether or not the message is of the specified type.
@@ -32,6 +38,8 @@ class NmeaMessage : public virtual K::Core::SerializableInterface {
     void AddField(const std::string &field);
     //! Grants access to the specified field.
     const std::string &Field(int index) const;
+    //! Grants access to the specified field.
+    std::string &Field(int index);
     //! Tells the number of message fields.
     int FieldCount() const;
     //! Computes and returns the current checksum (hex in lower case).

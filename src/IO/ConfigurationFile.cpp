@@ -20,74 +20,136 @@ namespace K {
 namespace IO {
 
 ConfigurationFile::ConfigurationFile() :
-        validCharacters_("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_/ ") {
+        validCharacters_("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_:/ "),
+        errorState_(false) {
     // Nop.
 }
 
-bool ConfigurationFile::SetValue(const string &section, const string &key, const string &value) {
-    if (IsSectionName(section) && IsKey(key) && IsValue(value)) {
+bool ConfigurationFile::ErrorState() {
+    return errorState_;
+}
+
+void ConfigurationFile::SetValue(const string &section, const string &key, const string &value) {
+    if (!errorState_ && IsSectionName(section) && IsKey(key) && IsValue(value)) {
         sections_[section][key] = value;
-        return true;
+    } else {
+        errorState_ = true;
     }
-    return false;
 }
 
-bool ConfigurationFile::SetValue(const string &section, const string &key, float value) {
-    return SetValue(section, key, to_string(value));
+void ConfigurationFile::SetValue(const string &section, const string &key, float value) {
+    char buffer[100];
+    std::sprintf(buffer, "%f", value);
+    SetValue(section, key, string(buffer));
 }
 
-bool ConfigurationFile::GetValue(const std::string &section, const std::string &key, std::string *outValue) {
-    auto sectionIter = sections_.find(section);
-    if (sectionIter != sections_.end()) {
-        auto keyIter = sectionIter->second.find(key);
-        if (keyIter != sectionIter->second.end()) {
-            *outValue = keyIter->second;
-            return true;
+void ConfigurationFile::SetValue(const string &section, const string &key, double value) {
+    char buffer[100];
+    std::sprintf(buffer, "%.8f", value);
+    SetValue(section, key, string(buffer));
+}
+
+void ConfigurationFile::SetValue(const string &section, const string &key, bool value) {
+    SetValue(section, key, string(value ? "true" : "false"));
+}
+
+void ConfigurationFile::GetValue(const string &section, const string &key, string *outValue) {
+    if (!errorState_) {
+        auto sectionIter = sections_.find(section);
+        if (sectionIter != sections_.end()) {
+            auto keyIter = sectionIter->second.find(key);
+            if (keyIter != sectionIter->second.end()) {
+                *outValue = keyIter->second;
+                return;
+            }
         }
     }
 
-    return false;
+    errorState_ = true;
 }
 
-bool ConfigurationFile::GetValue(const std::string &section, const std::string &key, float *outValue) {
-    string value;
-    if (GetValue(section, key, &value)) {
-        return StringTools::Parse(value, outValue);
-    }
-
-    return false;
-}
-
-bool ConfigurationFile::Save(const std::string &fileName) {
-    auto result = make_shared<Result>();
-    {
-        StreamBuffer stream(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
-                            File::AccessMode::WriteOnly, 4 * 1024, result);
-        bool firstSection = true;
-        for (auto &pair : sections_) {
-            if (!firstSection) {
-                stream << "\n";
+void ConfigurationFile::GetValue(const string &section, const string &key, float *outValue) {
+    if (!errorState_) {
+        string value;
+        GetValue(section, key, &value);
+        if (!errorState_) {
+            if (StringTools::Parse(value, outValue)) {
+                return;
             }
-            stream << "[" << pair.first << "]\n";
-            for (auto &keyValuePair : pair.second) {
-                stream << keyValuePair.first << " = " << keyValuePair.second << "\n";
-            }
-            firstSection = false;
         }
     }
 
-    return result->Success();
+    errorState_ = true;
 }
 
-bool ConfigurationFile::Load(const std::string &fileName) {
+void ConfigurationFile::GetValue(const string &section, const string &key, double *outValue) {
+    if (!errorState_) {
+        string value;
+        GetValue(section, key, &value);
+        if (!errorState_) {
+            if (StringTools::Parse(value, outValue)) {
+                return;
+            }
+        }
+    }
+
+    errorState_ = true;
+}
+
+void ConfigurationFile::GetValue(const string &section, const string &key, bool *outValue) {
+    if (!errorState_) {
+        string value;
+        GetValue(section, key, &value);
+        if (!errorState_) {
+            if (value == "true") {
+                *outValue = true;
+                return;
+            } else if (value == "false") {
+                *outValue = false;
+                return;
+            }
+        }
+    }
+
+    errorState_ = true;
+}
+
+void ConfigurationFile::Save(const string &fileName) {
+    if (!errorState_) {
+        auto result = make_shared<Result>();
+        {
+            StreamBuffer stream(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
+                                File::AccessMode::WriteOnly, 4 * 1024, result);
+            bool firstSection = true;
+            for (auto &pair : sections_) {
+                if (!firstSection) {
+                    stream << "\n";
+                }
+                stream << "[" << pair.first << "]\n";
+                for (auto &keyValuePair : pair.second) {
+                    stream << keyValuePair.first << " = " << keyValuePair.second << "\n";
+                }
+                firstSection = false;
+            }
+        }
+
+        if (!result->Success()) {
+            errorState_ = true;
+        }
+    }
+}
+
+void ConfigurationFile::Load(const string &fileName) {
+    sections_.clear();
+    errorState_ = false;
+
     StreamBuffer stream(make_shared<File>(fileName, File::AccessMode::ReadOnly, false),
                         File::AccessMode::ReadOnly, 4 * 1024);
-    sections_.clear();
-
     unordered_set<char> whiteSpace{ ' ', '\t' };
     string currentSection;
     string line;
-    while (stream.Good()) {
+    bool bad = false;
+    while (stream.Good() && !errorState_ && !bad) {
         Read(&stream, '\n', &line);
         if (stream.Good()) {
             if ((line.length() > 0u) && (line[0] == '[')) {
@@ -99,40 +161,33 @@ bool ConfigurationFile::Load(const std::string &fileName) {
                 if (tokens.size() == 2u) {
                     StringTools::Trim(&tokens[0], whiteSpace);
                     StringTools::Trim(&tokens[1], whiteSpace);
-                    if (!SetValue(currentSection, tokens[0], tokens[1])) {
-                        sections_.clear();
-                        return false;
-                    }
+                    SetValue(currentSection, tokens[0], tokens[1]);
                 }
                 else {
                     StringTools::Trim(&line, whiteSpace);
                     if (!line.empty()) {
-                        sections_.clear();
-                        return false;
+                        bad = true;
                     }
                 }
             }
         }
     }
 
-    if (stream.ErrorState()) {
+    if (stream.ErrorState() || errorState_ || bad) {
         sections_.clear();
-        return false;
-    }
-    else {
-        return true;
+        errorState_ = true;
     }
 }
 
-bool ConfigurationFile::IsSectionName(const std::string &text) {
+bool ConfigurationFile::IsSectionName(const string &text) {
     return IsValue(text);
 }
 
-bool ConfigurationFile::IsKey(const std::string &text) {
+bool ConfigurationFile::IsKey(const string &text) {
     return IsValue(text);
 }
 
-bool ConfigurationFile::IsValue(const std::string &text) {
+bool ConfigurationFile::IsValue(const string &text) {
     return validCharacters_.IsValid(text);
 }
 

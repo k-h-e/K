@@ -1,9 +1,11 @@
 #include <K/GeoPositioning/GeoPosition.h>
 
+#include <cmath>
 #include <K/Core/ItemReadInterface.h>
 #include <K/Core/ItemWriteInterface.h>
 #include <K/Core/NumberTools.h>
 
+using std::isfinite;
 using std::string;
 using K::Core::ItemReadInterface;
 using K::Core::ItemWriteInterface;
@@ -21,6 +23,13 @@ GeoPosition::GeoPosition()
 GeoPosition::GeoPosition(double latitude, double longitude)
         : latitude_(latitude),
           longitude_(longitude) {
+    if (!isfinite(latitude_)) {
+        latitude_ = 0.0;
+    }
+    if (!isfinite(longitude_)) {
+        longitude_ = 0.0;
+    }
+
     NumberTools::Clamp(&latitude_, -90.0, 90.0);
 
     while (longitude_ < -180.0) {

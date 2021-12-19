@@ -11,6 +11,7 @@ using std::stringstream;
 using std::hex;
 using std::setw;
 using std::setfill;
+using std::vector;
 using K::Core::ItemReadInterface;
 using K::Core::ItemWriteInterface;
 using K::Core::StringTools;
@@ -27,6 +28,29 @@ void NmeaMessage::Reset(const string &type) {
     fields_.clear();
 }
 
+bool NmeaMessage::Set(const string &message) {
+    vector<string> tokens = StringTools::Tokenize(message, "$", false);
+    if (tokens.size() == 2u) {
+        tokens = StringTools::Tokenize(tokens[1], "*", false);
+        if (tokens.size() == 2u) {
+            string checksum = tokens[1];
+            tokens = StringTools::Tokenize(tokens[0], ",", false);
+            if (tokens.size() > 1u) {
+                NmeaMessage newMessage(tokens[0]);
+                for (vector<string>::size_type i = 1u; i < tokens.size(); ++i) {
+                    newMessage.AddField(tokens[i]);
+                }
+                if (newMessage.CheckSum() == StringTools::ToLower(checksum)) {
+                    *this = newMessage;
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 string NmeaMessage::Type() const {
     return type_;
 }
@@ -40,6 +64,10 @@ void NmeaMessage::AddField(const std::string &field) {
 }
 
 const string &NmeaMessage::Field(int index) const {
+    return fields_[index];
+}
+
+string &NmeaMessage::Field(int index) {
     return fields_[index];
 }
 
