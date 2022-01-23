@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_COMPLETIONACTIONADAPTER_H_
 #define K_CORE_COMPLETIONACTIONADAPTER_H_
 
@@ -13,6 +23,12 @@ class ActionInterface;
 class CompletionActionAdapter : public virtual CompletionHandlerInterface {
   public:
     CompletionActionAdapter(const std::shared_ptr<ActionInterface> &action);
+    CompletionActionAdapter()                                                = delete;
+    CompletionActionAdapter(const CompletionActionAdapter &other)            = delete;
+    CompletionActionAdapter &operator=(const CompletionActionAdapter &other) = delete;
+    CompletionActionAdapter(CompletionActionAdapter &&other)                 = delete;
+    CompletionActionAdapter &operator=(CompletionActionAdapter &&other)      = delete;
+
     virtual void OnCompletion(int completionId);
 
   private:

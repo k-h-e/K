@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_FLOATMODN_H_
 #define K_CORE_FLOATMODN_H_
 
@@ -13,7 +23,11 @@ class FloatModN {
      *  Must be at least <c>2</c>.
      */
     FloatModN(int modulus);
-    // Default copy and move ok.
+    FloatModN()                                  = delete;
+    FloatModN(const FloatModN &other)            = default;
+    FloatModN &operator=(const FloatModN &other) = default;
+    FloatModN(FloatModN &&other)                 = default;
+    FloatModN &operator=(FloatModN &&other)      = default;
     
     //! Returns the (always positive) distance to the specified other FloatModN, along the shorter way "around the
     //! ring".

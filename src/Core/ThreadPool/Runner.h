@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_THREADPOOL_RUNNER_H_
 #define K_CORE_THREADPOOL_RUNNER_H_
 
@@ -13,6 +23,12 @@ class ThreadPool::Runner : public virtual Interface {
   public:
     Runner(int thread, CompletionHandlerInterface &completionHandler,
            const std::shared_ptr<SharedRunnerState> &sharedState);
+    Runner()                               = delete;
+    Runner(const Runner &other)            = delete;
+    Runner &operator=(const Runner &other) = delete;
+    Runner(Runner &&other)                 = delete;
+    Runner &operator=(Runner &&other)      = delete;
+
     void Run();
 
   private:

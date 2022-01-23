@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_VALIDCHARACTERS_H_
 #define K_CORE_VALIDCHARACTERS_H_
 
@@ -12,6 +22,7 @@ class ValidCharacters {
   public:
     //! Sets up the set of valid characters as the set of characters contained in the specified string.
     ValidCharacters(const std::string &validCharacters);
+    ValidCharacters()                                        = delete;
     ValidCharacters(const ValidCharacters &other)            = delete;
     ValidCharacters &operator=(const ValidCharacters &other) = delete;
     ValidCharacters(ValidCharacters &&other)                 = delete;

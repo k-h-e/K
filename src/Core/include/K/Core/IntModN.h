@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_INTMODN_H_
 #define K_CORE_INTMODN_H_
 
@@ -22,7 +32,11 @@ class IntModN {
      *  <c>[offset, offset + modulus - 1]</c>.
      */
     IntModN(int modulus, int offset);
-    // Default copy and move ok.
+    IntModN()                                = delete;
+    IntModN(const IntModN &other)            = default;
+    IntModN &operator=(const IntModN &other) = default;
+    IntModN(IntModN &&other)                 = default;
+    IntModN &operator=(IntModN &&other)      = default;
     
     //! Well...
     bool operator==(const IntModN &other) const;

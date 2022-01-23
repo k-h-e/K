@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_BUFFER_H_
 #define K_CORE_BUFFER_H_
 
@@ -20,6 +30,7 @@ class Buffer : public virtual ItemWriteInterface {
 
     class Reader : public virtual ItemReadInterface {
 	  public:
+        Reader()                               = default;
         Reader(const Reader &other)            = default;
         Reader &operator=(const Reader &other) = default;
         Reader(Reader &&other)                 = default;
@@ -60,10 +71,10 @@ class Buffer : public virtual ItemWriteInterface {
         std::shared_ptr<Core::Result> finalResultAcceptor_;
 	};
 
-    //! Creates an empty buffer.
-    Buffer();
 	//! Creates a buffer of the given initial size, but does not initialize its contents.
 	Buffer(int initialSize);
+    //! Creates an empty buffer.
+    Buffer();
     //! Will not copy the reference to a potentially set final result acceptor.
     Buffer(const Buffer &other);
     //! Will not copy the reference to a potentially set final result acceptor.

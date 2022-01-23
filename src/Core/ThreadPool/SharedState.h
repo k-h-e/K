@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_THREADPOOL_SHAREDSTATE_H_
 #define K_CORE_THREADPOOL_SHAREDSTATE_H_
 
@@ -21,6 +31,12 @@ class CompletionHandlerInterface;
  */
 class ThreadPool::SharedState : public virtual CompletionHandlerInterface {
   public:
+    SharedState()                                    = default;
+    SharedState(const SharedState &other)            = delete;
+    SharedState &operator=(const SharedState &other) = delete;
+    SharedState(SharedState &&other)                 = delete;
+    SharedState &operator=(SharedState &&other)      = delete;
+
     void Run(ActionInterface *action, CompletionHandlerInterface *completionHandler, int completionId);
     void OnCompletion(int completionId);
     void ShutDown();
@@ -30,6 +46,12 @@ class ThreadPool::SharedState : public virtual CompletionHandlerInterface {
         std::unique_ptr<std::thread>       thread;
         std::shared_ptr<Runner>            runner;
         std::shared_ptr<SharedRunnerState> sharedRunnerState;
+
+        ThreadInfo()                                   = default;
+        ThreadInfo(const ThreadInfo &other)            = delete;
+        ThreadInfo &operator=(const ThreadInfo &other) = delete;
+        ThreadInfo(ThreadInfo &&other)                 = default;
+        ThreadInfo &operator=(ThreadInfo &&other)      = default;
     };
 
     void LogStats();

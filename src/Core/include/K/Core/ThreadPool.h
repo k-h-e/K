@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_THREADPOOL_H_
 #define K_CORE_THREADPOOL_H_
 
@@ -16,7 +26,12 @@ class CompletionHandlerInterface;
 class ThreadPool {
   public:
     ThreadPool();
+    ThreadPool(const ThreadPool &other)            = delete;
+    ThreadPool &operator=(const ThreadPool &other) = delete;
+    ThreadPool(ThreadPool &&other)                 = delete;
+    ThreadPool &operator=(ThreadPool &&other)      = delete;
     ~ThreadPool();
+
     //! Runs the specified action on an arbitrary pool thread.
     /*!
      *  The caller is responsible for ensuring that both action and completion handler live until the thread pool calls

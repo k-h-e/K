@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_REUSABLEITEMS_H_
 #define K_CORE_REUSABLEITEMS_H_
 
@@ -25,6 +35,12 @@ class ReusableItems {
     class IteratorProvider;
     
     ReusableItems(int numGroups);
+    ReusableItems()                                      = delete;
+    ReusableItems(const ReusableItems &other)            = delete;
+    ReusableItems &operator=(const ReusableItems &other) = delete;
+    ReusableItems(ReusableItems &&other)                 = delete;
+    ReusableItems &operator=(ReusableItems &&other)      = delete;
+
     //! Provides another item for the client to use, assigning it to the specified group. The item is either taken from
     //! the set of idle items, or newly created if no idle item is currently present.
     /*!
@@ -61,11 +77,17 @@ class ReusableItems {
     
   private:
     struct ItemInfo {
-        int      prev, next;
-        T        item;
+        int prev;
+        int next;
+        T   item;
+
+        ItemInfo()                                 = default;
+        ItemInfo(const ItemInfo &other)            = default;
+        ItemInfo &operator=(const ItemInfo &other) = default;
+        ItemInfo(ItemInfo &&other)                 = default;
+        ItemInfo &operator=(ItemInfo &&other)      = default;
     };
-    ReusableItems(const ReusableItems &other);
-    ReusableItems &operator=(const ReusableItems &other);
+
     void AddIdleItem();
     
     std::vector<ItemInfo> items_;

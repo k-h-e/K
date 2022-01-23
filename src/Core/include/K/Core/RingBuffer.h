@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_RINGBUFFER_H_
 #define K_CORE_RINGBUFFER_H_
 
@@ -11,7 +21,10 @@ namespace Core {
 class RingBuffer {
   public:
     RingBuffer();
-    // Default copy/move, ok.
+    RingBuffer(const RingBuffer &other)            = delete;
+    RingBuffer &operator=(const RingBuffer &other) = delete;
+    RingBuffer(RingBuffer &&other)                 = delete;
+    RingBuffer &operator=(RingBuffer &&other)      = delete;
 
     //! Returns the number of bytes currently in the ring buffer.
     int Fill();

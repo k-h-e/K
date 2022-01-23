@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_THREADPOOL_SHAREDRUNNERSTATE_H_
 #define K_CORE_THREADPOOL_SHAREDRUNNERSTATE_H_
 
@@ -18,6 +28,11 @@ class CompletionHandlerInterface;
 class ThreadPool::SharedRunnerState {
   public:
     SharedRunnerState();
+    SharedRunnerState(const SharedRunnerState &other)            = delete;
+    SharedRunnerState &operator=(const SharedRunnerState &other) = delete;
+    SharedRunnerState(SharedRunnerState &&other)                 = delete;
+    SharedRunnerState &operator=(SharedRunnerState &&other)      = delete;
+
     bool WaitForWork(ActionInterface **outAction, CompletionHandlerInterface **outCompletionHandler,
                      int *outCompletionId);
     void Execute(ActionInterface *action, CompletionHandlerInterface *completionHandler, int completionId);

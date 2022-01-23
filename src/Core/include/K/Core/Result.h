@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_RESULT_H_
 #define K_CORE_RESULT_H_
 
@@ -10,15 +20,17 @@ namespace Core {
 //! Holds a simple, tri-state operation result (success/failure/not set).
 class Result : public virtual Interface {
   public:
-    //! Initializes the result as not set.
-    Result();
     //! Initializes the result as either success or failure.
     Result(bool success);
-    // Default copy/move, okay.
+    //! Initializes the result as not set.
+    Result();
+    Result(const Result &other)            = default;
+    Result &operator=(const Result &other) = default;
+    Result(Result &&other)                 = default;
+    Result &operator=(Result &&other)      = default;
 
     //! Sets the result as either success or failure.
     void Set(bool success);
-
     //! Tells whether the result is success.
     bool Success();
     //! Tells whether the result is success.

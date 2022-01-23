@@ -1,3 +1,13 @@
+////    ////
+////   ////     K Crossplatform C++ Assets
+////  ////      (C) Copyright Kai Hergenröther
+//// ////
+////////        - Core -
+//// ////
+////  ////
+////   ////
+////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef K_CORE_TIMEOFDAY_H_
 #define K_CORE_TIMEOFDAY_H_
 
@@ -13,13 +23,14 @@ class ItemWriteInterface;
 //! Holds a time of day in 24h format.
 class TimeOfDay : public virtual SerializableInterface {
   public:
+    TimeOfDay(int hours, int minutes, int seconds, int milliSeconds);
     //! Initializes to midnight.
     TimeOfDay();
-    TimeOfDay(int hours, int minutes, int seconds, int milliSeconds);
     TimeOfDay(const TimeOfDay &other)            = default;
     TimeOfDay &operator=(const TimeOfDay &other) = default;
     TimeOfDay(TimeOfDay &&other)                 = default;
     TimeOfDay &operator=(TimeOfDay &&other)      = default;
+
     std::string ToString() const;
 
     void Serialize(ItemWriteInterface *stream) const override;
