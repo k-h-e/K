@@ -177,7 +177,7 @@ bool EventLoop<EventClass, EventHandlerClass>::RunUntilEventOfType(const Event::
             }
         }
         
-        if (!hub_->GetEvents(hubClientId_, &eventsToDispatch_, false)) {
+        if (!hub_->GetEvents(hubClientId_, &eventsToDispatch_, std::nullopt)) {
             done = true;
         }
         reader_ = eventsToDispatch_->GetReader();
@@ -204,7 +204,7 @@ bool EventLoop<EventClass, EventHandlerClass>::RunBatch() {
             return true;
         }
 
-        done = !hub_->GetEvents(hubClientId_, &eventsToDispatch_, true);
+        done = !hub_->GetEvents(hubClientId_, &eventsToDispatch_);
         reader_ = eventsToDispatch_->GetReader();
         fetchedEvents = true;
     }

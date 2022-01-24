@@ -22,8 +22,8 @@ class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterf
     void HandleError() override;
 
   private:
-    enum class State { WaitingForDataSize,
-                       WaitingForData      };
+    enum class State { AcceptingChunkSize,
+                       AcceptingChunkData  };
 
     void CopyDown();
     void EnterErrorState();
@@ -31,10 +31,11 @@ class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterf
     shared_ptr<EventLoopHub> hub_;
 
     int                      hubClientId_;
+    uint32_t                 version_;
     State                    state_;
     K::Core::Buffer          buffer_;
     int                      cursor_;
-    int                      eventDataSize_;
+    int                      chunkSize_;
     bool                     error_;
 };
 

@@ -30,6 +30,8 @@ class NetworkEventCoupling::Writer : public virtual K::Core::ActionInterface {
 
     std::shared_ptr<K::IO::TcpConnection> tcpConnection_;
     int                                   hubClientId_;
+    std::chrono::milliseconds             keepAliveSendInterval_;
+    uint32_t                              version_;
 
 };
 

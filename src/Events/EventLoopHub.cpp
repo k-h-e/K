@@ -7,8 +7,10 @@
 #include <K/Events/Event.h>
 
 using std::mutex;
-using std::unique_lock;
+using std::optional;
 using std::to_string;
+using std::unique_lock;
+using std::chrono::milliseconds;
 using K::Core::Log;
 
 namespace K {
@@ -68,10 +70,26 @@ void EventLoopHub::Post(int clientLoopId, const void *data, int dataSize, bool o
     DoPost(clientLoopId, data, dataSize, onlyPostToOthers);
 }    // ......................................................................................... critical section, end.
 
-bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer, bool nonBlocking) {
+bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer) {
     (*buffer)->Clear();
 
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    LoopInfo *info = GetLoopInfo(clientLoopId);
+    if (!info || info->shutDownRequested || shutDownRequested_) {
+        return false;
+    } else {
+        if (info->buffer->DataSize()) {
+            info->buffer.swap(*buffer);
+        }
+        return true;
+    }
+}    // ......................................................................................... critical section, end.
+
+bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer, optional<milliseconds> timeout) {
+    (*buffer)->Clear();
+
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    bool didWait = false;
     while (true) {
         LoopInfo *info = GetLoopInfo(clientLoopId);
         if (!info || info->shutDownRequested || shutDownRequested_) {
@@ -82,8 +100,15 @@ bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *bu
             return true;
         }
         else {
-            if (nonBlocking) {
-                return true;
+            if (timeout) {
+                if (didWait) {
+                    return true;
+                } else {
+                    info->waiting = true;
+                    info->stateChanged->wait_for(critical, *timeout);
+                    info->waiting = false;
+                    didWait = true;
+                }
             }
             else {
                 info->waiting = true;

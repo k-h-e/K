@@ -39,9 +39,8 @@ class EventLoopHub : public virtual EventReceiverInterface {
     void Post(int clientLoopId, const void *data, int dataSize, bool onlyPostToOthers);
     //! Allows a client \ref EventLoop (thread) to retrieve all events currently scheduled for it.
     /*!
-     *  \param nonBlocking
-     *  If set to <c>false</c> and there are currently no more events scheduled for the calling client \ref EventLoop,
-     *  the method blocks the client loop's thread until new events arrive for it (or shutdown is requested).
+     *  If there are currently no more events scheduled for the calling client \ref EventLoop, the method returns
+     *  immediately.
      *
      *  \param buffer
      *  Some buffer no longer needed by the client \ref EventLoop. It will be swapped with another buffer containing all
@@ -49,7 +48,21 @@ class EventLoopHub : public virtual EventReceiverInterface {
      *
      *  \return <c>false</c> in case shutdown has been requested. The returned buffer will then be cleared.
      */
-    bool GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer, bool nonBlocking);
+    bool GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer);
+    //! Allows a client \ref EventLoop (thread) to retrieve all events currently scheduled for it.
+    /*!
+     *  If there are currently no more events scheduled for the calling client \ref EventLoop, the method blocks the
+     *  client loop's thread until new events arrive for it, or the specified timeout has elapsed (if given), or
+     *  shutdown is requested.
+     *
+     *  \param buffer
+     *  Some buffer no longer needed by the client \ref EventLoop. It will be swapped with another buffer containing all
+     *  event data the hub currently has for the calling client \ref EventLoop.
+     *
+     *  \return <c>false</c> in case shutdown has been requested. The returned buffer will then be cleared.
+     */
+    bool GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer,
+                   std::optional<std::chrono::milliseconds> timeout);
     //! Asks all participating client \ref EventLoop s to finish running (but does not wait until that has happened).
     /*!
      *  Client \ref EventLoop s can check for whether shutdown is requested for them by inspecting the return value of

@@ -38,6 +38,11 @@ class NetworkEventCoupling : public virtual K::Core::Interface {
   private:
     static const int writerCompletionId = 0;
 
+    enum class ChunkType : uint16_t {
+        KeepAlive,
+        Events
+    };
+
     class SharedState;
     class Writer;
     class ReadHandler;

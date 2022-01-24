@@ -4,6 +4,7 @@
 #include <K/Core/Log.h>
 #include <K/Events/EventLoopHub.h>
 
+using std::memcpy;
 using std::to_string;
 using K::Core::Log;
 using K::Events::EventLoopHub;
@@ -14,9 +15,10 @@ namespace Events {
 NetworkEventCoupling::ReadHandler::ReadHandler(const shared_ptr<EventLoopHub> &hub, int hubClientId)
         : hub_(hub),
           hubClientId_(hubClientId),
-          state_(State::WaitingForDataSize),
+          version_(1u),
+          state_(State::AcceptingChunkSize),
           cursor_(0),
-          eventDataSize_(0),
+          chunkSize_(0),
           error_(false) {
     // Nop.
 }
@@ -26,19 +28,19 @@ void NetworkEventCoupling::ReadHandler::HandleStreamData(const void *data, int d
         buffer_.Append(data, dataSize);
         uint8_t *buffer = static_cast<uint8_t *>(buffer_.Data());
 
-        uint32_t  eventDataSizeU32;
-        const int sizeFieldSize = static_cast<int>(sizeof(eventDataSizeU32));
+        uint32_t  chunkSizeU32;
+        const int sizeFieldSize = static_cast<int>(sizeof(chunkSizeU32));
         bool      done          = false;
         while (!done && !error_) {
             int numToProcess = buffer_.DataSize() - cursor_;
             switch (state_) {
-                case State::WaitingForDataSize:
+                case State::AcceptingChunkSize:
                     if (numToProcess >= sizeFieldSize) {
-                        std::memcpy(&eventDataSizeU32, &buffer[cursor_], sizeFieldSize);
-                        eventDataSize_  = static_cast<int>(eventDataSizeU32);
-                        if (eventDataSize_ > 0) {
-                            cursor_        += sizeFieldSize;
-                            state_          = State::WaitingForData;
+                        memcpy(&chunkSizeU32, &buffer[cursor_], sizeFieldSize);
+                        chunkSize_ = static_cast<int>(chunkSizeU32);
+                        if (chunkSize_ >= static_cast<int>(sizeof(ChunkType))) {
+                            cursor_ += sizeFieldSize;
+                            state_   = State::AcceptingChunkData;
                         }
                         else {
                             EnterErrorState();
@@ -49,11 +51,34 @@ void NetworkEventCoupling::ReadHandler::HandleStreamData(const void *data, int d
                         done = true;
                     }
                     break;
-                case State::WaitingForData:
-                    if (numToProcess >= eventDataSize_) {
-                        hub_->Post(hubClientId_, &buffer[cursor_], eventDataSize_, true);
-                        cursor_ += eventDataSize_;
-                        state_   = State::WaitingForDataSize;
+                case State::AcceptingChunkData:
+                    if (numToProcess >= chunkSize_) {
+                        ChunkType chunkType;
+                        memcpy(&chunkType, &buffer[cursor_], sizeof(chunkType));
+                        switch (chunkType) {
+                            case ChunkType::KeepAlive:
+                                Log::Print(Log::Level::Debug, this, [&]{ return "received keep alive"; });
+                                break;
+                            case ChunkType::Events:
+                                {
+                                    int offset = static_cast<int>(sizeof(chunkType) + sizeof(version_));
+                                    if (chunkSize_ > offset) {
+                                        int eventDataSize = chunkSize_ - offset;
+                                        Log::Print(Log::Level::Debug, this, [&]{
+                                            return "received event data, size=" + to_string(eventDataSize);
+                                        });
+                                        hub_->Post(hubClientId_, &buffer[cursor_ + offset], eventDataSize, true);
+                                    } else {
+                                        EnterErrorState();
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+
+                        cursor_ += chunkSize_;
+                        state_   = State::AcceptingChunkSize;
                     }
                     else {
                         CopyDown();
