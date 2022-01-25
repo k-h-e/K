@@ -1,21 +1,21 @@
 #include "Writer.h"
-#include "SharedState.h"
 
 #include <K/Core/Log.h>
+#include <K/Core/StopWatch.h>
 #include <K/IO/TcpConnection.h>
 #include <K/Events/EventLoopHub.h>
 #include "ReadHandler.h"
+#include "SharedState.h"
 
 using std::make_shared;
 using std::nullopt;
 using std::shared_ptr;
 using std::to_string;
 using std::unique_ptr;
-using std::chrono::duration_cast;
 using std::chrono::milliseconds;
-using std::chrono::steady_clock;
 using K::Core::Buffer;
 using K::Core::Log;
+using K::Core::StopWatch;
 using K::IO::TcpConnection;
 
 namespace K {
@@ -39,51 +39,25 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
 
     if (tcpConnection_ && tcpConnection_->Register(readHandler_)) {
         unique_ptr<Buffer> buffer(new Buffer());
-        steady_clock::time_point lastTime = steady_clock::now();
-        milliseconds             elapsed(0);
+        StopWatch    stopWatch;
+        milliseconds timeout;
         bool done = false;
         while (!done) {
             if (tcpConnection_->ErrorState()) {
                 Log::Print(Log::Level::Debug, this, []{ return "TCP connection down"; });
                 done = true;
             } else {
-                bool sendKeepAlive = false;
-
-                steady_clock::time_point now = steady_clock::now();
-                if (now < lastTime) {    // Wrap-around paranoia.
-                    sendKeepAlive = true;
-                    lastTime = now;
-                }
-
-                milliseconds delta = duration_cast<milliseconds>(now - lastTime);
-                if (delta < milliseconds(0)) {    // Wrap-around paranoia.
-                    sendKeepAlive = true;
-                    lastTime = now;
-                    delta = milliseconds(0);
-                }
-
-                elapsed += delta;
-                if (elapsed >= keepAliveSendInterval_) {
-                    sendKeepAlive = true;
-                    while (elapsed >= keepAliveSendInterval_) {
-                        elapsed -= keepAliveSendInterval_;
-                    }
-                } else if (elapsed < milliseconds(0)) {    // Wrap-around paranoia.
-                    elapsed = milliseconds(0);
-                }
-
-                lastTime = now;
-
-                if (sendKeepAlive) {
+                if (stopWatch.CyclicCheck(keepAliveSendInterval_, &timeout)) {
                     Log::Print(Log::Level::Debug, this, []{ return "sending keep-alive"; });
                     ChunkType chunkType = ChunkType::KeepAlive;
                     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType));
                     tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
                     tcpConnection_->WriteItem(&chunkType, sizeof(chunkType));
+
+                    (void)stopWatch.CyclicCheck(keepAliveSendInterval_, &timeout);
                 }
 
-                bool shutdownRequested = !hub_->GetEvents(hubClientId_, &buffer,
-                                                          keepAliveSendInterval_ - elapsed + milliseconds(2));
+                bool shutdownRequested = !hub_->GetEvents(hubClientId_, &buffer, timeout + milliseconds(2));
 
                 if (shutdownRequested) {
                     Log::Print(Log::Level::Debug, this, []{ return "event hub issued shutdown"; });
