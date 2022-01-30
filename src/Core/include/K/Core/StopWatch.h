@@ -12,12 +12,13 @@
 #define K_CORE_STOPWATCH_H_
 
 #include <chrono>
+#include <K/Core/Interface.h>
 
 namespace K {
 namespace Core {
 
 //! Stop watch.
-class StopWatch {
+class StopWatch : public virtual Interface {
   public:
     StopWatch();
     StopWatch(const StopWatch &other)            = delete;
@@ -31,6 +32,8 @@ class StopWatch {
     void Stop();
     //! Stops the stop watch if it is running and resets the elapsed time to 0ms.
     void Reset();
+    //! Clears the elaspsed time.
+    void ClearElapsed();
     //! Tells the elapsed time.
     std::chrono::milliseconds Elapsed();
     //! Tells whether the next instance of a cyclically repeating event is due.

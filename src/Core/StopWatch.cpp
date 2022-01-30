@@ -45,6 +45,10 @@ void StopWatch::Reset() {
     running_ = false;
 }
 
+void StopWatch::ClearElapsed() {
+    elapsed_ = milliseconds(0);
+}
+
 std::chrono::milliseconds StopWatch::Elapsed() {
     if (running_) {
         UpdateElapsed();
