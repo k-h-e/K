@@ -20,8 +20,6 @@
 namespace K {
 namespace Core {
 
-class ActionInterface;
-
 //! Shared state for the timers implementation.
 /*!
  *  Thread-safe (all public methods).
@@ -36,7 +34,7 @@ class Timers::SharedState : public virtual CompletionHandlerInterface {
 
     void RequestShutDown();
     void WaitForWorkerFinished();
-    int AddTimer(std::chrono::milliseconds interval, ActionInterface *handler);
+    int AddTimer(std::chrono::milliseconds interval, TimerHandlerInterface *handler);
     void RemoveTimer(int timer);
     void RunTimers();
     void OnCompletion(int completionId) override;
@@ -45,10 +43,11 @@ class Timers::SharedState : public virtual CompletionHandlerInterface {
     struct TimerInfo {
         std::chrono::milliseconds interval;
         std::chrono::milliseconds remaining;
-        ActionInterface           *handler;
+        TimerHandlerInterface     *handler;
+        int                       timerId;
 
         TimerInfo();
-        TimerInfo(std::chrono::milliseconds anInterval, ActionInterface *aHandler);
+        TimerInfo(std::chrono::milliseconds anInterval, TimerHandlerInterface *aHandler, int aTimerId);
         TimerInfo(const TimerInfo &other)            = default;
         TimerInfo &operator=(const TimerInfo &other) = default;
         TimerInfo(TimerInfo &&other)                 = default;

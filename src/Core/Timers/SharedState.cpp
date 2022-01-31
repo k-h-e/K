@@ -10,7 +10,6 @@
 
 #include "SharedState.h"
 
-#include <K/Core/ActionInterface.h>
 #include <K/Core/Log.h>
 #include <K/Core/StopWatch.h>
 
@@ -44,13 +43,14 @@ void Timers::SharedState::WaitForWorkerFinished() {
     }
 }    // ......................................................................................... critical section, end.
 
-int Timers::SharedState::AddTimer(milliseconds interval, ActionInterface *handler) {
+int Timers::SharedState::AddTimer(milliseconds interval, TimerHandlerInterface *handler) {
     if (interval <= milliseconds(0)) {
         interval = milliseconds(1000);
     }
     unique_lock<mutex> critical(lock_);    // critical section..........................................................
-    int id;
-    timers_.Get(0, &id) = TimerInfo(interval, handler);
+    int       id;
+    TimerInfo &info = timers_.Get(0, &id);
+    info = TimerInfo(interval, handler, id);
     stateChanged_.notify_all();
     Log::Print(Log::Level::Debug, this, [&]{
         return "timer " + to_string(id) + " added, num_now=" + to_string(timers_.Count() - timers_.IdleCount());
@@ -70,17 +70,23 @@ void Timers::SharedState::RemoveTimer(int timer) {
 
 void Timers::SharedState::RunTimers() {
     unique_lock<mutex> critical(lock_);    // critical section..........................................................
-    vector<ActionInterface *> handlersToCall;
-    StopWatch stopWatch;
-    stopWatch.Start();
+    vector<int> timersToCallHandlersFor;
+    bool        waitingForTimers = true;
+    StopWatch   stopWatch;
     while (!shutDownRequested_) {
         if (timers_.Count() - timers_.IdleCount() > 0) {
-            handlersToCall.clear();
+            if (waitingForTimers) {
+                stopWatch.Reset();
+                stopWatch.Start();
+                waitingForTimers = false;
+            }
+
             milliseconds elapsed       = stopWatch.Elapsed();
             milliseconds timeUntilNext = milliseconds::max();
+            timersToCallHandlersFor.clear();
             for (TimerInfo &info : timers_.Iterate(0)) {
                 if (elapsed >= info.remaining) {
-                    handlersToCall.push_back(info.handler);
+                    timersToCallHandlersFor.push_back(info.timerId);
                     milliseconds elapsedOfNext = elapsed - info.remaining;
                     while (elapsedOfNext >= info.interval) {
                         elapsedOfNext -= info.interval;
@@ -95,9 +101,10 @@ void Timers::SharedState::RunTimers() {
                 }
             }
 
-            if (!handlersToCall.empty()) {
-                for (ActionInterface *handler : handlersToCall) {
-                    handler->ExecuteAction();
+            if (!timersToCallHandlersFor.empty()) {
+                for (int timer : timersToCallHandlersFor) {
+                    TimerInfo &info = timers_.Item(timer);
+                    info.handler->OnTimer(info.timerId);
                 }
             }
 
@@ -116,6 +123,7 @@ void Timers::SharedState::RunTimers() {
             }
 
         } else {
+            waitingForTimers = true;
             Log::Print(Log::Level::Debug, this, [&]{ return "sleeping until timers present..."; });
             stateChanged_.wait(critical);
         }
@@ -138,8 +146,9 @@ Timers::SharedState::TimerInfo::TimerInfo()
     // Nop.
 }
 
-Timers::SharedState::TimerInfo::TimerInfo(milliseconds anInterval, ActionInterface *aHandler)
-        : handler(aHandler) {
+Timers::SharedState::TimerInfo::TimerInfo(milliseconds anInterval, TimerHandlerInterface *aHandler, int aTimerId)
+        : handler(aHandler),
+          timerId(aTimerId) {
     if (anInterval < milliseconds(1)) {
         anInterval = milliseconds(1000);
     }

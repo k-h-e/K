@@ -16,6 +16,7 @@ using std::chrono::milliseconds;
 using K::Core::Buffer;
 using K::Core::Log;
 using K::Core::StopWatch;
+using K::Core::Timers;
 using K::IO::TcpConnection;
 
 namespace K {
@@ -23,10 +24,10 @@ namespace Events {
 
 NetworkEventCoupling::Writer::Writer(
     const shared_ptr<TcpConnection> &tcpConnection, const shared_ptr<EventLoopHub> &hub, int hubClientId,
-    const shared_ptr<ReadHandler> &readHandler, shared_ptr<SharedState> sharedState)
+    const shared_ptr<SharedState> &sharedState, const shared_ptr<Timers> &timers)
         : sharedState_(sharedState),
+          timers_(timers),
           hub_(hub),
-          readHandler_(readHandler),
           tcpConnection_(tcpConnection),
           hubClientId_(hubClientId),
           keepAliveSendInterval_(1000),
@@ -37,7 +38,12 @@ NetworkEventCoupling::Writer::Writer(
 void NetworkEventCoupling::Writer::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
-    if (tcpConnection_ && tcpConnection_->Register(readHandler_)) {
+    auto readHandler = make_shared<ReadHandler>(hub_, hubClientId_, sharedState_);
+        // Shared state will outlive the read handler. We see to it in this scope!
+    if (tcpConnection_ && tcpConnection_->Register(readHandler)) {
+        sharedState_->RegisterTcpConnection(tcpConnection_.get());
+        int timer = timers_->AddTimer(milliseconds(8000), sharedState_.get());
+
         unique_ptr<Buffer> buffer(new Buffer());
         StopWatch    stopWatch;
         milliseconds timeout;
@@ -48,7 +54,6 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
                 done = true;
             } else {
                 if (stopWatch.CyclicCheck(keepAliveSendInterval_, &timeout)) {
-                    Log::Print(Log::Level::Debug, this, []{ return "sending keep-alive"; });
                     ChunkType chunkType = ChunkType::KeepAlive;
                     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType));
                     tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
@@ -65,9 +70,6 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
                 } else {
                     int dataSize = buffer->DataSize();
                     if (dataSize > 0) {
-                        Log::Print(Log::Level::Debug, this, [&]{
-                            return "sending event data, size=" + to_string(dataSize);
-                        });
                         ChunkType chunkType = ChunkType::Events;
                         uint32_t  chunkSize = static_cast<uint32_t>(dataSize)
                                                   + static_cast<uint32_t>(sizeof(chunkType) + sizeof(version_));
@@ -80,10 +82,13 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
             }
         }
 
-        tcpConnection_->Unregister(readHandler_);
+        timers_->RemoveTimer(timer);
+        sharedState_->RegisterTcpConnection(nullptr);
+        tcpConnection_->Unregister(readHandler);
     }
 
     tcpConnection_.reset();
+    hub_->UnregisterEventLoop(hubClientId_);
 
     Log::Print(Log::Level::Debug, this, []{ return "terminating"; });
 }

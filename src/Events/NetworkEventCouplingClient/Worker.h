@@ -14,11 +14,11 @@ class EventLoopHub;
 class NetworkEventCouplingClient::Worker : public virtual Core::ActionInterface {
   public:
     Worker(const std::shared_ptr<EventLoopHub> &hub,
-           const std::shared_ptr<K::Core::ActionInterface> &onConnectedAction,
-           const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
-           const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,
-           const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-           const std::shared_ptr<K::Core::ThreadPool> &threadPool, std::shared_ptr<SharedState> sharedState);
+       const std::shared_ptr<K::Core::ActionInterface> &onConnectedAction,
+       const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
+       const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,
+       const std::shared_ptr<SharedState> &sharedState, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+       const std::shared_ptr<K::Core::ThreadPool> &threadPool, const std::shared_ptr<K::Core::Timers> &timers);
     //! Informs the worker about the host to connect to.
     void SetHost(const std::string &host, int port);
     void ExecuteAction();
@@ -31,6 +31,7 @@ class NetworkEventCouplingClient::Worker : public virtual Core::ActionInterface 
     std::shared_ptr<K::Core::ActionInterface> onDisconnectedAction_;
     std::shared_ptr<K::IO::ConnectionIO>      connectionIO_;
     std::shared_ptr<K::Core::ThreadPool>      threadPool_;
+    std::shared_ptr<K::Core::Timers>          timers_;
     std::string                               host_;
     int                                       hostPort_;
 };

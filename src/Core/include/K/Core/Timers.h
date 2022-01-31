@@ -18,7 +18,6 @@
 namespace K {
 namespace Core {
 
-class ActionInterface;
 class ThreadPool;
 
 //! Timers.
@@ -27,6 +26,13 @@ class ThreadPool;
  */
 class Timers : public virtual Interface {
   public:
+    //! Interface to entities handling timers.
+    class TimerHandlerInterface : public virtual Interface {
+      public:
+        //! Asks the recipient object to handle another firing of the specified timer.
+        virtual void OnTimer(int timer) = 0;
+    };
+
     Timers(const std::shared_ptr<ThreadPool> &threadPool);
     Timers()                               = delete;
     Timers(const Timers &other)            = delete;
@@ -43,7 +49,7 @@ class Timers : public virtual Interface {
      *  \return
      *  Timer ID, required for removal later.
      */
-    int AddTimer(std::chrono::milliseconds interval, ActionInterface *handler);
+    int AddTimer(std::chrono::milliseconds interval, TimerHandlerInterface *handler);
     //! Removes the specified timer.
     /*!
      *  When the method returns, it is guaranteed that the associated handler will not be called again.

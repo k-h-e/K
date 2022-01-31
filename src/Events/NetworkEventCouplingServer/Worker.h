@@ -5,6 +5,9 @@
 #include <K/Events/NetworkEventCouplingServer.h>
 
 namespace K {
+namespace Core {
+    class Timers;
+}
 namespace IO {
     class ListenSocket;
 }
@@ -18,9 +21,9 @@ class EventLoopHub;
 //! Worker for the network event coupling server.
 class NetworkEventCouplingServer::Worker : public virtual K::Core::ActionInterface {
   public:
-    Worker(const std::shared_ptr<K::IO::ListenSocket> &listenSocket,
-           const std::shared_ptr<EventLoopHub> &hub,
-           const std::shared_ptr<K::Core::ThreadPool> &threadPool, const std::shared_ptr<SharedState> &sharedState);
+    Worker(const std::shared_ptr<K::IO::ListenSocket> &listenSocket, const std::shared_ptr<EventLoopHub> &hub,
+           const std::shared_ptr<SharedState> &sharedState, const std::shared_ptr<K::Core::ThreadPool> &threadPool,
+           const std::shared_ptr<K::Core::Timers> &timers);
     void ExecuteAction();
 
   private:
@@ -29,6 +32,7 @@ class NetworkEventCouplingServer::Worker : public virtual K::Core::ActionInterfa
     std::shared_ptr<K::IO::ListenSocket> listenSocket_;
     std::shared_ptr<EventLoopHub>        hub_;
     std::shared_ptr<K::Core::ThreadPool> threadPool_;
+    std::shared_ptr<K::Core::Timers>     timers_;
 };
 
 }    // Namespace Events.

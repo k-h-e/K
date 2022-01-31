@@ -3,8 +3,10 @@
 #include <cstring>
 #include <K/Core/Log.h>
 #include <K/Events/EventLoopHub.h>
+#include "SharedState.h"
 
 using std::memcpy;
+using std::shared_ptr;
 using std::to_string;
 using K::Core::Log;
 using K::Events::EventLoopHub;
@@ -12,8 +14,10 @@ using K::Events::EventLoopHub;
 namespace K {
 namespace Events {
 
-NetworkEventCoupling::ReadHandler::ReadHandler(const shared_ptr<EventLoopHub> &hub, int hubClientId)
-        : hub_(hub),
+NetworkEventCoupling::ReadHandler::ReadHandler(const shared_ptr<EventLoopHub> &hub, int hubClientId,
+                                               const std::shared_ptr<SharedState> &sharedState)
+        : sharedState_(sharedState),
+          hub_(hub),
           hubClientId_(hubClientId),
           version_(1u),
           state_(State::AcceptingChunkSize),
@@ -57,16 +61,13 @@ void NetworkEventCoupling::ReadHandler::HandleStreamData(const void *data, int d
                         memcpy(&chunkType, &buffer[cursor_], sizeof(chunkType));
                         switch (chunkType) {
                             case ChunkType::KeepAlive:
-                                Log::Print(Log::Level::Debug, this, [&]{ return "received keep alive"; });
+                                sharedState_->OnKeepAlive();
                                 break;
                             case ChunkType::Events:
                                 {
                                     int offset = static_cast<int>(sizeof(chunkType) + sizeof(version_));
                                     if (chunkSize_ > offset) {
                                         int eventDataSize = chunkSize_ - offset;
-                                        Log::Print(Log::Level::Debug, this, [&]{
-                                            return "received event data, size=" + to_string(eventDataSize);
-                                        });
                                         hub_->Post(hubClientId_, &buffer[cursor_ + offset], eventDataSize, true);
                                     } else {
                                         EnterErrorState();

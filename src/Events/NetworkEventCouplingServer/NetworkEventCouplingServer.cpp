@@ -8,6 +8,7 @@
 using std::shared_ptr;
 using std::make_shared;
 using K::Core::ThreadPool;
+using K::Core::Timers;
 using K::IO::ListenSocket;
 using K::IO::ConnectionIO;
 
@@ -16,11 +17,11 @@ namespace Events {
 
 NetworkEventCouplingServer::NetworkEventCouplingServer(
         int port, const shared_ptr<EventLoopHub> &hub, const shared_ptr<ConnectionIO> &connectionIO,
-        const shared_ptr<ThreadPool> &threadPool) {
+        const shared_ptr<ThreadPool> &threadPool, const shared_ptr<Timers> &timers) {
     sharedState_  = make_shared<SharedState>();
 
     listenSocket_ = make_shared<ListenSocket>(port, connectionIO, threadPool);
-    worker_       = make_shared<Worker>(listenSocket_, hub, threadPool, sharedState_);
+    worker_       = make_shared<Worker>(listenSocket_, hub, sharedState_, threadPool, timers);
 
     threadPool->Run(worker_.get(), sharedState_.get(), workerCompletionId);
 }

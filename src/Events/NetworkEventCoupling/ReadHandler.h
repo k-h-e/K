@@ -6,8 +6,6 @@
 #include <K/IO/StreamHandlerInterface.h>
 #include <K/Events/NetworkEventCoupling.h>
 
-using std::shared_ptr;
-
 namespace K {
 namespace Events {
 
@@ -16,7 +14,8 @@ class EventLoopHub;
 //! Asynchronous read handler for the network event coupling.
 class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterface {
   public:
-    ReadHandler(const shared_ptr<EventLoopHub> &hub, int hubClientId);
+    ReadHandler(const std::shared_ptr<EventLoopHub> &hub, int hubClientId,
+                const std::shared_ptr<SharedState> &sharedState);
     void HandleStreamData(const void *data, int dataSize) override;
     void HandleEof() override;
     void HandleError() override;
@@ -28,7 +27,8 @@ class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterf
     void CopyDown();
     void EnterErrorState();
 
-    shared_ptr<EventLoopHub> hub_;
+    std::shared_ptr<SharedState>  sharedState_;    // Thread-safe.
+    std::shared_ptr<EventLoopHub> hub_;            // Thread-safe.
 
     int                      hubClientId_;
     uint32_t                 version_;

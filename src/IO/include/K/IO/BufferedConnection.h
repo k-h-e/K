@@ -25,6 +25,7 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     BufferedConnection &operator=(const BufferedConnection &&other) = delete;
     ~BufferedConnection();
 
+    void TriggerShutDown();
     bool Register(const std::shared_ptr<StreamHandlerInterface> &handler) override;
     void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) override;
     void WriteItem(const void *item, int itemSize) override;

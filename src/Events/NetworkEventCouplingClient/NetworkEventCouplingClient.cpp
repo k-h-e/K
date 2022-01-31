@@ -7,8 +7,9 @@
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
-using K::Core::ThreadPool;
 using K::Core::ActionInterface;
+using K::Core::ThreadPool;
+using K::Core::Timers;
 using K::IO::ConnectionIO;
 
 namespace K {
@@ -17,11 +18,12 @@ namespace Events {
 NetworkEventCouplingClient::NetworkEventCouplingClient(
     const shared_ptr<EventLoopHub> &hub, const shared_ptr<ActionInterface> &onConnectedAction,
     const shared_ptr<ActionInterface> &onFailedToConnectAction, const shared_ptr<ActionInterface> &onDisconnectedAction,
-    const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<ThreadPool> &threadPool)
+    const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<ThreadPool> &threadPool,
+    const shared_ptr<Timers> &timers)
         : threadPool_(threadPool) {
     sharedState_ = make_shared<SharedState>();
     worker_      = make_shared<Worker>(hub, onConnectedAction, onFailedToConnectAction, onDisconnectedAction,
-                                       connectionIO, threadPool_, sharedState_);
+                                       sharedState_, connectionIO, threadPool_, timers);
 }
 
 NetworkEventCouplingClient::~NetworkEventCouplingClient() {

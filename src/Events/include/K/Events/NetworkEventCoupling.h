@@ -8,6 +8,7 @@ namespace K {
 namespace Core {
     class CompletionHandlerInterface;
     class ThreadPool;
+    class Timers;
 }
 namespace IO {
     class TcpConnection;
@@ -20,7 +21,7 @@ namespace Events {
 class EventLoopHub;
 
 //! Extends the event mechanism to other nodes across the network.
-class NetworkEventCoupling : public virtual K::Core::Interface {
+class NetworkEventCoupling : public virtual Core::Interface {
   public:
     //! Well, constructor.
     /*!
@@ -28,11 +29,10 @@ class NetworkEventCoupling : public virtual K::Core::Interface {
      *  Optional. If given, it will be called on an arbitrary thread and with the completion id as parameter when the
      *  network event coupling has shut down.
      */
-    NetworkEventCoupling(const std::shared_ptr<K::IO::TcpConnection> &tcpConnection,
-                         const std::shared_ptr<EventLoopHub> &hub,
-                         const std::shared_ptr<K::Core::CompletionHandlerInterface> &completionHandler,
-                         int completionId,
-                         const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+    NetworkEventCoupling(
+        const std::shared_ptr<IO::TcpConnection> &tcpConnection, const std::shared_ptr<EventLoopHub> &hub,
+        const std::shared_ptr<Core::CompletionHandlerInterface> &completionHandler, int completionId,
+        const std::shared_ptr<Core::ThreadPool> &threadPool, const std::shared_ptr<Core::Timers> &timers);
     ~NetworkEventCoupling();
 
   private:
@@ -47,12 +47,9 @@ class NetworkEventCoupling : public virtual K::Core::Interface {
     class Writer;
     class ReadHandler;
 
-    std::shared_ptr<SharedState>  sharedState_;
-    std::shared_ptr<EventLoopHub> hub_;
+    std::shared_ptr<SharedState>  sharedState_;    // Thread-safe.
 
     std::shared_ptr<Writer>       writer_;         // Writer thread.
-
-    int                           hubClientId_;
 };
 
 }    // Namespace Events.

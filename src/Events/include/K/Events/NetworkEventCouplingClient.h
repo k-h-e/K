@@ -5,8 +5,9 @@
 
 namespace K {
     namespace Core {
-        class ThreadPool;
         class ActionInterface;
+        class ThreadPool;
+        class Timers;
     }
     namespace IO {
         class ConnectionIO;
@@ -40,7 +41,7 @@ class NetworkEventCouplingClient {
         const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
         const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,
         const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-        const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+        const std::shared_ptr<K::Core::ThreadPool> &threadPool, const std::shared_ptr<K::Core::Timers> &timers);
     ~NetworkEventCouplingClient();
     //! Establishes a network event coupling connection to the specified host.
     /*!

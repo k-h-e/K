@@ -34,7 +34,7 @@ Timers::~Timers() {
     shared_->WaitForWorkerFinished();
 }
 
-int Timers::AddTimer(milliseconds interval, ActionInterface *handler) {
+int Timers::AddTimer(milliseconds interval, TimerHandlerInterface *handler) {
     return shared_->AddTimer(interval, handler);
 }
 

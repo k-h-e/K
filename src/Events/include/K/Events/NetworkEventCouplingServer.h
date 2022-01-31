@@ -6,6 +6,7 @@
 
 namespace K {
 namespace Core {
+    class Timers;
     class ThreadPool;
 }
 namespace IO {
@@ -22,9 +23,9 @@ class EventLoopHub;
 //! Installs network event couplings for incoming network connections.
 class NetworkEventCouplingServer : public virtual K::Core::ErrorStateInterface {
   public:
-    NetworkEventCouplingServer(int port, const std::shared_ptr<EventLoopHub> &hub,
-                               const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-                               const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+    NetworkEventCouplingServer(
+        int port, const std::shared_ptr<EventLoopHub> &hub, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+        const std::shared_ptr<K::Core::ThreadPool> &threadPool, const std::shared_ptr<K::Core::Timers> &timers);
     ~NetworkEventCouplingServer();
     bool ErrorState() override;
 
