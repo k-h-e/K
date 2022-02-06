@@ -23,19 +23,21 @@ namespace K {
 namespace Events {
 
 NetworkEventCouplingClient::Worker::Worker(
-    const shared_ptr<EventLoopHub> &hub, const shared_ptr<ActionInterface> &onConnectedAction,
-    const shared_ptr<ActionInterface> &onFailedToConnectAction, const shared_ptr<ActionInterface> &onDisconnectedAction,
-    const shared_ptr<SharedState> &sharedState, const shared_ptr<ConnectionIO> &connectionIO,
-    const shared_ptr<ThreadPool> &threadPool, const shared_ptr<Timers> &timers)
+    const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
+    const shared_ptr<ActionInterface> &onConnectedAction, const shared_ptr<ActionInterface> &onFailedToConnectAction,
+    const shared_ptr<ActionInterface> &onDisconnectedAction, const shared_ptr<SharedState> &sharedState,
+    const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<ThreadPool> &threadPool,
+    const shared_ptr<Timers> &timers)
         : sharedState_(sharedState),
           hub_(hub),
-          onConnectedAction_(onConnectedAction),
-          onFailedToConnectAction_(onFailedToConnectAction),
-          onDisconnectedAction_(onDisconnectedAction),
           connectionIO_(connectionIO),
           threadPool_(threadPool),
           timers_(timers),
-          hostPort_(0) {
+          onConnectedAction_(onConnectedAction),
+          onFailedToConnectAction_(onFailedToConnectAction),
+          onDisconnectedAction_(onDisconnectedAction),
+          hostPort_(0),
+          protocolVersion_(protocolVersion) {
     // Nop.
 }
 
@@ -56,7 +58,8 @@ void NetworkEventCouplingClient::Worker::ExecuteAction() {
         if (onDisconnectedAction_) {
             handler = make_shared<CompletionActionAdapter>(onDisconnectedAction_);
         }
-        auto coupling = make_shared<NetworkEventCoupling>(tcpConnection, hub_, handler, 0, threadPool_, timers_);
+        auto coupling = make_shared<NetworkEventCoupling>(tcpConnection, protocolVersion_, hub_, handler, 0,
+                                                          threadPool_, timers_);
         sharedState_->OnCouplingCreated(coupling);
     }
     else {

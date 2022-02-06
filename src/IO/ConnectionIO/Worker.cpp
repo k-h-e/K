@@ -233,6 +233,13 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
                 iter->second.client->OnCustomCall();
             }
         }
+
+        for (ClientInterface *client : workInfo_.clientsWithErrorStateRequested) {
+            auto iter = clients_.find(client);
+            if (iter != clients_.end()) {
+                SetClientError(&iter->second);
+            }
+        }
     }
 
     workInfo_.Clear();

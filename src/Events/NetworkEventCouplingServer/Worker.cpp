@@ -7,6 +7,7 @@
 
 using std::make_unique;
 using std::shared_ptr;
+using std::string;
 using std::unique_ptr;
 using K::Core::Log;
 using K::Core::ThreadPool;
@@ -19,14 +20,15 @@ namespace K {
 namespace Events {
 
 NetworkEventCouplingServer::Worker::Worker(
-    const shared_ptr<ListenSocket> &listenSocket, const shared_ptr<EventLoopHub> &hub,
+    const shared_ptr<ListenSocket> &listenSocket, const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
     const shared_ptr<SharedState> &sharedState, const shared_ptr<ThreadPool> &threadPool,
     const shared_ptr<Timers> &timers)
         : sharedState_(sharedState),
-          listenSocket_(listenSocket),
           hub_(hub),
           threadPool_(threadPool),
-          timers_(timers) {
+          timers_(timers),
+          listenSocket_(listenSocket),
+          protocolVersion_(protocolVersion) {
     // Nop.
 }
 
@@ -38,8 +40,8 @@ void NetworkEventCouplingServer::Worker::ExecuteAction() {
         shared_ptr<TcpConnection> tcpConnection = listenSocket_->AcceptConnection();
         if (tcpConnection && !sharedState_->ShutDownRequested()) {
             sharedState_->PrepareForCoupling();
-            auto coupling = make_unique<NetworkEventCoupling>(tcpConnection, hub_, sharedState_, couplingCompletionId,
-                                                              threadPool_, timers_);
+            auto coupling = make_unique<NetworkEventCoupling>(tcpConnection, protocolVersion_, hub_, sharedState_,
+                                                              couplingCompletionId, threadPool_, timers_);
             tcpConnection.reset();
             Log::Print(Log::Level::Debug, this, []{ return "network event coupling installed"; });
             sharedState_->WaitForCouplingFinished();

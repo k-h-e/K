@@ -71,8 +71,9 @@ BufferedConnection::~BufferedConnection() {
     });
 }
 
-void BufferedConnection::TriggerShutDown() {
-    Log::Print(Log::Level::Debug, this, [&]{ return "TriggerShutDown()"; });
+void BufferedConnection::TriggerErrorState() {
+    Log::Print(Log::Level::Debug, this, [&]{ return "TriggerErrorState()"; });
+    connectionIO_->RequestErrorState(sharedState_.get());
 }
 
 bool BufferedConnection::Register(const shared_ptr<StreamHandlerInterface> &handler) {

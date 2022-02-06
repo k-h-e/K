@@ -62,6 +62,7 @@ struct ConnectionIO::WorkInfo {
     std::vector<ConnectionIO::ClientInterface *> clientsReadyToRead;
     std::vector<ConnectionIO::ClientInterface *> clientsReadyToWrite;
     std::vector<ConnectionIO::ClientInterface *> clientsWithCustomCallRequested;
+    std::vector<ConnectionIO::ClientInterface *> clientsWithErrorStateRequested;
 
     WorkInfo() {
         Clear();
@@ -75,6 +76,7 @@ struct ConnectionIO::WorkInfo {
         clientsReadyToRead.clear();
         clientsReadyToWrite.clear();
         clientsWithCustomCallRequested.clear();
+        clientsWithErrorStateRequested.clear();
     }
 };
 

@@ -2,24 +2,28 @@
 
 #include <cstring>
 #include <K/Core/Log.h>
+#include <K/Core/StringTools.h>
 #include <K/Events/EventLoopHub.h>
 #include "SharedState.h"
 
 using std::memcpy;
 using std::shared_ptr;
+using std::string;
 using std::to_string;
 using K::Core::Log;
+using K::Core::StringTools;
 using K::Events::EventLoopHub;
 
 namespace K {
 namespace Events {
 
-NetworkEventCoupling::ReadHandler::ReadHandler(const shared_ptr<EventLoopHub> &hub, int hubClientId,
-                                               const std::shared_ptr<SharedState> &sharedState)
+NetworkEventCoupling::ReadHandler::ReadHandler(const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
+                                               int hubClientId, const shared_ptr<SharedState> &sharedState)
         : sharedState_(sharedState),
           hub_(hub),
           hubClientId_(hubClientId),
-          version_(1u),
+          protocolVersion_(protocolVersion),
+          protocolVersionMatch_(false),
           state_(State::AcceptingChunkSize),
           cursor_(0),
           chunkSize_(0),
@@ -65,16 +69,56 @@ void NetworkEventCoupling::ReadHandler::HandleStreamData(const void *data, int d
                                 break;
                             case ChunkType::Events:
                                 {
-                                    int offset = static_cast<int>(sizeof(chunkType) + sizeof(version_));
+                                    if (protocolVersionMatch_) {
+                                        int offset = static_cast<int>(sizeof(chunkType));
+                                        if (chunkSize_ > offset) {
+                                            int eventDataSize = chunkSize_ - offset;
+                                            hub_->Post(hubClientId_, &buffer[cursor_ + offset], eventDataSize, true);
+                                        } else {
+                                            EnterErrorState();
+                                        }
+                                    } else {
+                                        Log::Print(Log::Level::Warning, this, [&]{
+                                            return "protocol versions not verified to match!";
+                                        });
+                                        EnterErrorState();
+                                    }
+                                }
+                                break;
+                            case ChunkType::Version:
+                                {
+                                    int offset = static_cast<int>(sizeof(chunkType));
                                     if (chunkSize_ > offset) {
-                                        int eventDataSize = chunkSize_ - offset;
-                                        hub_->Post(hubClientId_, &buffer[cursor_ + offset], eventDataSize, true);
+                                        int length = chunkSize_ - offset;
+                                        string remoteProtocolVersion;
+                                        if (StringTools::Deserialize(&remoteProtocolVersion, &buffer[cursor_ + offset],
+                                                                     length)) {
+                                            if (protocolVersion_ == remoteProtocolVersion) {
+                                                protocolVersionMatch_ = true;
+                                                Log::Print(Log::Level::Debug, this, [&]{
+                                                    return "protocol version check ok (\"" + remoteProtocolVersion
+                                                        + "\")";
+                                                });
+                                            } else {
+                                                Log::Print(Log::Level::Warning, this, [&]{
+                                                    return "protocol version mismatch, local=\""
+                                                        + protocolVersion_ + "\", remote=\"" + remoteProtocolVersion
+                                                        + "\"";
+                                                });
+                                                EnterErrorState();
+                                            }
+                                        } else {
+                                            EnterErrorState();
+                                        }
                                     } else {
                                         EnterErrorState();
                                     }
                                 }
                                 break;
                             default:
+                                Log::Print(Log::Level::Warning, this, [&]{
+                                    return "skipping chunk of unknown type " + to_string(static_cast<int>(chunkType));
+                                });
                                 break;
                         }
 

@@ -36,6 +36,9 @@ void NetworkEventCoupling::SharedState::RegisterTcpConnection(TcpConnection *con
 void NetworkEventCoupling::SharedState::ShutDown() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     hub_->RequestShutDown(hubClientId_);
+    if (tcpConnection_) {
+        tcpConnection_->TriggerErrorState();    // Method is thread-safe, ok. Called in case worker is blocked in write.
+    }
     while (!writerFinished_) {
         stateChanged_.wait(critical);
     }
@@ -43,14 +46,7 @@ void NetworkEventCoupling::SharedState::ShutDown() {
 
 void NetworkEventCoupling::SharedState::OnKeepAlive() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-
-    // TESTING...
-    static int counter = 0;
-    ++counter;
-    if (counter < 10) {
-        keepAlive_ = true;
-        Log::Print(Log::Level::Debug, this, [&]{ return "keep-alive"; });
-    }
+    keepAlive_ = true;
 }    // ......................................................................................... critical section, end.
 
 void NetworkEventCoupling::SharedState::OnCompletion(int completionId) {
@@ -73,13 +69,11 @@ void NetworkEventCoupling::SharedState::OnCompletion(int completionId) {
 void NetworkEventCoupling::SharedState::OnTimer(int timer) {
     (void)timer;
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (keepAlive_) {
-        Log::Print(Log::Level::Debug, this, [&]{ return "keep-alive OK"; });
-    } else {
+    if (!keepAlive_) {
         Log::Print(Log::Level::Error, this, [&]{ return "no keep-alive received for too long, disconnecting..."; });
         hub_->RequestShutDown(hubClientId_);
         if (tcpConnection_) {
-            tcpConnection_->TriggerShutDown();
+            tcpConnection_->TriggerErrorState();    // Method is thread-safe, ok.
         }
     }
     keepAlive_ = false;

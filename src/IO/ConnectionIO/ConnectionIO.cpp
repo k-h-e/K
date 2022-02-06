@@ -68,5 +68,9 @@ void ConnectionIO::RequestCustomCall(ClientInterface *client) {
     sharedState_->RequestCustomCall(client);
 }
 
+void ConnectionIO::RequestErrorState(ClientInterface *client) {
+    sharedState_->RequestErrorState(client);
+}
+
 }    // Namespace IO.
 }    // Namespace K.

@@ -68,6 +68,8 @@ class ConnectionIO : public virtual K::Core::Interface {
     void SetClientCanWrite(ClientInterface *client);
     //! Requests a custom call for the specified client.
     void RequestCustomCall(ClientInterface *client);
+    //! Requests error state to be raised for the specified client.
+    void RequestErrorState(ClientInterface *client);
 
   private:
     class SharedState;

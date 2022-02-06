@@ -25,7 +25,14 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     BufferedConnection &operator=(const BufferedConnection &&other) = delete;
     ~BufferedConnection();
 
-    void TriggerShutDown();
+    //! Triggers error state.
+    /*!
+     *  This method is thread-safe. (Note that the class as a whole is not.)
+     *
+     *  Error state will hit in a deferred fashion - the object is not guaranteed to already be in error state when the
+     *  method returns.
+     */
+    void TriggerErrorState();
     bool Register(const std::shared_ptr<StreamHandlerInterface> &handler) override;
     void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) override;
     void WriteItem(const void *item, int itemSize) override;

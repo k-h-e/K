@@ -161,6 +161,14 @@ void ConnectionIO::SharedState::RequestCustomCall(ClientInterface *client) {
     }
 }    // ......................................................................................... critical section, end.
 
+void ConnectionIO::SharedState::RequestErrorState(ClientInterface *client) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    if (!error_) {
+        clientsWithErrorStateRequested_.push_back(client);
+        NotifyWorker();
+    }
+}    // ......................................................................................... critical section, end.
+
 void ConnectionIO::SharedState::ShutDown()  {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     DoShutDown(&critical);
@@ -196,6 +204,11 @@ void ConnectionIO::SharedState::GetWork(WorkInfo *outInfo) {
             outInfo->clientsWithCustomCallRequested.push_back(client);
         }
         clientsWithCustomCallRequested_.clear();
+
+        for (ClientInterface *client : clientsWithErrorStateRequested_) {
+            outInfo->clientsWithErrorStateRequested.push_back(client);
+        }
+        clientsWithErrorStateRequested_.clear();
     }
 }    // ......................................................................................... critical section, end.
 

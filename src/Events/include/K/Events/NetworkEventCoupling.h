@@ -30,7 +30,8 @@ class NetworkEventCoupling : public virtual Core::Interface {
      *  network event coupling has shut down.
      */
     NetworkEventCoupling(
-        const std::shared_ptr<IO::TcpConnection> &tcpConnection, const std::shared_ptr<EventLoopHub> &hub,
+        const std::shared_ptr<IO::TcpConnection> &tcpConnection, const std::string &protocolVersion,
+        const std::shared_ptr<EventLoopHub> &hub,
         const std::shared_ptr<Core::CompletionHandlerInterface> &completionHandler, int completionId,
         const std::shared_ptr<Core::ThreadPool> &threadPool, const std::shared_ptr<Core::Timers> &timers);
     ~NetworkEventCoupling();
@@ -40,7 +41,8 @@ class NetworkEventCoupling : public virtual Core::Interface {
 
     enum class ChunkType : uint16_t {
         KeepAlive,
-        Events
+        Events,
+        Version
     };
 
     class SharedState;

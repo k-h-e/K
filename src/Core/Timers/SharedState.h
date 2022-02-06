@@ -14,6 +14,7 @@
 #include <chrono>
 #include <mutex>
 #include <K/Core/CompletionHandlerInterface.h>
+#include <K/Core/PolledCyclicTrigger.h>
 #include <K/Core/ReusableItems.h>
 #include <K/Core/Timers.h>
 
@@ -41,10 +42,9 @@ class Timers::SharedState : public virtual CompletionHandlerInterface {
 
   private:
     struct TimerInfo {
-        std::chrono::milliseconds interval;
-        std::chrono::milliseconds remaining;
-        TimerHandlerInterface     *handler;
-        int                       timerId;
+        K::Core::PolledCyclicTrigger trigger;
+        TimerHandlerInterface        *handler;
+        int                          timerId;
 
         TimerInfo();
         TimerInfo(std::chrono::milliseconds anInterval, TimerHandlerInterface *aHandler, int aTimerId);

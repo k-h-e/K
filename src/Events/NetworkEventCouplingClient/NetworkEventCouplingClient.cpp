@@ -16,14 +16,14 @@ namespace K {
 namespace Events {
 
 NetworkEventCouplingClient::NetworkEventCouplingClient(
-    const shared_ptr<EventLoopHub> &hub, const shared_ptr<ActionInterface> &onConnectedAction,
-    const shared_ptr<ActionInterface> &onFailedToConnectAction, const shared_ptr<ActionInterface> &onDisconnectedAction,
-    const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<ThreadPool> &threadPool,
-    const shared_ptr<Timers> &timers)
+    const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
+    const shared_ptr<ActionInterface> &onConnectedAction, const shared_ptr<ActionInterface> &onFailedToConnectAction,
+    const shared_ptr<ActionInterface> &onDisconnectedAction, const shared_ptr<ConnectionIO> &connectionIO,
+    const shared_ptr<ThreadPool> &threadPool, const shared_ptr<Timers> &timers)
         : threadPool_(threadPool) {
     sharedState_ = make_shared<SharedState>();
-    worker_      = make_shared<Worker>(hub, onConnectedAction, onFailedToConnectAction, onDisconnectedAction,
-                                       sharedState_, connectionIO, threadPool_, timers);
+    worker_      = make_shared<Worker>(protocolVersion, hub, onConnectedAction, onFailedToConnectAction,
+                                       onDisconnectedAction, sharedState_, connectionIO, threadPool_, timers);
 }
 
 NetworkEventCouplingClient::~NetworkEventCouplingClient() {

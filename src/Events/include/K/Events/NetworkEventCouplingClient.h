@@ -36,7 +36,7 @@ class NetworkEventCouplingClient {
      *  down.
      */
     NetworkEventCouplingClient(
-        const std::shared_ptr<EventLoopHub> &hub,
+        const std::string &protocolVersion, const std::shared_ptr<EventLoopHub> &hub,
         const std::shared_ptr<K::Core::ActionInterface> &onConnectedAction,
         const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
         const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,

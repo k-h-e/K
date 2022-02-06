@@ -11,13 +11,14 @@
 #include "SharedState.h"
 
 #include <K/Core/Log.h>
-#include <K/Core/StopWatch.h>
 
 using std::mutex;
 using std::to_string;
 using std::unique_lock;
 using std::vector;
+using std::chrono::duration_cast;
 using std::chrono::milliseconds;
+using std::chrono::steady_clock;
 using K::Core::Log;
 
 namespace K {
@@ -70,65 +71,44 @@ void Timers::SharedState::RemoveTimer(int timer) {
 
 void Timers::SharedState::RunTimers() {
     unique_lock<mutex> critical(lock_);    // critical section..........................................................
-    vector<int> timersToCallHandlersFor;
-    bool        waitingForTimers = true;
-    StopWatch   stopWatch;
     while (!shutDownRequested_) {
         if (timers_.Count() - timers_.IdleCount() > 0) {
-            if (waitingForTimers) {
-                stopWatch.Reset();
-                stopWatch.Start();
-                waitingForTimers = false;
-            }
-
-            milliseconds elapsed       = stopWatch.Elapsed();
-            milliseconds timeUntilNext = milliseconds::max();
-            timersToCallHandlersFor.clear();
+            steady_clock::time_point now           = steady_clock::now();
+            milliseconds             timeUntilNext = milliseconds::max();
             for (TimerInfo &info : timers_.Iterate(0)) {
-                if (elapsed >= info.remaining) {
-                    timersToCallHandlersFor.push_back(info.timerId);
-                    milliseconds elapsedOfNext = elapsed - info.remaining;
-                    while (elapsedOfNext >= info.interval) {
-                        elapsedOfNext -= info.interval;
-                    }
-                    info.remaining = info.interval - elapsedOfNext;
-                } else {
-                    info.remaining -= elapsed;
-                }
-
-                if (info.remaining < timeUntilNext) {
-                    timeUntilNext = info.remaining;
-                }
-            }
-
-            if (!timersToCallHandlersFor.empty()) {
-                for (int timer : timersToCallHandlersFor) {
-                    TimerInfo &info = timers_.Item(timer);
+                if (info.trigger.Check(now)) {
                     info.handler->OnTimer(info.timerId);
                 }
+                milliseconds remaining = info.trigger.Remaining();
+                if (remaining < timeUntilNext) {
+                    timeUntilNext = remaining;
+                }
             }
 
-            milliseconds deltaTime = stopWatch.Elapsed() - elapsed;
-            timeUntilNext = (timeUntilNext > deltaTime) ? timeUntilNext - deltaTime : milliseconds(0);
-            if (timeUntilNext > milliseconds(0)) {
-                milliseconds toWait = timeUntilNext + milliseconds(1);
-                if (toWait < timeUntilNext) {
+            steady_clock::time_point afterTimers = steady_clock::now();
+            milliseconds handlerTime(0);
+            if (afterTimers > now) {
+                milliseconds deltaTime = duration_cast<milliseconds>(afterTimers - now);
+                if (deltaTime > milliseconds(0)) {
+                    handlerTime = deltaTime;
+                }
+            }
+
+            if (timeUntilNext > handlerTime) {
+                timeUntilNext = timeUntilNext - handlerTime;
+                milliseconds toWait = timeUntilNext + milliseconds(2);
+                if (!(toWait > timeUntilNext)) {
                     toWait = timeUntilNext;
                     Log::Print(Log::Level::Warning, this, [&]{
                         return "to_wait_corrected=" + to_string(toWait.count()) + "ms";
                     });
                 }
-
                 stateChanged_.wait_for(critical, toWait);
             }
-
         } else {
-            waitingForTimers = true;
             Log::Print(Log::Level::Debug, this, [&]{ return "sleeping until timers present..."; });
             stateChanged_.wait(critical);
         }
-
-        stopWatch.ClearElapsed();
     }
 }    // ......................................................................................... critical section, end.
 
@@ -140,21 +120,17 @@ void Timers::SharedState::OnCompletion(int completionId) {
 }    // ......................................................................................... critical section, end.
 
 Timers::SharedState::TimerInfo::TimerInfo()
-        : interval(1000),
-          remaining(1000),
-          handler(nullptr) {
+        : trigger(milliseconds(1000)),
+          handler(nullptr),
+          timerId(0) {
     // Nop.
 }
 
 Timers::SharedState::TimerInfo::TimerInfo(milliseconds anInterval, TimerHandlerInterface *aHandler, int aTimerId)
-        : handler(aHandler),
+        : trigger(anInterval),
+          handler(aHandler),
           timerId(aTimerId) {
-    if (anInterval < milliseconds(1)) {
-        anInterval = milliseconds(1000);
-    }
-
-    interval  = anInterval;
-    remaining = interval;
+    // Nop.
 }
 
 }    // Namespace Core.

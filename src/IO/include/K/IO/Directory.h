@@ -14,10 +14,10 @@ namespace IO {
 class Directory : public virtual K::Core::ErrorStateInterface {
   public:
     Directory(const std::string &path);
-    Directory(const Directory &other)             = delete;
-    Directory &operator=(const Directory &other)  = delete;
-    Directory(const Directory &&other)            = delete;
-    Directory &operator=(const Directory &&other) = delete;
+    Directory(const Directory &other)            = delete;
+    Directory &operator=(const Directory &other) = delete;
+    Directory(Directory &&other)                 = delete;
+    Directory &operator=(Directory &&other)      = delete;
     ~Directory();
 
     //! Retrieves the next directory entry.

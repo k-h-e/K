@@ -39,6 +39,8 @@ class StringTools {
     static std::string GetCleanClassName(const Interface *instance, int maxNumSegments);
     static void Serialize(const std::string &text, ItemWriteInterface *stream);
     static void Deserialize(std::string *text, ItemReadInterface *stream);
+    static void Serialize(const std::string &text, std::vector<uint8_t> *outBinary);
+    static bool Deserialize(std::string *text, const void *binary, int binarySize);
 
   private:
     static const char * const base64EncodeTable;

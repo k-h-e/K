@@ -9,6 +9,7 @@
 
 using std::shared_ptr;
 using std::make_shared;
+using std::string;
 using std::to_string;
 using std::chrono::milliseconds;
 using K::Core::CompletionHandlerInterface;
@@ -22,17 +23,19 @@ namespace K {
 namespace Events {
 
 NetworkEventCoupling::NetworkEventCoupling(
-    const shared_ptr<TcpConnection> &tcpConnection, const shared_ptr<EventLoopHub> &hub,
-    const shared_ptr<CompletionHandlerInterface> &completionHandler, int completionId,
-    const std::shared_ptr<ThreadPool> &threadPool, const std::shared_ptr<Timers> &timers) {
+        const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion,
+        const shared_ptr<EventLoopHub> &hub, const shared_ptr<CompletionHandlerInterface> &completionHandler,
+        int completionId, const std::shared_ptr<ThreadPool> &threadPool, const std::shared_ptr<Timers> &timers) {
     int hubClientId = hub->RegisterEventLoop();
     sharedState_ = make_shared<SharedState>(completionHandler, completionId, hub, hubClientId);
-    writer_ = make_shared<Writer>(tcpConnection, hub, hubClientId, sharedState_, timers);
+    sharedState_->RegisterTcpConnection(tcpConnection.get());
+
+    writer_ = make_shared<Writer>(tcpConnection, protocolVersion, hub, hubClientId, sharedState_, timers);
     threadPool->Run(writer_.get(), sharedState_.get(), writerCompletionId);
 }
 
 NetworkEventCoupling::~NetworkEventCoupling() {
-    sharedState_->ShutDown();
+    sharedState_->ShutDown();    // Writer (thread) cleans everything up when it terminates.
 }
 
 }    // Namespace Events.

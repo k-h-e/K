@@ -231,5 +231,32 @@ void StringTools::Deserialize(string *text, ItemReadInterface *stream) {
     }
 }
 
+void StringTools::Serialize(const string &text, vector<uint8_t> *outBinary) {
+    uint32_t size = static_cast<uint32_t>(text.size());
+    outBinary->resize(sizeof(size) + size*sizeof(string::value_type));
+    memcpy(&(*outBinary)[0], &size, sizeof(size));
+    if (size) {
+        memcpy(&(*outBinary)[sizeof(size)], &text[0], size*sizeof(string::value_type));
+    }
+}
+
+bool StringTools::Deserialize(string *text, const void *binary, int binarySize) {
+    uint32_t size;
+    if (binarySize >= static_cast<int>(sizeof(size))) {
+        memcpy(&size, binary, sizeof(size));
+        if (static_cast<int>(sizeof(size) + size*sizeof(string::value_type)) >= binarySize) {
+            text->resize(size);
+            if (size) {
+                const uint8_t *binaryBytes = static_cast<const uint8_t *>(binary);
+                memcpy(&(*text)[0], &binaryBytes[sizeof(size)], size*sizeof(string::value_type));
+            }
+            return true;
+        }
+    }
+
+    text->clear();
+    return false;
+}
+
 }    // Namespace Core.
 }    // namespace K.

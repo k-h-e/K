@@ -2,6 +2,7 @@
 #define K_EVENTS_NETWORKEVENTCOUPLING_READHANDLER_H_
 
 #include <memory>
+#include <string>
 #include <K/Core/Buffer.h>
 #include <K/IO/StreamHandlerInterface.h>
 #include <K/Events/NetworkEventCoupling.h>
@@ -14,7 +15,7 @@ class EventLoopHub;
 //! Asynchronous read handler for the network event coupling.
 class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterface {
   public:
-    ReadHandler(const std::shared_ptr<EventLoopHub> &hub, int hubClientId,
+    ReadHandler(const std::string &protocolVersion, const std::shared_ptr<EventLoopHub> &hub, int hubClientId,
                 const std::shared_ptr<SharedState> &sharedState);
     void HandleStreamData(const void *data, int dataSize) override;
     void HandleEof() override;
@@ -31,7 +32,8 @@ class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterf
     std::shared_ptr<EventLoopHub> hub_;            // Thread-safe.
 
     int                      hubClientId_;
-    uint32_t                 version_;
+    std::string              protocolVersion_;
+    bool                     protocolVersionMatch_;
     State                    state_;
     K::Core::Buffer          buffer_;
     int                      cursor_;
