@@ -2,33 +2,47 @@
 #define K_EVENTS_NETWORKEVENTCOUPLINGSERVER_SHAREDSTATE_H_
 
 #include <mutex>
-#include <condition_variable>
-#include <K/Core/CompletionHandlerInterface.h>
+#include <optional>
+#include <K/IO/ListenSocket.h>
 #include <K/Events/NetworkEventCouplingServer.h>
 
 namespace K {
 namespace Events {
 
-//! State shared between threads of the network event coupling server.
+class NetworkEventCoupling;
+
+//! State shared between threads.
 /*!
  *  The class is thread-safe (i.e. all public methods).
  */
-class NetworkEventCouplingServer::SharedState : public K::Core::CompletionHandlerInterface {
+class NetworkEventCouplingServer::SharedState : public virtual IO::ListenSocket::HandlerInterface {
   public:
-    SharedState();
-    void RequestShutDown();
-    bool ShutDownRequested();
-    void PrepareForCoupling();
-    void WaitForCouplingFinished();
-    void WaitForWorkerFinished();
-    virtual void OnCompletion(int operationId);
+    SharedState(const std::string &protocolVersion, const std::shared_ptr<EventLoopHub> &hub,
+                const std::shared_ptr<IO::ConnectionIO> &connectionIO,
+                const std::shared_ptr<Core::ThreadPool> &threadPool, const std::shared_ptr<Core::Timers> &timers);
+    SharedState()                                    = delete;
+    SharedState(const SharedState &other)            = delete;
+    SharedState &operator=(const SharedState &other) = delete;
+    SharedState(SharedState &&other)                 = delete;
+    SharedState &operator=(SharedState &&other)      = delete;
+
+    void SetTimer(int timer);
+    void ShutDown();
+    void OnNetworkConnectionAccepted(const std::shared_ptr<IO::TcpConnection> &connection) override;
+    void OnListenSocketErrorState() override;
 
   private:
-    std::mutex              lock_;
-    std::condition_variable stateChanged_;
-    bool                    couplingFinished_;
-    bool                    workerFinished_;
-    bool                    shutDownRequested_;
+    const std::shared_ptr<EventLoopHub>           hub_;             // Thread safe.
+    const std::shared_ptr<IO::ConnectionIO>       connectionIO_;    // Thread safe.
+    const std::shared_ptr<Core::ThreadPool>       threadPool_;      // Thread safe.
+    const std::shared_ptr<Core::Timers>           timers_;          // Thread safe.
+
+    std::mutex                                    lock_;    // Protects everything below...
+    std::string                                   protocolVersion_;
+    std::shared_ptr<Events::NetworkEventCoupling> coupling_;
+    bool                                          unpauseTimer_;
+    std::optional<int>                            timer_;
+    bool                                          shutDown_;
 };
 
 }    // Namespace Events.

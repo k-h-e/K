@@ -10,6 +10,7 @@
 
 #include <K/Core/ThreadPool.h>
 
+#include <cassert>
 #include <K/Core/ActionInterface.h>
 #include <K/Core/CompletionHandlerInterface.h>
 #include <K/Core/Log.h>

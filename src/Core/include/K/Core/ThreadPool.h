@@ -11,6 +11,7 @@
 #ifndef K_CORE_THREADPOOL_H_
 #define K_CORE_THREADPOOL_H_
 
+#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>

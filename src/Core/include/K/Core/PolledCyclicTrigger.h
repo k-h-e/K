@@ -34,6 +34,9 @@ class PolledCyclicTrigger : public virtual Interface {
     //! Returns the time remaining until the next triggering of the cyclic action is due, measured from the time of the
     //! last check.
     std::chrono::milliseconds Remaining() const;
+    //! Resets the trigger so that the full configured interval needs to elapse before the next triggering of the cyclic
+    //! action is due the next time.
+    void Reset();
 
   private:
     std::chrono::steady_clock::time_point::duration interval_;

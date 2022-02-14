@@ -34,12 +34,16 @@ Timers::~Timers() {
     shared_->WaitForWorkerFinished();
 }
 
-int Timers::AddTimer(milliseconds interval, TimerHandlerInterface *handler) {
-    return shared_->AddTimer(interval, handler);
+int Timers::AddTimer(milliseconds interval, HandlerInterface *handler, bool paused) {
+    return shared_->AddTimer(interval, handler, paused);
 }
 
 void Timers::RemoveTimer(int timer) {
     shared_->RemoveTimer(timer);
+}
+
+void Timers::PauseTimer(int timer, bool paused) {
+    shared_->PauseTimer(timer, paused);
 }
 
 }    // Namespace Core.

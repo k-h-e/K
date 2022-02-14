@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <condition_variable>
+#include <optional>
 #include <K/Core/CompletionHandlerInterface.h>
 #include <K/Core/Timers.h>
 #include <K/Events/NetworkEventCoupling.h>
@@ -14,27 +15,27 @@ namespace Events {
 /*!
  *  The class is thread-safe (i.e. all public methods).
  */
-class NetworkEventCoupling::SharedState : public virtual K::Core::CompletionHandlerInterface,
-                                          public virtual K::Core::Timers::TimerHandlerInterface {
+class NetworkEventCoupling::SharedState : public virtual Core::CompletionHandlerInterface,
+                                          public virtual Core::Timers::HandlerInterface {
   public:
-    SharedState(const std::shared_ptr<K::Core::CompletionHandlerInterface> &completionHandler,
+    SharedState(const std::shared_ptr<Core::CompletionHandlerInterface> &completionHandler,
                 int completionId, const std::shared_ptr<EventLoopHub> &hub, int hubClientId);
-    void RegisterTcpConnection(K::IO::TcpConnection *connection);
+    void RegisterTcpConnection(IO::TcpConnection *connection);
     void ShutDown();
     void OnKeepAlive();
     void OnCompletion(int completionId) override;
-    void OnTimer(int timer) override;
+    bool OnTimer(int timer) override;
 
   private:
-    std::mutex                                           lock_;
-    std::condition_variable                              stateChanged_;
-    std::shared_ptr<K::Core::CompletionHandlerInterface> completionHandler_;
-    int                                                  completionId_;
-    bool                                                 keepAlive_;
-    bool                                                 writerFinished_;
-    std::shared_ptr<EventLoopHub>                        hub_;
-    int                                                  hubClientId_;
-    K::IO::TcpConnection                                 *tcpConnection_;
+    std::mutex                                        lock_;
+    std::condition_variable                           stateChanged_;
+    std::shared_ptr<Core::CompletionHandlerInterface> completionHandler_;
+    int                                               completionId_;
+    bool                                              keepAlive_;
+    bool                                              writerFinished_;
+    std::shared_ptr<EventLoopHub>                     hub_;
+    std::optional<int>                                hubClientId_;
+    IO::TcpConnection                                 *tcpConnection_;
 };
 
 }    // Namespace Events.

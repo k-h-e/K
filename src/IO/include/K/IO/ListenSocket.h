@@ -20,29 +20,29 @@ class ConnectionIO;
 /*!
  * Thread-safe (i.e. all public methods).
  */
-class ListenSocket : public virtual K::Core::ErrorStateInterface {
+class ListenSocket : public virtual Core::ErrorStateInterface {
   public:
-    ListenSocket(int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-                 const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+    class HandlerInterface : public virtual Core::Interface {
+      public:
+        virtual void OnNetworkConnectionAccepted(const std::shared_ptr<TcpConnection> &connection) = 0;
+        virtual void OnListenSocketErrorState() = 0;
+    };
+
+    ListenSocket(int port, const std::shared_ptr<ConnectionIO> &connectionIO,
+                 const std::shared_ptr<Core::ThreadPool> &threadPool);
     ListenSocket(const ListenSocket &other)             = delete;
     ListenSocket &operator=(const ListenSocket &other)  = delete;
     ListenSocket(ListenSocket &&other)                  = delete;
     ListenSocket &operator=(ListenSocket &&other)       = delete;
 
-    //! Accepts a new connection from the listen socket.
+    //! Registers the specified handler, unregistering any handler potentially registered earlier.
     /*!
-     *  \return
-     *  <c>null</c> handle in case of failure.
+     *  The handler methods will get called on an arbitrary thread and must not call back into the <c>ListenSocket</c>.
+     *
+     *  Pass <c>nullptr</c> to unregister a registered handler. When the method then returns, it is guaranteed that the
+     *  handler will not be called again.
      */
-    std::shared_ptr<Socket> Accept();
-    //! Accepts a new connection from the listen socket.
-    /*!
-     *  \return
-     *  <c>null</c> handle in case of failure.
-     */
-    std::shared_ptr<TcpConnection> AcceptConnection();
-    //! Shuts down the listen socket, causing active <c>Accept()</c> calls to return and fail.
-    void ShutDown();
+    void Register(HandlerInterface *handler);
     bool ErrorState() override;
 
   private:

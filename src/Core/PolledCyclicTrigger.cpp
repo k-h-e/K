@@ -77,5 +77,11 @@ milliseconds PolledCyclicTrigger::Remaining() const {
     return duration_cast<milliseconds>(interval_ - elapsed_);
 }
 
+void PolledCyclicTrigger::Reset() {
+    referenceTimePoint_ = steady_clock::now();
+    offset_             = milliseconds(0);
+    elapsed_            = milliseconds(0);
+}
+
 }    // Namespace Core.
 }    // Namespace K.

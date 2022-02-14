@@ -62,9 +62,12 @@ class ReusableItems {
     void Put(int itemId);
     //! Moves the specified in-use item to the specified in-use group.
     /*!
-     *  The item is added to the back of the target group.
+     *  The item is added to the back of the target group. It is irrelevant in which in-use group the item has been when
+     *  the method was called.
      */
     void Move(int itemId, int targetGroup);
+    //! Tells whether or not the specified item group is empty.
+    bool Empty(int groupId);
     //! Allows to iterate over the items in the specified group.
     IteratorProvider Iterate(int groupId);
     //! Grants access to the specified item.
@@ -226,6 +229,12 @@ void ReusableItems<T>::Move(int itemId, int targetGroup) {
     itemInfo.prev                    = lastTargetGroupItem;
     itemInfo.next                    = groupAnchors_[targetGroup];
     targetGroupAnchorInfo.prev       = itemId;
+}
+
+template<class T>
+bool ReusableItems<T>::Empty(int groupId) {
+    ItemInfo &groupAnchorInfo  = items_[groupAnchors_[groupId]];
+    return (groupAnchorInfo.next == groupAnchors_[groupId]);
 }
 
 template<class T>

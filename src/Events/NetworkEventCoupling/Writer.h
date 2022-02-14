@@ -20,8 +20,8 @@ class EventLoopHub;
 //! Writer for the network event coupling.
 /*!
  *  When the writer terminates (finishes its <c>ExecuteAction</c> method), it cleans everything up. Specifically, it
- *  unregisters from the event loop hub and unregisters the TCP connection from the shared state at the appropriate
- *  time.
+ *  unregisters the TCP connection from the shared state at the appropriate time. Unregistering from the event loop hub
+ *  is done in the completion handler in the shared state, though.
  */
 class NetworkEventCoupling::Writer : public virtual K::Core::ActionInterface {
   public:

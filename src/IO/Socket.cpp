@@ -188,7 +188,7 @@ void Socket::ShutDownSocket() {
                 error_ = true;
             }
             socketDown_ = true;
-            Log::Print(Log::Level::Debug, this, [=]{ return "socket " + to_string(fd_) + " shut down"; });
+            Log::Print(Log::Level::Debug, this, [&]{ return "socket " + to_string(fd_) + " shut down"; });
         }
     }
 }

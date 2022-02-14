@@ -35,42 +35,30 @@ class ListenSocket::SharedState : public virtual K::Core::ErrorStateInterface,
     SharedState &operator=(SharedState &&other)       = delete;
     ~SharedState();
 
-    //! Accepts a new connection from the listen socket.
-    /*!
-     *  \return
-     *  <c>null</c> handle in case of failure.
-     */
-    std::shared_ptr<Socket> Accept();
-    //! Accepts a new connection from the listen socket.
-    /*!
-     *  \return
-     *  <c>null</c> handle in case of failure.
-     */
-    std::shared_ptr<TcpConnection> AcceptConnection();
-    //! Shuts down the listen socket, causing active <c>Accept()</c> calls to return and fail.
-    void ShutDown();
-    //! To be called from the acceptor thread to deliver an accepted connection.
-    void OnConnectionAccepted(int fd);
+    void Register(HandlerInterface *handler);
     bool ErrorState() override;
+
+    void OnConnectionAccepted(int fd);
+    void ReportError();
     void OnCompletion(int completionId) override;
 
   private:
     // Expects lock to be held.
-    int DoAccept(std::unique_lock<std::mutex> &critical);
-    // Expects lock to be held.
     void UpdateAcceptor(std::unique_lock<std::mutex> &critical);
+    // Expects lock to be held.
+    void EnsureHandlerUpdatedInitially(std::unique_lock<std::mutex> &critical);
 
     std::mutex                       lock_;    // Protects everything below...
     std::condition_variable              stateChanged_;
     int                                  port_;
-    int                                  fd_;
-    int                                  numAcceptRequests_;
-    int                                  acceptedConnection_;
+    HandlerInterface                     *handler_;
+    bool                                 handlerUpdatedInitially_;
     std::unique_ptr<Acceptor>            acceptor_;
     bool                                 acceptorThreadRunning_;
+    bool                                 error_;
+    bool                                 shuttingDown_;
     std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
     std::shared_ptr<K::Core::ThreadPool> threadPool_;
-    bool                                 error_;
 };
 
 }    // Namespace IO.

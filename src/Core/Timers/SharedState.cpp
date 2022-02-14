@@ -25,7 +25,7 @@ namespace K {
 namespace Core {
 
 Timers::SharedState::SharedState()
-        : timers_(1),
+        : timers_(2),
           shutDownRequested_(false),
           workerFinished_(false) {
     // Nop.
@@ -44,18 +44,28 @@ void Timers::SharedState::WaitForWorkerFinished() {
     }
 }    // ......................................................................................... critical section, end.
 
-int Timers::SharedState::AddTimer(milliseconds interval, TimerHandlerInterface *handler) {
+int Timers::SharedState::AddTimer(milliseconds interval, HandlerInterface *handler, bool paused) {
     if (interval <= milliseconds(0)) {
         interval = milliseconds(1000);
     }
     unique_lock<mutex> critical(lock_);    // critical section..........................................................
     int       id;
-    TimerInfo &info = timers_.Get(0, &id);
+    TimerInfo &info = timers_.Get(activeTimers, &id);
     info = TimerInfo(interval, handler, id);
+
+    if (paused) {
+        timers_.Move(id, pausedTimers);
+        Log::Print(Log::Level::Debug, this, [&]{
+            return "timer " + to_string(id) + " added as paused, num_now="
+                       + to_string(timers_.Count() - timers_.IdleCount());
+        });
+    } else {
+        Log::Print(Log::Level::Debug, this, [&]{
+            return "timer " + to_string(id) + " added, num_now=" + to_string(timers_.Count() - timers_.IdleCount());
+        });
+    }
+
     stateChanged_.notify_all();
-    Log::Print(Log::Level::Debug, this, [&]{
-        return "timer " + to_string(id) + " added, num_now=" + to_string(timers_.Count() - timers_.IdleCount());
-    });
     return id;
 }    // ......................................................................................... critical section, end.
 
@@ -69,15 +79,34 @@ void Timers::SharedState::RemoveTimer(int timer) {
     });
 }    // ......................................................................................... critical section, end.
 
+void Timers::SharedState::PauseTimer(int timer, bool paused) {
+    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    if (paused) {
+        timers_.Move(timer, pausedTimers);
+        Log::Print(Log::Level::Debug, this, [&]{ return "timer " + to_string(timer) + " paused"; });
+    } else {
+        timers_.Item(timer).trigger.Reset();
+        timers_.Move(timer, activeTimers);
+        Log::Print(Log::Level::Debug, this, [&]{ return "timer " + to_string(timer) + " unpaused"; });
+    }
+    stateChanged_.notify_all();
+}    // ......................................................................................... critical section, end.
+
 void Timers::SharedState::RunTimers() {
     unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    vector<int> timersToPause;
     while (!shutDownRequested_) {
-        if (timers_.Count() - timers_.IdleCount() > 0) {
+        if (!timers_.Empty(activeTimers)) {
             steady_clock::time_point now           = steady_clock::now();
             milliseconds             timeUntilNext = milliseconds::max();
-            for (TimerInfo &info : timers_.Iterate(0)) {
+
+            timersToPause.clear();
+            for (TimerInfo &info : timers_.Iterate(activeTimers)) {
                 if (info.trigger.Check(now)) {
-                    info.handler->OnTimer(info.timerId);
+                    bool handlerDidRequestPause = !info.handler->OnTimer(info.timerId);
+                    if (handlerDidRequestPause) {
+                        timersToPause.push_back(info.timerId);
+                    }
                 }
                 milliseconds remaining = info.trigger.Remaining();
                 if (remaining < timeUntilNext) {
@@ -85,26 +114,36 @@ void Timers::SharedState::RunTimers() {
                 }
             }
 
-            steady_clock::time_point afterTimers = steady_clock::now();
-            milliseconds handlerTime(0);
-            if (afterTimers > now) {
-                milliseconds deltaTime = duration_cast<milliseconds>(afterTimers - now);
-                if (deltaTime > milliseconds(0)) {
-                    handlerTime = deltaTime;
+            for (int timer : timersToPause) {
+                timers_.Move(timer, pausedTimers);
+                Log::Print(Log::Level::Debug, this, [&]{
+                    return "timer " + to_string(timer) + " paused upon handler request";
+                });
+            }
+
+            milliseconds toWait(0);
+            if (!timers_.Empty(activeTimers)) {
+                steady_clock::time_point afterTimers = steady_clock::now();
+                milliseconds handlerTime(0);
+                if (afterTimers > now) {
+                    milliseconds deltaTime = duration_cast<milliseconds>(afterTimers - now);
+                    if (deltaTime > milliseconds(0)) {
+                        handlerTime = deltaTime;
+                    }
+                }
+
+                if (timeUntilNext > handlerTime) {
+                    toWait = timeUntilNext - handlerTime;
                 }
             }
 
-            if (timeUntilNext > handlerTime) {
-                timeUntilNext = timeUntilNext - handlerTime;
-                milliseconds toWait = timeUntilNext + milliseconds(2);
-                if (!(toWait > timeUntilNext)) {
-                    toWait = timeUntilNext;
-                    Log::Print(Log::Level::Warning, this, [&]{
-                        return "to_wait_corrected=" + to_string(toWait.count()) + "ms";
-                    });
-                }
-                stateChanged_.wait_for(critical, toWait);
+            milliseconds newToWait = toWait + milliseconds(2);
+            if (newToWait > toWait) {
+                toWait = newToWait;
             }
+
+            stateChanged_.wait_for(critical, toWait);
+
         } else {
             Log::Print(Log::Level::Debug, this, [&]{ return "sleeping until timers present..."; });
             stateChanged_.wait(critical);
@@ -126,7 +165,7 @@ Timers::SharedState::TimerInfo::TimerInfo()
     // Nop.
 }
 
-Timers::SharedState::TimerInfo::TimerInfo(milliseconds anInterval, TimerHandlerInterface *aHandler, int aTimerId)
+Timers::SharedState::TimerInfo::TimerInfo(milliseconds anInterval, HandlerInterface *aHandler, int aTimerId)
         : trigger(anInterval),
           handler(aHandler),
           timerId(aTimerId) {

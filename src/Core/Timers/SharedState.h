@@ -12,6 +12,7 @@
 #define K_CORE_TIMERS_SHAREDSTATE_H_
 
 #include <chrono>
+#include <condition_variable>
 #include <mutex>
 #include <K/Core/CompletionHandlerInterface.h>
 #include <K/Core/PolledCyclicTrigger.h>
@@ -35,19 +36,22 @@ class Timers::SharedState : public virtual CompletionHandlerInterface {
 
     void RequestShutDown();
     void WaitForWorkerFinished();
-    int AddTimer(std::chrono::milliseconds interval, TimerHandlerInterface *handler);
+    int AddTimer(std::chrono::milliseconds interval, HandlerInterface *handler, bool paused);
     void RemoveTimer(int timer);
+    void PauseTimer(int timer, bool paused);
     void RunTimers();
     void OnCompletion(int completionId) override;
 
   private:
+    static const int activeTimers = 0;
+    static const int pausedTimers = 1;
     struct TimerInfo {
         K::Core::PolledCyclicTrigger trigger;
-        TimerHandlerInterface        *handler;
+        HandlerInterface             *handler;
         int                          timerId;
 
         TimerInfo();
-        TimerInfo(std::chrono::milliseconds anInterval, TimerHandlerInterface *aHandler, int aTimerId);
+        TimerInfo(std::chrono::milliseconds anInterval, HandlerInterface *aHandler, int aTimerId);
         TimerInfo(const TimerInfo &other)            = default;
         TimerInfo &operator=(const TimerInfo &other) = default;
         TimerInfo(TimerInfo &&other)                 = default;

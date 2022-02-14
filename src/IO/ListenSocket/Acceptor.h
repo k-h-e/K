@@ -10,17 +10,24 @@ namespace IO {
 //! Acceptor for the listen socket.
 class ListenSocket::Acceptor : public virtual Core::ActionInterface {
   public:
-    Acceptor(int fd, SharedState *shared);
+    Acceptor(int port, SharedState *shared);
     Acceptor(const Acceptor &other)             = delete;
     Acceptor &operator=(const Acceptor &other)  = delete;
-    Acceptor(Acceptor &&other)            = delete;
-    Acceptor &operator=(Acceptor &&other) = delete;
+    Acceptor(Acceptor &&other)                  = delete;
+    Acceptor &operator=(Acceptor &&other)       = delete;
+    ~Acceptor();
 
+    void SetErrorState();
     void ExecuteAction() override;
 
   private:
+    void Close();
+
+    SharedState *shared_;    // Thread safe.
+
     int         fd_;
-    SharedState *shared_;
+    bool        error_;
+
 };
 
 }    // Namespace IO.

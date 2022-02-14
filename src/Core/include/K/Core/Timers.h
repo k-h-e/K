@@ -27,10 +27,13 @@ class ThreadPool;
 class Timers : public virtual Interface {
   public:
     //! Interface to entities handling timers.
-    class TimerHandlerInterface : public virtual Interface {
+    class HandlerInterface : public virtual Interface {
       public:
         //! Asks the recipient object to handle another firing of the specified timer.
-        virtual void OnTimer(int timer) = 0;
+        /*!
+         *  \return If the handler returns <c>false</c>, the timer will be paused.
+         */
+        virtual bool OnTimer(int timer) = 0;
     };
 
     Timers(const std::shared_ptr<ThreadPool> &threadPool);
@@ -46,10 +49,13 @@ class Timers : public virtual Interface {
      *  \param handler
      *  The handler will get called on a worker thread. It must not call back into the <c>Timers</c> object.
      *
+     *  \param paused
+     *  If set, the timer starts in paused state.
+     *
      *  \return
      *  Timer ID, required for removal later.
      */
-    int AddTimer(std::chrono::milliseconds interval, TimerHandlerInterface *handler);
+    int AddTimer(std::chrono::milliseconds interval, HandlerInterface *handler, bool paused);
     //! Removes the specified timer.
     /*!
      *  When the method returns, it is guaranteed that the associated handler will not be called again.
@@ -57,6 +63,15 @@ class Timers : public virtual Interface {
      *  Passing an invalid timer ID yields undefined behavior.
      */
     void RemoveTimer(int timer);
+    //! Pauses/unpauses the specified timer.
+    /*!
+     *  In case the timer is paused, it is guaranteed that the associated handler will not be called again when the
+     *  method returns.
+     *
+     *  In case the timer is unpaused, it is reset so its full interval must elapse before it fires again for the first
+     *  time.
+     */
+    void PauseTimer(int timer, bool paused);
 
   private:
     class SharedState;

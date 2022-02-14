@@ -35,7 +35,9 @@ void NetworkEventCoupling::SharedState::RegisterTcpConnection(TcpConnection *con
 
 void NetworkEventCoupling::SharedState::ShutDown() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    hub_->RequestShutDown(hubClientId_);
+    if (hubClientId_) {
+        hub_->RequestShutDown(*hubClientId_);
+    }
     if (tcpConnection_) {
         tcpConnection_->TriggerErrorState();    // Method is thread-safe, ok. Called in case worker is blocked in write.
     }
@@ -53,6 +55,8 @@ void NetworkEventCoupling::SharedState::OnCompletion(int completionId) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
 
     if (completionId == writerCompletionId) {
+        hub_->UnregisterEventLoop(*hubClientId_);
+        hubClientId_.reset();
         writerFinished_ = true;
     }
 
@@ -66,17 +70,23 @@ void NetworkEventCoupling::SharedState::OnCompletion(int completionId) {
     stateChanged_.notify_all();
 }    // ......................................................................................... critical section, end.
 
-void NetworkEventCoupling::SharedState::OnTimer(int timer) {
+bool NetworkEventCoupling::SharedState::OnTimer(int timer) {
     (void)timer;
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!keepAlive_) {
         Log::Print(Log::Level::Error, this, [&]{ return "no keep-alive received for too long, disconnecting..."; });
-        hub_->RequestShutDown(hubClientId_);
+        if (hubClientId_) {
+            hub_->RequestShutDown(*hubClientId_);
+        }
         if (tcpConnection_) {
             tcpConnection_->TriggerErrorState();    // Method is thread-safe, ok.
         }
+    } else {
+        Log::Print(Log::Level::Debug, this, [&]{ return "keep-alive check OK"; });
     }
+
     keepAlive_ = false;
+    return true;
 }    // ......................................................................................... critical section, end.
 
 }    // Namespace Events.

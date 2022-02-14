@@ -35,7 +35,8 @@ int EventLoopHub::RegisterEventLoop() {
 
     LoopInfo &loopInfo = loops_[id];
     loopInfo.inUse = true;
-    Log::Print(Log::Level::Debug, this, [=]{ return "registered event loop, id=" + to_string(id); });
+    Log::Print(Log::Level::Debug, this, [&]{ return "registered event loop, id=" + to_string(id); });
+
     return id;
 }    // ......................................................................................... critical section, end.
 
@@ -45,7 +46,7 @@ void EventLoopHub::UnregisterEventLoop(int clientLoopId) {
     if (info) {
         info->Reset();
         unusedLoopSlots_.push(clientLoopId);
-        Log::Print(Log::Level::Debug, this, [=]{ return "deregistered event loop " + to_string(clientLoopId); });
+        Log::Print(Log::Level::Debug, this, [&]{ return "deregistered event loop " + to_string(clientLoopId); });
     }
 }    // ......................................................................................... critical section, end.
 
@@ -135,6 +136,9 @@ void EventLoopHub::RequestShutDown(int clientLoopId) {
     if (loopInfo) {
         loopInfo->shutDownRequested = true;
         loopInfo->stateChanged->notify_all();
+        Log::Print(Log::Level::Debug, this, [&]{
+            return "shutdown requested for event loop " + to_string(clientLoopId);
+        });
     }
 }    // ......................................................................................... critical section, end.
  

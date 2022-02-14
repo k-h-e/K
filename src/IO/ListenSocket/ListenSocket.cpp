@@ -16,16 +16,8 @@ ListenSocket::ListenSocket(int port, const shared_ptr<ConnectionIO> &connectionI
     shared_ = make_shared<SharedState>(port, connectionIO, threadPool);
 }
 
-shared_ptr<Socket> ListenSocket::Accept() {
-    return shared_->Accept();
-}
-
-shared_ptr<TcpConnection> ListenSocket::AcceptConnection() {
-    return shared_->AcceptConnection();
-}
-
-void ListenSocket::ShutDown() {
-    shared_->ShutDown();
+void ListenSocket::Register(HandlerInterface *handler) {
+    shared_->Register(handler);
 }
 
 bool ListenSocket::ErrorState() {

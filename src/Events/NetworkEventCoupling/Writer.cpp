@@ -44,7 +44,7 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
 
     auto readHandler = make_shared<ReadHandler>(protocolVersion_, hub_, hubClientId_, sharedState_);
     if (tcpConnection_->Register(readHandler)) {
-        int timer = timers_->AddTimer(keepAliveParameters_.CheckInterval(), sharedState_.get());
+        int timer = timers_->AddTimer(keepAliveParameters_.CheckInterval(), sharedState_.get(), false);
 
         unique_ptr<Buffer>  buffer(new Buffer());
         PolledCyclicTrigger trigger(keepAliveParameters_.SendInterval());
@@ -86,7 +86,8 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
     readHandler.reset();
     sharedState_->RegisterTcpConnection(nullptr);
     tcpConnection_.reset();
-    hub_->UnregisterEventLoop(hubClientId_);
+
+    // Unregistering from the event loop hub is done in the completion handler in the shared state.
 
     Log::Print(Log::Level::Debug, this, []{ return "terminating"; });
 }
