@@ -29,7 +29,7 @@ class ErrorStateInterface : public virtual Interface {
      *  Error state is persistent insofar as once the object has entered error state, it does not automatically leave it
      *  again.
      */
-    virtual bool ErrorState() = 0;
+    virtual bool ErrorState() const = 0;
 };
 
 }    // Namespace Core.

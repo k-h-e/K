@@ -30,9 +30,9 @@ class File : public BlockingStreamCore,
     void Seek(int64_t position) override;
     int64_t StreamPosition() override;
     bool Good() const override;
-    bool Eof() override;
+    bool Eof() const override;
     void ClearEof() override;
-    bool ErrorState() override;
+    bool ErrorState() const override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
     static void AccessModeToFlags(AccessMode accessMode, bool *outReadable, bool *outWritable);

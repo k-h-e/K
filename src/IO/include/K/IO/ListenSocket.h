@@ -43,7 +43,7 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
      *  handler will not be called again.
      */
     void Register(HandlerInterface *handler);
-    bool ErrorState() override;
+    bool ErrorState() const override;
 
   private:
     class Acceptor;

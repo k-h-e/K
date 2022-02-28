@@ -9,12 +9,13 @@
 #include <K/IO/IOTools.h>
 #include <K/IO/NetworkTools.h>
 
-using std::shared_ptr;
 using std::make_shared;
-using std::to_string;
 using std::mutex;
-using std::unique_lock;
+using std::optional;
+using std::shared_ptr;
 using std::string;
+using std::to_string;
+using std::unique_lock;
 using std::vector;
 using K::Core::Result;
 using K::Core::StringTools;
@@ -150,7 +151,7 @@ bool Socket::Good() const {
 }    // ......................................................................................... critical section, end.
 
 
-bool Socket::Eof() {
+bool Socket::Eof() const {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return eof_;
 }    // ......................................................................................... critical section, end.
@@ -160,7 +161,7 @@ void Socket::ClearEof() {
     eof_ = false;
 }    // ......................................................................................... critical section, end.
 
-bool Socket::ErrorState() {
+bool Socket::ErrorState() const {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
 }    // ......................................................................................... critical section, end.
@@ -171,13 +172,13 @@ void Socket::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor) {
 }    // ......................................................................................... critical section, end.
 
 shared_ptr<Socket> Socket::ConnectTcp(const string &host, Core::Interface *loggingObject) {
-    int fd = NetworkTools::ConnectTcp(host, loggingObject);
-    return (fd >= 0) ? make_shared<Socket>(fd) : nullptr;
+    optional<int> fd = NetworkTools::ConnectTcp(host, loggingObject);
+    return fd ? make_shared<Socket>(*fd) : nullptr;
 }
 
 shared_ptr<Socket> Socket::ConnectTcp(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
-    int fd = NetworkTools::ConnectTcp(ip4Address, port, loggingObject);
-    return (fd >= 0) ? make_shared<Socket>(fd) : nullptr;
+    optional<int> fd = NetworkTools::ConnectTcp(ip4Address, port, loggingObject);
+    return fd ? make_shared<Socket>(*fd) : nullptr;
 }
 
 // Expects the lock to be held.

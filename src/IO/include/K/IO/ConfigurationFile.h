@@ -19,7 +19,7 @@ class ConfigurationFile : public virtual Core::ErrorStateInterface {
     ConfigurationFile(ConfigurationFile &&other)                 = delete;
     ConfigurationFile &operator=(ConfigurationFile &&other)      = delete;
 
-    bool ErrorState() override;
+    bool ErrorState() const override;
 
     //! Sets the value for the specified key.
     void SetValue(const std::string &section, const std::string &key, const std::string &value);

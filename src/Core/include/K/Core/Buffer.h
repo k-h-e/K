@@ -55,8 +55,8 @@ class Buffer : public virtual ItemWriteInterface {
 
         void ReadItem(void *outItem, int itemSize) override;
         bool Good() const override;
-        bool ErrorState() override;
-        bool Eof() override;
+        bool ErrorState() const override;
+        bool Eof() const override;
         void ClearEof() override;
         void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
@@ -129,7 +129,7 @@ class Buffer : public virtual ItemWriteInterface {
 
     void WriteItem(const void *item, int itemSize) override;
     bool Good() const override;
-    bool ErrorState() override;
+    bool ErrorState() const override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
   private:

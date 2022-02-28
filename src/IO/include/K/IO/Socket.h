@@ -30,9 +30,9 @@ class Socket : public BlockingStreamCore {
     int Read(void *outBuffer, int bufferSize) override;
     int Write(const void *data, int dataSize) override;
     bool Good() const override;
-    bool Eof() override;
+    bool Eof() const override;
     void ClearEof() override;
-    bool ErrorState() override;
+    bool ErrorState() const override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
     //! Establishes a TCP network stream connection to a host given by name and port, separated by a <c>':'</c>.
@@ -51,7 +51,7 @@ class Socket : public BlockingStreamCore {
   private:
     void ShutDownSocket();
 
-    std::mutex                    lock_;
+    mutable std::mutex            lock_;                   // Protects everything below...
     int                           fd_;
     bool                          socketDown_;
     bool                          eof_;

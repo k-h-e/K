@@ -10,6 +10,7 @@
 
 using std::shared_ptr;
 using std::make_shared;
+using std::optional;
 using std::to_string;
 using K::Core::Result;
 using K::Core::Log;
@@ -17,44 +18,44 @@ using K::Core::Log;
 namespace K {
 namespace IO {
 
-BufferedConnection::BufferedConnection(int fd, int bufferSizeThreshold, const shared_ptr<Result> &resultAcceptor,
-                                       const shared_ptr<ConnectionIO> &connectionIO)
+BufferedConnection::BufferedConnection(
+    optional<int> fd, int bufferSizeThreshold, const shared_ptr<Result> &resultAcceptor,
+    const shared_ptr<ConnectionIO> &connectionIO)
         : connectionIO_(connectionIO),
           fd_(fd),
           finalResultAcceptor_(resultAcceptor) {
-    bool success = false;
-
     sharedState_ = make_shared<SharedState>(bufferSizeThreshold, connectionIO_);
-    if (fd_ >= 0) {
-        if (connectionIO_->Register(sharedState_, fd_)) {
-            success = true;
-        }
-        else {
+    if (*fd_) {
+        if (!connectionIO_->Register(sharedState_, *fd_)) {
+            (void)IOTools::CloseFileDescriptor(*fd_, this);
             Log::Print(Log::Level::Warning, this, [&]{
-                return "failed to register fd " + to_string(fd_) + " with central I/O"; });
+                return "failed to register fd " + to_string(*fd_) + " with central I/O"; });
+            fd_.reset();
         }
     }
     else {
-        Log::Print(Log::Level::Warning, this, [&]{
-            return "bad file descriptor " + to_string(fd_); });
+        Log::Print(Log::Level::Warning, this, [&]{ return "no file descriptor given"; });
     }
 
-    if (!success) {
+    if (!*fd_) {
         sharedState_->SetError();
     }
 }
 
 BufferedConnection::~BufferedConnection() {
     bool error;
-    if (fd_ >= 0) {
-        Log::Print(Log::Level::Debug, this, [&]{ return "unregistering fd " + to_string(fd_) + " from central I/O"; });
+
+    // Note: We're currently not waiting for all remaining buffered write data to be written!
+
+    if (*fd_) {
+        Log::Print(Log::Level::Debug, this, [&]{ return "unregistering fd " + to_string(*fd_) + " from central I/O"; });
         bool finalStreamError = true;
         connectionIO_->Unregister(sharedState_, &finalStreamError);
         Log::Print(Log::Level::Debug, this, [&]{
-            return "fd " + to_string(fd_) + " unregistered from central I/O" + ", final_stream_error="
+            return "fd " + to_string(*fd_) + " unregistered from central I/O" + ", final_stream_error="
                 + to_string(finalStreamError); });
 
-        bool closeError = !IOTools::CloseFileDescriptor(fd_, this);
+        bool closeError = !IOTools::CloseFileDescriptor(*fd_, this);
 
         error = finalStreamError || closeError;
     }
@@ -66,9 +67,6 @@ BufferedConnection::~BufferedConnection() {
     if (finalResultAcceptor_) {
         *finalResultAcceptor_ = finalResult;
     }
-    Log::Print(Log::Level::Debug, this, [&]{
-        return "closed, fd=" + to_string(fd_) + ", final_result=" + finalResult.ToString();
-    });
 }
 
 void BufferedConnection::TriggerErrorState() {
@@ -92,7 +90,7 @@ bool BufferedConnection::Good() const {
     return sharedState_->Good();
 }
 
-bool BufferedConnection::Eof() {
+bool BufferedConnection::Eof() const {
     return sharedState_->Eof();
 }
 
@@ -100,7 +98,7 @@ void BufferedConnection::ClearEof() {
     sharedState_->ClearEof();
 }
 
-bool BufferedConnection::ErrorState() {
+bool BufferedConnection::ErrorState() const {
     return sharedState_->Error();
 }
 

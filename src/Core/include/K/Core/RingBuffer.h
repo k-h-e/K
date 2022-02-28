@@ -27,11 +27,13 @@ class RingBuffer {
     RingBuffer &operator=(RingBuffer &&other)      = delete;
 
     //! Returns the number of bytes currently in the ring buffer.
-    int Fill();
+    int Size() const;
+    //! Tells whether the ring buffer is currently empty.
+    bool Empty() const;
     //! Gets (and removes) at most <c>bufferSize</c> bytes from the buffer.
     /*!
      *  \return
-     *  Number of bytes actually fetched from the buffer. <c>0</c> in case the buffer was empty.
+     *  Number of bytes actually fetched from the buffer. <c>0</c> means the buffer was empty.
      */
     int Get(void *outBuffer, int bufferSize);
     //! Puts (a copy of) the specified data in the buffer.
@@ -47,12 +49,15 @@ class RingBuffer {
      *  The buffer grows as needed.
      */
     void PutBack(const void *data, int dataSize);
+    //! Transfers data to the specified other ring buffer, as long as the other ring buffer's size does not exceed the
+    //! size specified.
+    void TransferTo(RingBuffer *other, int maxSize);
 
   private:
     void Grow();
 
     std::vector<uint8_t> buffer_;
-    int                  size_;
+    int                  capacity_;
     int                  cursor_;
     int                  fill_;
 };

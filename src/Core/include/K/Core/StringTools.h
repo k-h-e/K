@@ -22,6 +22,7 @@ class Interface;
 class ItemReadInterface;
 class ItemWriteInterface;
 
+//! Tool functions dealing with strings.
 class StringTools {
   public:
     static std::vector<std::string> Tokenize(const std::string &text, char separator);

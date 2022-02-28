@@ -36,14 +36,14 @@ class NmeaDevice : public virtual K::Core::ErrorStateInterface {
      *  <c>false</c> in case of failure.
      */
     bool Write(const NmeaMessage &message);
-    bool ErrorState() override;
+    bool ErrorState() const override;
 
   private:
     std::shared_ptr<NmeaMessageHandlerInterface> handler_;    // Given to connection thread.
     std::shared_ptr<NmeaParser>                  parser_;     // Given to connection thread.
 
     std::shared_ptr<K::IO::ConnectionStreamInterface> connection_;
-    bool                                              error_;
+    mutable bool                                      error_;
 };
 
 }    // Namespace GeoPositioning.

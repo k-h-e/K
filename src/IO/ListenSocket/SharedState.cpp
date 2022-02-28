@@ -58,7 +58,7 @@ void ListenSocket::SharedState::Register(HandlerInterface *handler) {
     UpdateAcceptor(critical);
 }    // ......................................................................................... critical section, end.
 
-bool ListenSocket::SharedState::ErrorState() {
+bool ListenSocket::SharedState::ErrorState() const {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
     return error_;
 }    // ......................................................................................... critical section, end.

@@ -16,6 +16,7 @@
 namespace K {
 namespace Core {
 
+//! Tool functions dealing with numbers.
 class NumberTools {
   public:
     static const double pi;

@@ -69,7 +69,7 @@ void BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) 
             return;
         }
 
-        int bufferFill = writeBuffer_.Fill();
+        int bufferFill = writeBuffer_.Size();
         if (bufferFill >= bufferSizeThreshold_) {
             writeCanContinue_.wait(critical);
         }

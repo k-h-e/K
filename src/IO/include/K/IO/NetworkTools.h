@@ -1,6 +1,7 @@
 #ifndef K_IO_NETWORKTOOLS_H_
 #define K_IO_NETWORKTOOLS_H_
 
+#include <optional>
 #include <string>
 
 namespace K {
@@ -17,21 +18,21 @@ class NetworkTools {
     //! Establishes a TCP network connection to a host given by name and port, separated by a <c>':'</c>.
     /*!
      *  \return
-     *  File descriptor of the created TCP socket, and <c>-1</c> in case of failure.
+     *  File descriptor of the created TCP socket, and <c>nullopt</c> in case of failure.
      */
-    static int ConnectTcp(const std::string &hostAndPort, K::Core::Interface *loggingObject);
+    static std::optional<int> ConnectTcp(const std::string &hostAndPort, K::Core::Interface *loggingObject);
     //! Establishes a network stream connection to the specified host.
     /*!
      *  \return
-     *  File descriptor of the created TCP socket, and <c>-1</c> in case of failure.
+     *  File descriptor of the created TCP socket, and <c>nullopt</c> in case of failure.
      */
-    static int ConnectTcp(const std::string &host, int port, K::Core::Interface *loggingObject);
+    static std::optional<int> ConnectTcp(const std::string &host, int port, K::Core::Interface *loggingObject);
     //! Establishes a network stream connection to the specified host.
     /*!
      *  \return
-     *  File descriptor of the created TCP socket, and <c>-1</c> in case of failure.
+     *  File descriptor of the created TCP socket, and <c>nullopt</c> in case of failure.
      */
-    static int ConnectTcp(uint32_t ip4Address, int port, K::Core::Interface *loggingObject);
+    static std::optional<int> ConnectTcp(uint32_t ip4Address, int port, K::Core::Interface *loggingObject);
     //! Resolves the specified host name.
     /*!
      *  \return

@@ -2,6 +2,7 @@
 #define K_IO_BUFFEREDCONNECTION_H_
 
 #include <memory>
+#include <optional>
 #include <K/IO/ConnectionStreamInterface.h>
 
 namespace K {
@@ -13,12 +14,18 @@ class StreamHandlerInterface;
 //! Buffered connection.
 class BufferedConnection : public virtual ConnectionStreamInterface {
   public:
-    //! The connection takes ownership over the UNIX file descriptor.
+    //! Creates a new buffered connection for the specified UNIX file descriptor.
     /*!
-     *  Bad file descriptors < 0 are accepted, with the connection being initialized to error state right away.
+     *  \param fd
+     *  The connection takes ownership over the UNIX file descriptor. Bad file descriptors (<c>nullopt</c> or negative
+     *  ones) are accepted, with the connection being initialized to error state right away.
+     *
+     *  \param resultAcceptor
+     *  The result acceptor is optional.
      */
-    BufferedConnection(int fd, int bufferSizeThreshold, const std::shared_ptr<Core::Result> &resultAcceptor,
-                       const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    BufferedConnection(
+        std::optional<int> fd, int bufferSizeThreshold, const std::shared_ptr<Core::Result> &resultAcceptor,
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     BufferedConnection(const BufferedConnection &other)             = delete;
     BufferedConnection &operator=(const BufferedConnection &other)  = delete;
     BufferedConnection(const BufferedConnection &&other)            = delete;
@@ -37,9 +44,9 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) override;
     void WriteItem(const void *item, int itemSize) override;
     bool Good() const override;
-    bool Eof() override;
+    bool Eof() const override;
     void ClearEof() override;
-    bool ErrorState() override;
+    bool ErrorState() const override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
   private:
@@ -48,7 +55,7 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     std::shared_ptr<SharedState> sharedState_;
 
     std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
-    int                                  fd_;
+    std::optional<int>                   fd_;
     std::shared_ptr<Core::Result>        finalResultAcceptor_;
 };
 

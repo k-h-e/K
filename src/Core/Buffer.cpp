@@ -89,7 +89,7 @@ bool Buffer::Good() const {
     return true;
 }
 
-bool Buffer::ErrorState() {
+bool Buffer::ErrorState() const {
     return false;
 }
 
@@ -143,11 +143,11 @@ bool Buffer::Reader::Good() const {
     return !eof_;
 }
 
-bool Buffer::Reader::ErrorState() {
+bool Buffer::Reader::ErrorState() const {
     return false;
 }
 
-bool Buffer::Reader::Eof() {
+bool Buffer::Reader::Eof() const {
     return eof_;
 }
 

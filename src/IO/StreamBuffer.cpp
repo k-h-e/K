@@ -183,7 +183,7 @@ bool StreamBuffer::Good() const {
     return !error_ && !eof_;
 }
 
-bool StreamBuffer::Eof() {
+bool StreamBuffer::Eof() const {
     return eof_;
 }
 
@@ -191,7 +191,7 @@ void StreamBuffer::ClearEof() {
     eof_ = false;
 }
 
-bool StreamBuffer::ErrorState() {
+bool StreamBuffer::ErrorState() const {
     return error_;
 }
 

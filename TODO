@@ -1,3 +1,4 @@
+- Optionally write outgoing buffered data when connections get destroyed? -> BufferedConnection, framework connection.
 - IO::IO: NotifyWorker() is void, uses assert. Better solution?
 - Check everywhere regarding default move operations!
 

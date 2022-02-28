@@ -9,6 +9,8 @@
 #include <K/Core/StringTools.h>
 #include <K/Core/Log.h>
 
+using std::nullopt;
+using std::optional;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -18,7 +20,7 @@ using K::Core::Log;
 namespace K {
 namespace IO {
 
-int NetworkTools::ConnectTcp(const string &hostAndPort, Core::Interface *loggingObject) {
+optional<int> NetworkTools::ConnectTcp(const string &hostAndPort, Core::Interface *loggingObject) {
     vector<string> tokens = StringTools::Tokenize(hostAndPort, ':');
     if (tokens.size() == 2) {
         int port;
@@ -27,19 +29,19 @@ int NetworkTools::ConnectTcp(const string &hostAndPort, Core::Interface *logging
         }
     }
 
-    return -1;
+    return nullopt;
 }
 
-int NetworkTools::ConnectTcp(const string &host, int port, Core::Interface *loggingObject) {
+optional<int> NetworkTools::ConnectTcp(const string &host, int port, Core::Interface *loggingObject) {
     uint32_t ip4Address;
     if (ResolveHostName(host, &ip4Address, loggingObject)) {
         return ConnectTcp(ip4Address, port, loggingObject);
     }
 
-    return -1;
+    return nullopt;
 }
 
-int NetworkTools::ConnectTcp(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
+optional<int> NetworkTools::ConnectTcp(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
     int fd = socket(PF_INET, SOCK_STREAM, 0);
     if (fd != -1) {
         if (PrepareSocket(fd, loggingObject)) {
@@ -69,7 +71,7 @@ int NetworkTools::ConnectTcp(uint32_t ip4Address, int port, Core::Interface *log
         Log::Print(Log::Level::Warning, loggingObject, []{ return "failed to create socket"; });
     }
 
-    return -1;
+    return nullopt;
 }
 
 bool NetworkTools::ResolveHostName(const string &hostName, uint32_t *outIp4Address, Core::Interface *loggingObject) {

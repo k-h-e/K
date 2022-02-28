@@ -25,7 +25,7 @@ ConfigurationFile::ConfigurationFile() :
     // Nop.
 }
 
-bool ConfigurationFile::ErrorState() {
+bool ConfigurationFile::ErrorState() const {
     return errorState_;
 }
 

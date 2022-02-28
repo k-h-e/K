@@ -36,7 +36,7 @@ class ListenSocket::SharedState : public virtual K::Core::ErrorStateInterface,
     ~SharedState();
 
     void Register(HandlerInterface *handler);
-    bool ErrorState() override;
+    bool ErrorState() const override;
 
     void OnConnectionAccepted(int fd);
     void ReportError();
@@ -48,7 +48,7 @@ class ListenSocket::SharedState : public virtual K::Core::ErrorStateInterface,
     // Expects lock to be held.
     void EnsureHandlerUpdatedInitially(std::unique_lock<std::mutex> &critical);
 
-    std::mutex                       lock_;    // Protects everything below...
+    mutable std::mutex                   lock_;    // Protects everything below...
     std::condition_variable              stateChanged_;
     int                                  port_;
     HandlerInterface                     *handler_;

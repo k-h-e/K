@@ -66,7 +66,7 @@ bool NmeaDevice::Write(const NmeaMessage &message) {
     return false;
 }
 
-bool NmeaDevice::ErrorState() {
+bool NmeaDevice::ErrorState() const {
     if (!error_) {
         if (connection_->ErrorState() || connection_->Eof()) {
             error_ = true;

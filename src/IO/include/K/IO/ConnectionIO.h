@@ -53,7 +53,8 @@ class ConnectionIO : public virtual K::Core::Interface {
      *  The client methods will get called on an arbitrary thread.
      *
      *  \return
-     *  <c>false</c> in case the file descriptor could not be registered.
+     *  <c>false</c> in case the file descriptor could not be registered. This includes cases with negative file
+     *  descriptors.
      */
     bool Register(const std::shared_ptr<ClientInterface> &client, int fd);
     //! Unregisters the respective client, if it was registered.

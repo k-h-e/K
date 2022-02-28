@@ -54,7 +54,7 @@ bool Directory::GetNextEntry(std::string *outName, bool *outIsDirectory, off_t *
     return false;
 }
 
-bool Directory::ErrorState() {
+bool Directory::ErrorState() const {
     return error_;
 }
 

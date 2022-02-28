@@ -20,7 +20,7 @@ void ListenSocket::Register(HandlerInterface *handler) {
     shared_->Register(handler);
 }
 
-bool ListenSocket::ErrorState() {
+bool ListenSocket::ErrorState() const {
     return shared_->ErrorState();
 }
 

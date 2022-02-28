@@ -27,7 +27,7 @@ class ReadableStreamInterface : public virtual StreamInterface {
      *
      *  Once EOF state has been raised on the stream, it remains that way until explicitly cleared via ClearEof().
      */
-    virtual bool Eof() = 0;
+    virtual bool Eof() const = 0;
     //! Clears EOF state (in case it was set).
     virtual void ClearEof() = 0;
 };

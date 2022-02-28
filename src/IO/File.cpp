@@ -173,7 +173,7 @@ bool File::Good() const {
     return !error_ && !eof_;
 }
 
-bool File::Eof() {
+bool File::Eof() const {
     return eof_;
 }
 
@@ -181,7 +181,7 @@ void File::ClearEof() {
     eof_ = false;
 }
 
-bool File::ErrorState() {
+bool File::ErrorState() const {
     return error_;
 }
 
