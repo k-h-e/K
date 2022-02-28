@@ -24,7 +24,7 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
   public:
     class HandlerInterface : public virtual Core::Interface {
       public:
-        virtual void OnNetworkConnectionAccepted(const std::shared_ptr<TcpConnection> &connection) = 0;
+        virtual void OnListenSocketAcceptedConnection(const std::shared_ptr<TcpConnection> &connection) = 0;
         virtual void OnListenSocketErrorState() = 0;
     };
 

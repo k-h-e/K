@@ -25,6 +25,7 @@ Connection::LoopThreadState::LoopThreadState(
         : synchronizedState(aSynchronizedState),
           connectionIO(aConnectionIO),
           runLoop(aRunLoop),
+          runLoopClientId(0),
           handler(nullptr),
           handlerAssociatedId(0),
           error(false),

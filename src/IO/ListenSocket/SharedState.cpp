@@ -69,7 +69,7 @@ void ListenSocket::SharedState::OnConnectionAccepted(int fd) {
     if (!error_) {
         if (handler_) {
             auto connection = make_shared<TcpConnection>(fd, connectionIO_);
-            handler_->OnNetworkConnectionAccepted(connection);
+            handler_->OnListenSocketAcceptedConnection(connection);
         } else {
             Log::Print(Log::Level::Warning, this, [&]{
                 return "no handler registered, immediately closing accepted connection " + to_string(fd);

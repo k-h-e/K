@@ -28,7 +28,7 @@ class NetworkEventCouplingServer::SharedState : public virtual IO::ListenSocket:
 
     void SetTimer(int timer);
     void ShutDown();
-    void OnNetworkConnectionAccepted(const std::shared_ptr<IO::TcpConnection> &connection) override;
+    void OnListenSocketAcceptedConnection(const std::shared_ptr<IO::TcpConnection> &connection) override;
     void OnListenSocketErrorState() override;
 
   private:

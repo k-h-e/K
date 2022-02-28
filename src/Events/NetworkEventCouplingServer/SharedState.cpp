@@ -48,7 +48,8 @@ void NetworkEventCouplingServer::SharedState::ShutDown() {
     shutDown_ = true;
 }    // ......................................................................................... critical section, end.
 
-void NetworkEventCouplingServer::SharedState::OnNetworkConnectionAccepted(const shared_ptr<TcpConnection> &connection) {
+void NetworkEventCouplingServer::SharedState::OnListenSocketAcceptedConnection(
+        const shared_ptr<TcpConnection> &connection) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!shutDown_) {
         coupling_ = make_shared<NetworkEventCoupling>(connection, protocolVersion_, hub_, nullptr, 0, threadPool_,
