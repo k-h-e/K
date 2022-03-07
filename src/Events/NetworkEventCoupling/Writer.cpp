@@ -47,24 +47,24 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
         int timer = timers_->AddTimer(keepAliveParameters_.CheckInterval(), sharedState_.get(), false);
 
         unique_ptr<Buffer>  buffer(new Buffer());
-        PolledCyclicTrigger trigger(keepAliveParameters_.SendInterval());
+        PolledCyclicTrigger sendKeepAliveTrigger(keepAliveParameters_.SendInterval());
 
         SendVersionChunk();
 
         bool done = false;
         while (!done) {
-            if (tcpConnection_->ErrorState()) {
+            if (tcpConnection_->WriteFailed()) {
                 Log::Print(Log::Level::Debug, this, []{ return "TCP connection down"; });
                 done = true;
             } else {
-                if (trigger.Check()) {
+                if (sendKeepAliveTrigger.Check()) {
                     SendKeepAliveChunk();
-                    (void)trigger.Check();
+                    (void)sendKeepAliveTrigger.Check();
                 }
 
-                milliseconds timeout = trigger.Remaining() + milliseconds(2);
-                if (!(timeout > trigger.Remaining())) {
-                    timeout = trigger.Remaining();
+                milliseconds timeout = sendKeepAliveTrigger.Remaining() + milliseconds(2);
+                if (!(timeout > sendKeepAliveTrigger.Remaining())) {
+                    timeout = sendKeepAliveTrigger.Remaining();
                 }
 
                 bool shutdownRequested = !hub_->GetEvents(hubClientId_, &buffer, timeout);

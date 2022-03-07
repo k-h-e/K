@@ -14,6 +14,7 @@ using std::optional;
 using std::to_string;
 using K::Core::Result;
 using K::Core::Log;
+using K::Core::StreamHandlerInterface;
 
 namespace K {
 namespace IO {
@@ -86,16 +87,16 @@ void BufferedConnection::WriteItem(const void *item, int itemSize) {
     sharedState_->WriteItem(item, itemSize);
 }
 
-bool BufferedConnection::Good() const {
-    return sharedState_->Good();
+bool BufferedConnection::WriteFailed() const {
+    return sharedState_->WriteFailed();
+}
+
+void BufferedConnection::ClearWriteFailed() {
+    sharedState_->ClearWriteFailed();
 }
 
 bool BufferedConnection::Eof() const {
     return sharedState_->Eof();
-}
-
-void BufferedConnection::ClearEof() {
-    sharedState_->ClearEof();
 }
 
 bool BufferedConnection::ErrorState() const {

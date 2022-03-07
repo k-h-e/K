@@ -4,10 +4,10 @@
 #include <cstring>
 #include <cassert>
 #include <iomanip>
-#include <K/IO/ConnectionStreamInterface.h>
+#include <K/Core/ConnectionStreamInterface.h>
 
 using namespace std;
-using K::IO::ConnectionStreamInterface;
+using K::Core::ConnectionStreamInterface;
 
 namespace K {
 namespace GeoPositioning {
@@ -57,7 +57,7 @@ void NmeaDevice::Unregister(const std::shared_ptr<NmeaMessageHandlerInterface> &
 bool NmeaDevice::Write(const NmeaMessage &message) {
     if (!error_) {
         message.WriteTo(connection_.get());
-        if (!connection_->ErrorState()) {
+        if (!connection_->WriteFailed()) {
             return true;
         }
     }

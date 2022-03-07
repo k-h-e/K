@@ -195,9 +195,6 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
                 ClientInfo &clientInfo = iter->second;
                 clientInfo.unregistering = true;
                 clientInfo.canWrite      = true;
-                Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
-                    + " requested deregistration";
-                });
 
                 if (clientInfo.error) {
                     ScheduleClientDeregistration(clientInfo);
@@ -350,9 +347,6 @@ void ConnectionIO::Worker::SetClientError(ClientInfo *clientInfo) {
 
 void ConnectionIO::Worker::ScheduleClientDeregistration(const ClientInfo &clientInfo) {
     clientsToUnregister_.push_back(clientInfo.client.get());
-    Log::Print(Log::Level::Debug, this, [&]{ return "client for fd " + to_string(clientInfo.fileDescriptor)
-        + " scheduled for deregistration";
-    });
 }
 
 }    // Namespace IO.

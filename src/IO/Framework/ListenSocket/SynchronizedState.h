@@ -11,6 +11,7 @@
 #ifndef K_IO_FRAMEWORK_LISTENSOCKET_SYNCHRONIZEDSTATE_H_
 #define K_IO_FRAMEWORK_LISTENSOCKET_SYNCHRONIZEDSTATE_H_
 
+#include <deque>
 #include <mutex>
 #include <optional>
 #include <K/IO/ListenSocket.h>
@@ -32,11 +33,12 @@ class ListenSocket::SynchronizedState : public virtual IO::ListenSocket::Handler
     SynchronizedState &operator=(const SynchronizedState &other) = delete;
     SynchronizedState(SynchronizedState &&other)                 = delete;
     SynchronizedState &operator=(SynchronizedState &&other)      = delete;
-    ~SynchronizedState()                                         = default;
+    ~SynchronizedState();
 
     void SetRunLoopClientId(int id);
     void Sync(LoopThreadState *loopThreadState);
-    void OnListenSocketAcceptedConnection(const std::shared_ptr<TcpConnection> &connection) override;
+    void OnListenSocketAcceptedConnection(const std::shared_ptr<IO::TcpConnection> &connection) override;
+    void OnListenSocketAcceptedConnection(int fd) override;
     void OnListenSocketErrorState() override;
 
   private:
@@ -46,6 +48,7 @@ class ListenSocket::SynchronizedState : public virtual IO::ListenSocket::Handler
     std::mutex lock_;    // Protects everything below...
     const std::shared_ptr<Core::Framework::RunLoop> runLoop_;
     std::optional<int>                              runLoopClientId_;
+    std::deque<int>                                 acceptedConnections_;
     bool                                            error_;
     bool                                            syncRequested_;
 };

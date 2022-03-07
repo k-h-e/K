@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <mutex>
-#include <K/IO/BlockingStreamCore.h>
+#include <K/IO/BlockingIOStreamCore.h>
 
 namespace K {
 namespace IO {
@@ -12,7 +12,7 @@ namespace IO {
 /*!
  *  The class is thread-safe (i.e. all public instance methods).
  */
-class Socket : public BlockingStreamCore {
+class Socket : public BlockingIOStreamCore {
   public:
     //! The socket takes ownership over the UNIX file descriptor.
     Socket(int fd);
@@ -27,11 +27,13 @@ class Socket : public BlockingStreamCore {
     //! Shuts down the socket if it is still up.
     void ShutDown();
 
-    int Read(void *outBuffer, int bufferSize) override;
-    int Write(const void *data, int dataSize) override;
-    bool Good() const override;
+    int ReadBlocking(void *buffer, int bufferSize) override;
+    bool ReadFailed() const override;
+    void ClearReadFailed() override;
+    int WriteBlocking(const void *data, int dataSize) override;
+    bool WriteFailed() const override;
+    void ClearWriteFailed() override;
     bool Eof() const override;
-    void ClearEof() override;
     bool ErrorState() const override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
@@ -54,6 +56,8 @@ class Socket : public BlockingStreamCore {
     mutable std::mutex            lock_;                   // Protects everything below...
     int                           fd_;
     bool                          socketDown_;
+    bool                          readFailed_;
+    bool                          writeFailed_;
     bool                          eof_;
     bool                          error_;
     std::shared_ptr<Core::Result> finalResultAcceptor_;

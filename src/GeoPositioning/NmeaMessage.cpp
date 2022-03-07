@@ -108,7 +108,7 @@ void NmeaMessage::Deserialize(K::Core::ItemReadInterface *stream) {
     StringTools::Deserialize(&type_, stream);
     uint32_t numFields;
     stream->ReadItem(&numFields, sizeof(numFields));
-    if (stream->Good()) {
+    if (!stream->ReadFailed()) {
         fields_.clear();
         for (uint32_t i = 0u; i < numFields; ++i) {
             string field;

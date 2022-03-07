@@ -26,6 +26,7 @@ ListenSocket::SharedState::SharedState(int port, const shared_ptr<ConnectionIO> 
                                        const shared_ptr<ThreadPool> &threadPool)
         : port_(port),
           handler_(nullptr),
+          handlerFileDescriptorMode_(false),
           handlerUpdatedInitially_(false),
           acceptorThreadRunning_(false),
           error_(false),
@@ -49,12 +50,11 @@ ListenSocket::SharedState::~SharedState() {
     }
 }    // ......................................................................................... critical section, end.
 
-void ListenSocket::SharedState::Register(HandlerInterface *handler) {
+void ListenSocket::SharedState::Register(HandlerInterface *handler, bool fileDescriptorMode) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
-    handler_ = handler;
-    if (handler_) {
-        handlerUpdatedInitially_ = false;
-    }
+    handler_                   = handler;
+    handlerFileDescriptorMode_ = handler_ ? fileDescriptorMode : false;
+    handlerUpdatedInitially_   = false;
     UpdateAcceptor(critical);
 }    // ......................................................................................... critical section, end.
 
@@ -68,8 +68,12 @@ void ListenSocket::SharedState::OnConnectionAccepted(int fd) {
     EnsureHandlerUpdatedInitially(critical);
     if (!error_) {
         if (handler_) {
-            auto connection = make_shared<TcpConnection>(fd, connectionIO_);
-            handler_->OnListenSocketAcceptedConnection(connection);
+            if (handlerFileDescriptorMode_) {
+                handler_->OnListenSocketAcceptedConnection(fd);
+            } else {
+                auto connection = make_shared<TcpConnection>(fd, connectionIO_);
+                handler_->OnListenSocketAcceptedConnection(connection);
+            }
         } else {
             Log::Print(Log::Level::Warning, this, [&]{
                 return "no handler registered, immediately closing accepted connection " + to_string(fd);

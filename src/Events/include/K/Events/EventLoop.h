@@ -221,7 +221,8 @@ void EventLoop<EventClass, EventHandlerClass>::Post(const Event &event) {
 template<class EventClass, class EventHandlerClass>
 EventClass *EventLoop<EventClass, EventHandlerClass>::DispatchOne() {
     int slot;
-    if (reader_.ReadBlock(&slot, sizeof(slot))) {
+    reader_.ReadItem(&slot, sizeof(slot));
+    if (!reader_.ReadFailed()) {
         EventInfo  &info  = events_[slot];
         EventClass &event = *(info.prototype);
         event.Deserialize(&reader_);

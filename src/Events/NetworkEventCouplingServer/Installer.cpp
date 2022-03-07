@@ -53,14 +53,14 @@ void NetworkEventCouplingServer::Installer::InstallListenSocket(unique_lock<mute
     UninstallListenSocket(critical);
     Log::Print(Log::Level::Debug, this, [&]{ return "installing listen socket"; });
     listenSocket_ = make_shared<ListenSocket>(port_, connectionIO_, threadPool_);
-    listenSocket_->Register(shared_.get());
+    listenSocket_->Register(shared_.get(), false);
 }
 
 void NetworkEventCouplingServer::Installer::UninstallListenSocket(unique_lock<mutex> &critical) {
     (void)critical;
     if (listenSocket_) {
         Log::Print(Log::Level::Debug, this, [&]{ return "uninstalling listen socket"; });
-        listenSocket_->Register(nullptr);
+        listenSocket_->Register(nullptr, false);
         listenSocket_.reset();
     }
 }

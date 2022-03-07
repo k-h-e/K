@@ -10,18 +10,16 @@ using K::IO::ConnectionIO;
 namespace K {
 namespace IO {
 
-UartConnection::UartConnection(const string &deviceFileName, UartTools::BaudRate baudRate,
+UartConnection::UartConnection(const string &deviceFileName, Uart::BaudRate baudRate,
                                const shared_ptr<ConnectionIO> &connectionIO)
-        : BufferedConnection(UartTools::OpenUart(deviceFileName, baudRate), bufferSizeThreshold, nullptr,
-                             connectionIO) {
+        : BufferedConnection(Uart::Open(deviceFileName, baudRate), bufferSizeThreshold, nullptr, connectionIO) {
     // Nop.
 }
 
 UartConnection::UartConnection(
-    const string &deviceFileName, UartTools::BaudRate baudRate, const shared_ptr<Result> &resultAcceptor,
+    const string &deviceFileName, Uart::BaudRate baudRate, const shared_ptr<Result> &resultAcceptor,
     const shared_ptr<ConnectionIO> &connectionIO)
-        : BufferedConnection(UartTools::OpenUart(deviceFileName, baudRate), bufferSizeThreshold, resultAcceptor,
-                             connectionIO) {
+        : BufferedConnection(Uart::Open(deviceFileName, baudRate), bufferSizeThreshold, resultAcceptor, connectionIO) {
     // Nop.
 }
 

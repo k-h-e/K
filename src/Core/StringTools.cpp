@@ -223,7 +223,7 @@ void StringTools::Serialize(const string &text, ItemWriteInterface *stream) {
 void StringTools::Deserialize(string *text, ItemReadInterface *stream) {
     uint32_t size;
     stream->ReadItem(&size, sizeof(size));
-    if (stream->Good()) {
+    if (!stream->ReadFailed()) {
         text->clear();
         if (size) {
             text->resize(size);

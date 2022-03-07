@@ -11,6 +11,7 @@ using std::unique_lock;
 using std::mutex;
 using std::to_string;
 using K::Core::Log;
+using K::Core::StreamHandlerInterface;
 
 namespace K {
 namespace IO {
@@ -20,7 +21,7 @@ BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shar
           handlerCalledInitially_(true),
           bufferSizeThreshold_(bufferSizeThreshold),
           canNotWrite_(true),
-          customCallReportEof_(false),
+          writeFailed_(false),
           eof_(false),
           error_(false) {
     // Nop.
@@ -40,7 +41,6 @@ bool BufferedConnection::SharedState::Register(const shared_ptr<StreamHandlerInt
     if (!error_) {
         handler_                = handler;
         handlerCalledInitially_ = false;
-        customCallReportEof_    = false;
         connectionIO_->RequestCustomCall(this);
         connectionIO_->SetClientCanRead(this);
         return true;
@@ -55,56 +55,52 @@ void BufferedConnection::SharedState::Unregister(const shared_ptr<StreamHandlerI
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (handler == handler_) {
         handler_.reset();
-        customCallReportEof_ = false;
     }
 }    // ......................................................................................... critical section, end.
 
 void BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) {
     assert(itemSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    const uint8_t *data   = static_cast<const uint8_t *>(item);
-    int           numLeft = itemSize;
-    while (!error_) {
-        if (!numLeft) {
-            return;
+    if (!writeFailed_) {
+        const uint8_t *data   = static_cast<const uint8_t *>(item);
+        int           numLeft = itemSize;
+        while (!error_ && numLeft) {
+            int bufferFill = writeBuffer_.Size();
+            if (bufferFill >= bufferSizeThreshold_) {
+                writeCanContinue_.wait(critical);
+            }
+            else {
+                int numToCopy = std::min(numLeft, bufferSizeThreshold_ - bufferFill);    // Will be > 0.
+                writeBuffer_.Put(data, numToCopy);
+                data    += numToCopy;
+                numLeft -= numToCopy;
+                if (canNotWrite_) {
+                    connectionIO_->SetClientCanWrite(this);
+                    canNotWrite_ = false;
+                }
+            }
         }
 
-        int bufferFill = writeBuffer_.Size();
-        if (bufferFill >= bufferSizeThreshold_) {
-            writeCanContinue_.wait(critical);
-        }
-        else {
-            int numToCopy = std::min(numLeft, bufferSizeThreshold_ - bufferFill);    // Will be > 0.
-            writeBuffer_.Put(data, numToCopy);
-            data    += numToCopy;
-            numLeft -= numToCopy;
-            if (canNotWrite_) {
-                connectionIO_->SetClientCanWrite(this);
-                canNotWrite_ = false;
-            }
+        if (error_) {
+            writeFailed_ = true;
         }
     }
 }    // ......................................................................................... critical section, end.
 
-bool BufferedConnection::SharedState::Good() {
+bool BufferedConnection::SharedState::WriteFailed() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    return !error_ && !eof_;
+    return writeFailed_;
 }    // ......................................................................................... critical section, end.
 
+void BufferedConnection::SharedState::ClearWriteFailed() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    writeFailed_ = false;
+}    // ......................................................................................... critical section, end.
 
 bool BufferedConnection::SharedState::Eof() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    return eof_;
+    return (eof_ && !error_);
 }    // ......................................................................................... critical section, end.
-
-void BufferedConnection::SharedState::ClearEof() {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (eof_) {
-        customCallReportEof_ = true;
-        connectionIO_->RequestCustomCall(this);
-    }
-}    // ......................................................................................... critical section, end.
-
 
 bool BufferedConnection::SharedState::Error() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
@@ -151,12 +147,6 @@ void BufferedConnection::SharedState::OnCustomCall() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     Log::Print(Log::Level::Debug, this, []{ return "handling custom call"; });
     EnsureHandlerCalledInitially();
-    if (customCallReportEof_) {
-        customCallReportEof_ = false;
-        if (handler_) {
-            handler_->HandleEof();
-        }
-    }
 }    // ......................................................................................... critical section, end.
 
 void BufferedConnection::SharedState::OnEof() {

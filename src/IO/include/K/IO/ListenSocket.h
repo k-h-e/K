@@ -25,6 +25,7 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
     class HandlerInterface : public virtual Core::Interface {
       public:
         virtual void OnListenSocketAcceptedConnection(const std::shared_ptr<TcpConnection> &connection) = 0;
+        virtual void OnListenSocketAcceptedConnection(int fd) = 0;
         virtual void OnListenSocketErrorState() = 0;
     };
 
@@ -42,7 +43,7 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
      *  Pass <c>nullptr</c> to unregister a registered handler. When the method then returns, it is guaranteed that the
      *  handler will not be called again.
      */
-    void Register(HandlerInterface *handler);
+    void Register(HandlerInterface *handler, bool fileDescriptorMode);
     bool ErrorState() const override;
 
   private:

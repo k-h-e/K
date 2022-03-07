@@ -3,16 +3,22 @@
 
 #include <memory>
 #include <optional>
-#include <K/IO/ConnectionStreamInterface.h>
+#include <K/Core/ConnectionStreamInterface.h>
+
+namespace K {
+    namespace Core {
+        class StreamHandlerInterface;
+    }
+    namespace IO {
+        class ConnectionIO;
+    }
+}
 
 namespace K {
 namespace IO {
 
-class ConnectionIO;
-class StreamHandlerInterface;
-
 //! Buffered connection.
-class BufferedConnection : public virtual ConnectionStreamInterface {
+class BufferedConnection : public virtual Core::ConnectionStreamInterface {
   public:
     //! Creates a new buffered connection for the specified UNIX file descriptor.
     /*!
@@ -32,20 +38,20 @@ class BufferedConnection : public virtual ConnectionStreamInterface {
     BufferedConnection &operator=(const BufferedConnection &&other) = delete;
     ~BufferedConnection();
 
-    //! Triggers error state.
+    //! <b>[Thread safe]</b> Triggers error state.
     /*!
-     *  This method is thread-safe. (Note that the class as a whole is not.)
+     *  This method is thread safe. (Note that the class as a whole is not.)
      *
      *  Error state will hit in a deferred fashion - the object is not guaranteed to already be in error state when the
      *  method returns.
      */
     void TriggerErrorState();
-    bool Register(const std::shared_ptr<StreamHandlerInterface> &handler) override;
-    void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) override;
+    bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler) override;
+    void Unregister(const std::shared_ptr<Core::StreamHandlerInterface> &handler) override;
     void WriteItem(const void *item, int itemSize) override;
-    bool Good() const override;
+    bool WriteFailed() const override;
+    void ClearWriteFailed() override;
     bool Eof() const override;
-    void ClearEof() override;
     bool ErrorState() const override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 

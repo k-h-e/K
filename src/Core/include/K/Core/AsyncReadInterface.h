@@ -1,15 +1,14 @@
-#ifndef K_IO_ASYNCREADINTERFACE_H_
-#define K_IO_ASYNCREADINTERFACE_H_
+#ifndef K_CORE_ASYNCREADINTERFACE_H_
+#define K_CORE_ASYNCREADINTERFACE_H_
 
 #include <memory>
-#include <K/Core/ReadableStreamInterface.h>
-#include <K/IO/StreamHandlerInterface.h>
+#include <K/Core/StreamHandlerInterface.h>
 
 namespace K {
-namespace IO {
+namespace Core {
 
-//! Interface to streams providing asynchronous reading.
-class AsyncReadInterface : public virtual K::Core::ReadableStreamInterface {
+//! Interface to data readers providing asynchronous reading.
+class AsyncReadInterface : public virtual Interface {
   public:
     //! Registers the specified read handler.
     /*!
@@ -25,7 +24,7 @@ class AsyncReadInterface : public virtual K::Core::ReadableStreamInterface {
     virtual void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) = 0;
 };
 
-}    // Namespace IO.
+}    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_IO_ASYNCREADINTERFACE_H_
+#endif    // K_CORE_ASYNCREADINTERFACE_H_

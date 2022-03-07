@@ -42,7 +42,6 @@ bool ConnectionIO::SharedState::Register(const shared_ptr<ClientInterface> &clie
         return false;
     }
 
-    Log::Print(Log::Level::Debug, this, [&]{ return "switching fd " + to_string(fd) + " to non-blocking"; });
     bool switchedToNonBlocking = false;
     int flags = fcntl(fd, F_GETFL);
     if (flags != -1) {
@@ -56,7 +55,6 @@ bool ConnectionIO::SharedState::Register(const shared_ptr<ClientInterface> &clie
         return false;
     }
 
-    Log::Print(Log::Level::Debug, this, []{ return "waiting until ready for registration"; });
     while (registrationOperationRunning_) {
         if (error_) {
             Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
@@ -66,7 +64,6 @@ bool ConnectionIO::SharedState::Register(const shared_ptr<ClientInterface> &clie
         stateChanged_.wait(critical);
     }
 
-    Log::Print(Log::Level::Debug, this, [&]{ return "registering client for fd " + to_string(fd); });
     registrationInfo_             = RegistrationInfo(client, fd);
     registrationOperationRunning_ = true;
     NotifyWorker();
@@ -98,7 +95,6 @@ void ConnectionIO::SharedState::Unregister(const shared_ptr<ClientInterface> &cl
     *outFinalStreamError = true;
 
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    Log::Print(Log::Level::Debug, this, []{ return "waiting until ready for deregistration"; });
     while (registrationOperationRunning_) {
         if (error_) {
             Log::Print(Log::Level::Warning, this, []{
@@ -110,7 +106,6 @@ void ConnectionIO::SharedState::Unregister(const shared_ptr<ClientInterface> &cl
         stateChanged_.wait(critical);
     }
 
-    Log::Print(Log::Level::Debug, this, []{ return "unregistering client"; });
     unregistrationInfo_           = UnregistrationInfo(client);
     registrationOperationRunning_ = true;
     NotifyWorker();

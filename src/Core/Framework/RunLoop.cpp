@@ -93,6 +93,7 @@ void RunLoop::RequestActivation(int client) {
     if (!clientsToActivate_.contains(client)) {
         clientsToActivate_.insert(client);
         clientActivationOrder_.push_back(client);
+        stateChanged_.notify_all();
     }
 }    // ......................................................................................... critical section, end.
 

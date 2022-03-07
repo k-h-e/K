@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include <K/Core/Buffer.h>
-#include <K/IO/StreamHandlerInterface.h>
+#include <K/Core/StreamHandlerInterface.h>
 #include <K/Events/NetworkEventCoupling.h>
 
 namespace K {
@@ -13,7 +13,7 @@ namespace Events {
 class EventLoopHub;
 
 //! Asynchronous read handler for the network event coupling.
-class NetworkEventCoupling::ReadHandler : public virtual IO::StreamHandlerInterface {
+class NetworkEventCoupling::ReadHandler : public virtual Core::StreamHandlerInterface {
   public:
     ReadHandler(const std::string &protocolVersion, const std::shared_ptr<EventLoopHub> &hub, int hubClientId,
                 const std::shared_ptr<SharedState> &sharedState);

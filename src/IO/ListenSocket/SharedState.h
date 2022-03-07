@@ -35,7 +35,7 @@ class ListenSocket::SharedState : public virtual K::Core::ErrorStateInterface,
     SharedState &operator=(SharedState &&other)       = delete;
     ~SharedState();
 
-    void Register(HandlerInterface *handler);
+    void Register(HandlerInterface *handler, bool fileDescriptorMode);
     bool ErrorState() const override;
 
     void OnConnectionAccepted(int fd);
@@ -52,6 +52,7 @@ class ListenSocket::SharedState : public virtual K::Core::ErrorStateInterface,
     std::condition_variable              stateChanged_;
     int                                  port_;
     HandlerInterface                     *handler_;
+    bool                                 handlerFileDescriptorMode_;
     bool                                 handlerUpdatedInitially_;
     std::unique_ptr<Acceptor>            acceptor_;
     bool                                 acceptorThreadRunning_;

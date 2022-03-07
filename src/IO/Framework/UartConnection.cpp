@@ -11,17 +11,16 @@ namespace IO {
 namespace Framework {
 
 UartConnection::UartConnection(
-    const string &deviceFileName, UartTools::BaudRate baudRate, const shared_ptr<RunLoop> &runLoop,
+    const string &deviceFileName, Uart::BaudRate baudRate, const shared_ptr<RunLoop> &runLoop,
     const shared_ptr<ConnectionIO> &connectionIO)
-        : Connection(UartTools::OpenUart(deviceFileName, baudRate), bufferSizeConstraint, nullptr, runLoop,
-                     connectionIO) {
+        : Connection(Uart::Open(deviceFileName, baudRate), bufferSizeConstraint, nullptr, runLoop, connectionIO) {
     // Nop.
 }
 
 UartConnection::UartConnection(
-    const string &deviceFileName, UartTools::BaudRate baudRate, const shared_ptr<Result> &resultAcceptor,
+    const string &deviceFileName, Uart::BaudRate baudRate, const shared_ptr<Result> &resultAcceptor,
     const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO)
-        : Connection(UartTools::OpenUart(deviceFileName, baudRate), bufferSizeConstraint, resultAcceptor, runLoop,
+        : Connection(Uart::Open(deviceFileName, baudRate), bufferSizeConstraint, resultAcceptor, runLoop,
                      connectionIO) {
     // Nop.
 }

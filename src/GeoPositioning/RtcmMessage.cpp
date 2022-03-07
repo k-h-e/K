@@ -68,7 +68,7 @@ void RtcmMessage::Serialize(ItemWriteInterface *stream) const {
 void RtcmMessage::Deserialize(ItemReadInterface *stream) {
     uint32_t size;
     stream->ReadItem(&size, sizeof(size));
-    if (stream->Good() && size) {
+    if (!stream->ReadFailed() && size) {
         image_.resize(size);
         stream->ReadItem(&image_[0], static_cast<int>(size));
     }

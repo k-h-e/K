@@ -23,13 +23,14 @@ namespace K {
     }
     namespace IO {
         class ConnectionIO;
-        class TcpConnection;
     }
 }
 
 namespace K {
 namespace IO {
 namespace Framework {
+
+class TcpConnection;
 
 //! Listen socket, for use with a <c>Core::Framework::RunLoop</c>.
 class ListenSocket : public virtual Core::ErrorStateInterface {
@@ -41,7 +42,7 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
          *  \param id
          *  ID that was given when the handler was registered.
          */
-        virtual void OnListenSocketAcceptedConnection(int id, const std::shared_ptr<TcpConnection> &connection) = 0;
+        virtual void OnListenSocketAcceptedConnection(int id, std::unique_ptr<TcpConnection> connection) = 0;
         //! Informs the handler that the listen socket has entered error state.
         /*!
          *  \param id

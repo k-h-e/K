@@ -10,6 +10,7 @@
 
 #include <K/IO/Framework/Connection.h>
 
+#include <K/Core/Log.h>
 #include <K/Core/Result.h>
 #include <K/Core/Framework/RunLoop.h>
 #include <K/IO/ConnectionIO.h>
@@ -21,6 +22,8 @@ using std::make_shared;
 using std::make_unique;
 using std::optional;
 using std::shared_ptr;
+using std::to_string;
+using K::Core::Log;
 using K::Core::Result;
 using K::Core::Framework::RunLoop;
 using K::IO::IOTools;
@@ -48,8 +51,12 @@ Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_
         }
     }
 
-    if (!fd_) {
+    if (fd_) {
+        loopThreadState_->connectionIO->SetClientCanRead(loopThreadState_->synchronizedState.get());
+        Log::Print(Log::Level::Debug, this, [&]{ return "connection established, fd=" + to_string(*fd_); });
+    } else {
         loopThreadState_->synchronizedState->OnError();
+        Log::Print(Log::Level::Error, this, [&]{ return "connection created bad"; });
     }
 }
 
@@ -72,9 +79,15 @@ Connection::~Connection() {
     if (finalResultAcceptor_) {
         finalResultAcceptor_->Set(success);
     }
+
+    if (success) {
+        Log::Print(Log::Level::Debug, this, [&]{ return "connection closed successfully, fd=" + to_string(*fd_); });
+    } else {
+        Log::Print(Log::Level::Error, this, [&]{ return "bad connection cleaned up"; });
+    }
 }
 
-void Connection::Register(NonBlockingStreamInterface::HandlerInterface *handler, int id) {
+void Connection::Register(NonBlockingIOStreamInterface::HandlerInterface *handler, int id) {
     if (handler) {
         loopThreadState_->handler              = handler;
         loopThreadState_->handlerAssociatedId  = id;
@@ -90,43 +103,64 @@ void Connection::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor
     finalResultAcceptor_ = resultAcceptor;
 }
 
-int Connection::Read(void *outBuffer, int bufferSize) {
+int Connection::ReadNonBlocking(void *buffer, int bufferSize) {
     int numRead = 0;
-    if (!loopThreadState_->error) {
-        numRead = loopThreadState_->readBuffer.Get(outBuffer, bufferSize);
-    }
-
-    if (numRead) {
-        loopThreadState_->RequestActivation();
-    } else {
-        loopThreadState_->clientReadPaused = true;
-    }
-    return numRead;
-}
-
-int Connection::Write(const void *data, int dataSize) {
-    int numWritten = 0;
-    if (!loopThreadState_->error) {
-        if (loopThreadState_->bufferSizeConstraint > loopThreadState_->writeBuffer.Size()) {
-            int numToWrite = std::min(loopThreadState_->bufferSizeConstraint - loopThreadState_->writeBuffer.Size(),
-                                      dataSize);
-            if (numToWrite > 0) {    // Defensive.
-                loopThreadState_->writeBuffer.Put(data, numToWrite);
-                numWritten = numToWrite;
+    if (!loopThreadState_->readFailed) {
+        if (ErrorState() || Eof()) {
+            loopThreadState_->readFailed = true;
+        } else {
+            numRead = loopThreadState_->readBuffer.Get(buffer, bufferSize);
+            if (numRead) {
+                loopThreadState_->RequestActivation();
+            } else {
+                loopThreadState_->clientReadPaused = true;
             }
         }
     }
 
-    if (numWritten) {
-        loopThreadState_->RequestActivation();
-    } else {
-        loopThreadState_->clientWritePaused = true;
+    return numRead;
+}
+
+bool Connection::ReadFailed() const {
+    return loopThreadState_->readFailed;
+}
+
+void Connection::ClearReadFailed() {
+    loopThreadState_->readFailed = false;
+}
+
+int Connection::WriteNonBlocking(const void *data, int dataSize) {
+    int numWritten = 0;
+    if (!loopThreadState_->writeFailed) {
+        if (ErrorState()) {
+            loopThreadState_->writeFailed = true;
+        } else {
+            if (loopThreadState_->bufferSizeConstraint > loopThreadState_->writeBuffer.Size()) {
+                int numToWrite = std::min(loopThreadState_->bufferSizeConstraint - loopThreadState_->writeBuffer.Size(),
+                                          dataSize);
+                if (numToWrite > 0) {    // Defensive.
+                    loopThreadState_->writeBuffer.Put(data, numToWrite);
+                    numWritten = numToWrite;
+                }
+            }
+
+            if (numWritten) {
+                loopThreadState_->RequestActivation();
+            } else {
+                loopThreadState_->clientWritePaused = true;
+            }
+        }
     }
+
     return numWritten;
 }
 
-bool Connection::Good() const {
-    return (!ErrorState() && !Eof());
+bool Connection::WriteFailed() const {
+    return loopThreadState_->writeFailed;
+}
+
+void Connection::ClearWriteFailed() {
+    loopThreadState_->writeFailed = false;
 }
 
 bool Connection::ErrorState() const {
@@ -134,12 +168,7 @@ bool Connection::ErrorState() const {
 }
 
 bool Connection::Eof() const {
-    return (loopThreadState_->eof && loopThreadState_->readBuffer.Empty());
-}
-
-void Connection::ClearEof() {
-    loopThreadState_->newHandlerRegistered = true;    // Will cause ready read and ready write to be emitted.
-    loopThreadState_->RequestActivation();
+    return (loopThreadState_->eof && loopThreadState_->readBuffer.Empty() && !loopThreadState_->error);
 }
 
 int Connection::ValidateBufferSizeConstraint(int bufferSizeConstraint) {

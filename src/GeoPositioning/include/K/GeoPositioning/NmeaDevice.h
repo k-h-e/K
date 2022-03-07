@@ -7,7 +7,7 @@
 
 namespace K {
 
-namespace IO {
+namespace Core {
     class ConnectionStreamInterface;
 }
 
@@ -18,7 +18,7 @@ class NmeaMessage;
 //! Provides access to an NMEA (protocol defined by the National Marine Electronics Association) device.
 class NmeaDevice : public virtual K::Core::ErrorStateInterface {
   public:
-    NmeaDevice(const std::shared_ptr<K::IO::ConnectionStreamInterface> &connection);
+    NmeaDevice(const std::shared_ptr<K::Core::ConnectionStreamInterface> &connection);
     ~NmeaDevice();
     //! Registers the specified sentence receiver.
     /*!
@@ -42,8 +42,8 @@ class NmeaDevice : public virtual K::Core::ErrorStateInterface {
     std::shared_ptr<NmeaMessageHandlerInterface> handler_;    // Given to connection thread.
     std::shared_ptr<NmeaParser>                  parser_;     // Given to connection thread.
 
-    std::shared_ptr<K::IO::ConnectionStreamInterface> connection_;
-    mutable bool                                      error_;
+    std::shared_ptr<K::Core::ConnectionStreamInterface> connection_;
+    mutable bool                                        error_;
 };
 
 }    // Namespace GeoPositioning.

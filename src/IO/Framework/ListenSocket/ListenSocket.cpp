@@ -10,6 +10,7 @@
 
 #include <K/IO/Framework/ListenSocket.h>
 
+#include <K/IO/Framework/TcpConnection.h>
 #include "LoopThreadState.h"
 #include "SynchronizedState.h"
 
@@ -28,15 +29,15 @@ ListenSocket::ListenSocket(int port, const shared_ptr<RunLoop> &runLoop,
                            const shared_ptr<ConnectionIO> &connectionIO, const std::shared_ptr<ThreadPool> &threadPool)
         : loopThreadState_(make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop),
-              make_shared<IO::ListenSocket>(port, connectionIO, threadPool))) {
+              make_shared<IO::ListenSocket>(port, connectionIO, threadPool), connectionIO)) {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 
-    loopThreadState_->listenSocket->Register(loopThreadState_->synchronizedState.get());
+    loopThreadState_->listenSocket->Register(loopThreadState_->synchronizedState.get(), true);
 }
 
 ListenSocket::~ListenSocket() {
-    loopThreadState_->listenSocket->Register(nullptr);
+    loopThreadState_->listenSocket->Register(nullptr, false);
     loopThreadState_->runLoop->RemoveClient(loopThreadState_->runLoopClientId);
 }
 

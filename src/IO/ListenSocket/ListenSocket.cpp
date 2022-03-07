@@ -16,8 +16,8 @@ ListenSocket::ListenSocket(int port, const shared_ptr<ConnectionIO> &connectionI
     shared_ = make_shared<SharedState>(port, connectionIO, threadPool);
 }
 
-void ListenSocket::Register(HandlerInterface *handler) {
-    shared_->Register(handler);
+void ListenSocket::Register(HandlerInterface *handler, bool fileDescriptorMode) {
+    shared_->Register(handler, fileDescriptorMode);
 }
 
 bool ListenSocket::ErrorState() const {

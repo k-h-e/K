@@ -27,6 +27,8 @@ File::File(const string &fileName, AccessMode accessMode, bool truncate, const s
         : fileName_(fileName),
           fd_(-1),
           position_(0),
+          readFailed_(false),
+          writeFailed_(false),
           eof_(false),
           error_(true),
           finalResultAcceptor_(resultAcceptor) {
@@ -86,99 +88,116 @@ File::~File() {
     });
 }
 
-int File::Read(void *outBuffer, int bufferSize) {
+int File::ReadBlocking(void *buffer, int bufferSize) {
     assert(bufferSize > 0);
-    if (!error_ && !eof_) {
-        if (readable_) {
-            bool done = false;
-            while (!done) {
-                int numRead = read(fd_, outBuffer, bufferSize);
-                if (numRead > 0) {
-                    position_ += numRead;
-                    return numRead;
-                }
-                else if (numRead == 0) {
-                    eof_ = true;
-                    Log::Print(Log::Level::Debug, this, [&]{
-                        return "EOF encountered, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
-                    });
-                    return 0;
-                }
-                else {
-                    if (errno != EINTR) {
+    int numRead = 0;
+    if (!readFailed_) {
+        if (!error_ && !eof_) {
+            if (!readable_) {
+                error_ = true;
+            } else {
+                bool done = false;
+                while (!done) {
+                    numRead = read(fd_, buffer, bufferSize);
+                    if (numRead > 0) {
+                        position_ += numRead;
                         done = true;
+                    } else if (numRead == 0) {
+                        eof_ = true;
+                        done = true;
+                        Log::Print(Log::Level::Debug, this, [&]{
+                            return "EOF encountered, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
+                        });
+                    } else {
+                        if (errno != EINTR) {
+                            error_ = true;
+                            done   = true;
+                            Log::Print(Log::Level::Error, this, [&]{
+                                return "read error, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
+                            });
+                        }
                     }
                 }
             }
         }
-
-        error_ = true;
-        Log::Print(Log::Level::Warning, this, [&]{
-            return "read error, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
-        });
     }
 
-    return 0;
+    if (!numRead) {
+        readFailed_ = true;
+    }
+    return numRead;
 }
 
-int File::Write(const void *data, int dataSize) {
+bool File::ReadFailed() const {
+    return readFailed_;
+}
+
+void File::ClearReadFailed() {
+    readFailed_ = false;
+}
+
+int File::WriteBlocking(const void *data, int dataSize) {
     assert(dataSize > 0);
-    if (!error_) {
-        if (writable_) {
-            bool done = false;
-            while (!done) {
-                int numWritten = write(fd_, data, dataSize);
-                if (numWritten >= 0) {
-                    position_ += numWritten;
-                    return numWritten;
-                }
-                else {
-                    if (errno != EINTR) {
+    int numWritten = 0;
+    if (!writeFailed_) {
+        if (!error_) {
+            if (!writable_) {
+                error_ = true;
+            } else {
+                bool done = false;
+                while (!done) {
+                    numWritten = write(fd_, data, dataSize);
+                    if (numWritten >= 0) {
+                        position_ += numWritten;
                         done = true;
+                    } else {
+                        if (errno != EINTR) {
+                            error_ = true;
+                            done = true;
+                            Log::Print(Log::Level::Error, this, [&]{
+                                return "write error, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
+                            });
+                        }
                     }
                 }
             }
         }
-
-        error_ = true;
-        Log::Print(Log::Level::Warning, this, [&]{
-            return "write error, file=\"" + fileName_ + "\", fd=" + to_string(fd_);
-        });
     }
 
-    return 0;
+    if (!numWritten) {
+        writeFailed_ = true;
+    }
+    return numWritten;
+}
+
+bool File::WriteFailed() const {
+    return writeFailed_;
+}
+
+void File::ClearWriteFailed() {
+    writeFailed_ = false;
 }
 
 void File::Seek(int64_t position) {
-    assert(position >= 0);
     if (!error_) {
-        if (lseek(fd_, static_cast<off_t>(position), SEEK_SET) == static_cast<off_t>(position)) {
-            position_ = position;
-            return;
+        if ((position >= 0) && (lseek(fd_, static_cast<off_t>(position), SEEK_SET) == static_cast<off_t>(position))) {
+            eof_ = false;
+        } else {
+            error_ = true;
+            Log::Print(Log::Level::Error, this, [&]{
+                return "seek failed, file=\"" + fileName_ + "\", fd=" + to_string(fd_) + ", position="
+                    + to_string(position);
+            });
         }
-
-        error_ = true;
-        Log::Print(Log::Level::Warning, this, [&]{
-            return "seek error, file=\"" + fileName_ + "\", fd=" + to_string(fd_) + ", position="
-                + to_string(position);
-        });
     }
 }
 
-int64_t File::StreamPosition() {
+int64_t File::StreamPosition() const {
     return position_;
 }
 
-bool File::Good() const {
-    return !error_ && !eof_;
-}
-
 bool File::Eof() const {
-    return eof_;
-}
-
-void File::ClearEof() {
-    eof_ = false;
+    return (eof_ && !error_);
 }
 
 bool File::ErrorState() const {

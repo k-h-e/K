@@ -19,7 +19,7 @@ namespace K {
 namespace IO {
 namespace Framework {
 
-class NonBlockingStreamInterface;
+class NonBlockingIOStreamInterface;
 
 //! Connection state exclusively accessed from the run loop thread.
 struct Connection::LoopThreadState : public virtual Core::Framework::RunLoop::ClientInterface {
@@ -29,10 +29,12 @@ struct Connection::LoopThreadState : public virtual Core::Framework::RunLoop::Cl
     const std::shared_ptr<Core::Framework::RunLoop> runLoop;
     int                                             runLoopClientId;
 
-    NonBlockingStreamInterface::HandlerInterface    *handler;
+    NonBlockingIOStreamInterface::HandlerInterface  *handler;
     int                                             handlerAssociatedId;
     Core::RingBuffer                                readBuffer;
     Core::RingBuffer                                writeBuffer;
+    bool                                            readFailed;
+    bool                                            writeFailed;
     bool                                            error;
     bool                                            eof;
     bool                                            clientReadPaused;

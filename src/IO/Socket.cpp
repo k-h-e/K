@@ -30,6 +30,8 @@ Socket::Socket(int fd) : Socket(fd, nullptr) {}
 
 Socket::Socket(int fd, const shared_ptr<Result> &resultAcceptor)
         : socketDown_(false),
+          readFailed_(false),
+          writeFailed_(false),
           eof_(false),
           error_(false),
           finalResultAcceptor_(resultAcceptor) {
@@ -66,11 +68,16 @@ void Socket::ShutDown() {
     ShutDownSocket();
 }    // ......................................................................................... critical section, end.
 
-int Socket::Read(void *outBuffer, int bufferSize) {
+int Socket::ReadBlocking(void *buffer, int bufferSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
+        if (readFailed_) {
+            return 0;
+        }
+
         if (error_) {
+            readFailed_ = true;
             return 0;
         }
 
@@ -79,6 +86,7 @@ int Socket::Read(void *outBuffer, int bufferSize) {
         }
 
         if (eof_) {
+            readFailed_ = true;
             return 0;
         }
 
@@ -86,11 +94,12 @@ int Socket::Read(void *outBuffer, int bufferSize) {
     }    // ..................................................................................... critical section, end.
 
     while (true) {
-        int num = read(fd, outBuffer, bufferSize);
+        int num = read(fd, buffer, bufferSize);
         if (num == 0) {
             unique_lock<mutex> critical(lock_);    // Critical section..................................................
             ShutDownSocket();
-            eof_ = true;
+            eof_        = true;
+            readFailed_ = true;
             return 0;
         }    // ................................................................................. critical section, end.
         else if (num == -1) {
@@ -100,7 +109,8 @@ int Socket::Read(void *outBuffer, int bufferSize) {
             else {
                 unique_lock<mutex> critical(lock_);    // Critical section..............................................
                 ShutDownSocket();
-                error_ = true;
+                error_      = true;
+                readFailed_ = true;
                 return 0;
             }    // ............................................................................. critical section, end.
         }
@@ -110,16 +120,32 @@ int Socket::Read(void *outBuffer, int bufferSize) {
     }
 }
 
-int Socket::Write(const void *data, int dataSize) {
+bool Socket::ReadFailed() const {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    return readFailed_;
+}    // ......................................................................................... critical section, end.
+
+void Socket::ClearReadFailed() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    readFailed_ = false;
+}    // ......................................................................................... critical section, end.
+
+int Socket::WriteBlocking(const void *data, int dataSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
+        if (writeFailed_) {
+            return 0;
+        }
+
         if (error_) {
+            writeFailed_ = true;
             return 0;
         }
 
         if (socketDown_) {
-            error_ = true;
+            error_       = true;
+            writeFailed_ = true;
             return 0;
         }
 
@@ -135,30 +161,32 @@ int Socket::Write(const void *data, int dataSize) {
             else {
                 unique_lock<mutex> critical(lock_);    // Critical section..............................................
                 ShutDownSocket();
-                error_ = true;
+                error_       = true;
+                writeFailed_ = true;
                 return 0;
             }    // ............................................................................. critical section, end.
         }
         else {
-            return num;
+            if (num > 0) {
+                return num;
+            }
         }
     }
 }
 
-bool Socket::Good() const {
-    unique_lock<mutex> critical(const_cast<mutex &>(lock_));    // Critical section..........................................................
-    return !error_ && !eof_;
+bool Socket::WriteFailed() const {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    return writeFailed_;
 }    // ......................................................................................... critical section, end.
 
+void Socket::ClearWriteFailed() {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    writeFailed_ = false;
+}    // ......................................................................................... critical section, end.
 
 bool Socket::Eof() const {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    return eof_;
-}    // ......................................................................................... critical section, end.
-
-void Socket::ClearEof() {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    eof_ = false;
+    return (eof_ && !error_);
 }    // ......................................................................................... critical section, end.
 
 bool Socket::ErrorState() const {

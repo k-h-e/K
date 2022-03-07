@@ -19,7 +19,7 @@ StreamSaver::StreamSaver(const string &fileName)
 void StreamSaver::HandleStreamData(const void *data, int dataSize) {
     if (stream_) {
         stream_->WriteItem(data, dataSize);
-        if (!stream_->Good()) {
+        if (stream_->WriteFailed()) {
             stream_.reset();
         }
     }

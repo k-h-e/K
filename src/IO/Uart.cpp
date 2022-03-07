@@ -1,4 +1,4 @@
-#include <K/IO/UartTools.h>
+#include <K/IO/Uart.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -11,7 +11,7 @@ using std::string;
 namespace K {
 namespace IO {
 
-optional<int> UartTools::OpenUart(const string &deviceFileName, BaudRate baudRate) {
+optional<int> Uart::Open(const string &deviceFileName, BaudRate baudRate) {
     int fd = open(deviceFileName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd != -1) {
         tcflag_t baudRateFlag;

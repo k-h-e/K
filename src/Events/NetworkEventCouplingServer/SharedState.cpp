@@ -2,6 +2,7 @@
 
 #include <K/Core/Log.h>
 #include <K/Core/Timers.h>
+#include <K/IO/IOTools.h>
 #include <K/Events/NetworkEventCoupling.h>
 
 using std::make_shared;
@@ -14,6 +15,7 @@ using K::Core::Log;
 using K::Core::ThreadPool;
 using K::Core::Timers;
 using K::IO::ConnectionIO;
+using K::IO::IOTools;
 using K::IO::ListenSocket;
 using K::IO::TcpConnection;
 
@@ -56,6 +58,10 @@ void NetworkEventCouplingServer::SharedState::OnListenSocketAcceptedConnection(
                                                       timers_);
     }
 }    // ......................................................................................... critical section, end.
+
+void NetworkEventCouplingServer::SharedState::OnListenSocketAcceptedConnection(int fd) {
+    (void)IOTools::CloseFileDescriptor(fd, this);
+}
 
 void NetworkEventCouplingServer::SharedState::OnListenSocketErrorState() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................

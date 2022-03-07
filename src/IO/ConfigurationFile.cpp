@@ -1,11 +1,12 @@
 #include <K/IO/ConfigurationFile.h>
 
+#include <K/Core/StreamOperations.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Result.h>
 #include <K/IO/File.h>
 #include <K/IO/StreamBuffer.h>
-#include <K/IO/IOTools.h>
 
+using std::sprintf;
 using std::string;
 using std::to_string;
 using std::unordered_set;
@@ -39,13 +40,13 @@ void ConfigurationFile::SetValue(const string &section, const string &key, const
 
 void ConfigurationFile::SetValue(const string &section, const string &key, float value) {
     char buffer[100];
-    std::sprintf(buffer, "%f", value);
+    sprintf(buffer, "%f", value);
     SetValue(section, key, string(buffer));
 }
 
 void ConfigurationFile::SetValue(const string &section, const string &key, double value) {
     char buffer[100];
-    std::sprintf(buffer, "%.8f", value);
+    sprintf(buffer, "%.8f", value);
     SetValue(section, key, string(buffer));
 }
 
@@ -149,9 +150,9 @@ void ConfigurationFile::Load(const string &fileName) {
     string currentSection;
     string line;
     bool bad = false;
-    while (stream.Good() && !errorState_ && !bad) {
+    while (!stream.ReadFailed() && !stream.Eof() && !bad) {
         Read(&stream, '\n', &line);
-        if (stream.Good()) {
+        if (!stream.ReadFailed()) {
             if ((line.length() > 0u) && (line[0] == '[')) {
                 StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
                 currentSection = line;
@@ -173,7 +174,7 @@ void ConfigurationFile::Load(const string &fileName) {
         }
     }
 
-    if (stream.ErrorState() || errorState_ || bad) {
+    if (stream.ReadFailed() || bad) {
         sections_.clear();
         errorState_ = true;
     }

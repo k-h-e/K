@@ -2,15 +2,16 @@
 #define K_IO_FILE_H_
 
 #include <string>
-#include <K/IO/BlockingStreamCore.h>
-#include <K/IO/SeekableBlockingStreamInterface.h>
+#include <K/Core/SeekableBlockingIOStreamInterface.h>
+#include <K/IO/BlockingIOStreamCore.h>
+
 
 namespace K {
 namespace IO {
 
 //! File.
-class File : public BlockingStreamCore,
-             public virtual SeekableBlockingStreamInterface {
+class File : public BlockingIOStreamCore,
+             public virtual Core::SeekableBlockingIOStreamInterface {
   public:
     enum class AccessMode { ReadOnly,
                             WriteOnly,
@@ -25,13 +26,15 @@ class File : public BlockingStreamCore,
     File &operator=(const File &&other) = delete;
     ~File();
 
-    int Read(void *outBuffer, int bufferSize) override;
-    int Write(const void *data, int dataSize) override;
+    int ReadBlocking(void *buffer, int bufferSize) override;
+    bool ReadFailed() const override;
+    void ClearReadFailed() override;
+    int WriteBlocking(const void *data, int dataSize) override;
+    bool WriteFailed() const override;
+    void ClearWriteFailed() override;
     void Seek(int64_t position) override;
-    int64_t StreamPosition() override;
-    bool Good() const override;
+    int64_t StreamPosition() const override;
     bool Eof() const override;
-    void ClearEof() override;
     bool ErrorState() const override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
 
@@ -48,6 +51,8 @@ class File : public BlockingStreamCore,
     bool                          readable_;
     bool                          writable_;
     int64_t                       position_;
+    bool                          readFailed_;
+    bool                          writeFailed_;
     bool                          eof_;
     bool                          error_;
     std::shared_ptr<Core::Result> finalResultAcceptor_;

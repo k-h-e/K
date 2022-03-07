@@ -2,13 +2,13 @@
 #define K_IO_STREAMHANDLERTEE_H_
 
 #include <memory>
-#include <K/IO/StreamHandlerInterface.h>
+#include <K/Core/StreamHandlerInterface.h>
 
 namespace K {
 namespace IO {
 
 //! Stream handler tee piece: forwards a stream to two stream handlers.
-class StreamHandlerTee : public virtual StreamHandlerInterface {
+class StreamHandlerTee : public virtual Core::StreamHandlerInterface {
   public:
     StreamHandlerTee(const std::shared_ptr<StreamHandlerInterface> &streamHandler1,
                      const std::shared_ptr<StreamHandlerInterface> &streamHandler2);
@@ -22,8 +22,8 @@ class StreamHandlerTee : public virtual StreamHandlerInterface {
     void HandleError() override;
 
   private:
-    std::shared_ptr<StreamHandlerInterface> streamHandler1_;
-    std::shared_ptr<StreamHandlerInterface> streamHandler2_;
+    std::shared_ptr<Core::StreamHandlerInterface> streamHandler1_;
+    std::shared_ptr<Core::StreamHandlerInterface> streamHandler2_;
 };
 
 }    // Namespace IO.

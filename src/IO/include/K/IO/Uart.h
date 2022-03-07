@@ -1,5 +1,5 @@
-#ifndef K_IO_UARTTOOLS_H_
-#define K_IO_UARTTOOLS_H_
+#ifndef K_IO_UART_H_
+#define K_IO_UART_H_
 
 #include <optional>
 #include <string>
@@ -7,7 +7,8 @@
 namespace K {
 namespace IO {
 
-class UartTools {
+// Various UART functions.
+class Uart {
   public:
     enum class BaudRate { Baud4800,
                           Baud9600,
@@ -17,10 +18,10 @@ class UartTools {
     /*!
      *  \return <c>nullopt</c> in case of failure.
      */
-    static std::optional<int> OpenUart(const std::string &deviceFileName, BaudRate baudRate);
+    static std::optional<int> Open(const std::string &deviceFileName, BaudRate baudRate);
 };
 
 }    // Namespace IO.
 }    // namespace K.
 
-#endif    // K_IO_UARTTOOLS_H_
+#endif    // K_IO_UART_H_

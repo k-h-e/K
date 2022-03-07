@@ -35,14 +35,7 @@ Buffer::Buffer(const Buffer &other) {
 Buffer &Buffer::operator=(const Buffer &other) {
     buffer_     = other.buffer_;
     bufferFill_ = other.bufferFill_;
-    finalResultAcceptor_.reset();
     return *this;
-}
-
-Buffer::~Buffer() {
-    if (finalResultAcceptor_) {
-        finalResultAcceptor_->Set(true);
-    }
 }
 
 void *Buffer::Data() {
@@ -85,16 +78,12 @@ void Buffer::WriteItem(const void *item, int itemSize) {
     Append(item, itemSize);
 }
 
-bool Buffer::Good() const {
-    return true;
-}
-
-bool Buffer::ErrorState() const {
+bool Buffer::WriteFailed() const {
     return false;
 }
 
-void Buffer::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor) {
-    finalResultAcceptor_ = resultAcceptor;
+void Buffer::ClearWriteFailed() {
+    // Nop.
 }
 
 void Buffer::RestoreToCurrentCapacity() {
@@ -108,55 +97,40 @@ Buffer::Reader Buffer::GetReader() const {
 Buffer::Reader::Reader(const Buffer *buffer)
 	: buffer_(buffer),
       cursor_(0),
-      eof_(false) {
+      readFailed_(false) {
 }
 
-Buffer::Reader::~Reader() {
-    if (finalResultAcceptor_) {
-        finalResultAcceptor_->Set(true);
+int Buffer::Reader::ReadNonBlocking(void *buffer, int bufferSize) {
+    int numRead = 0;
+    if (!readFailed_) {
+        int numToDeliver = buffer_->bufferFill_ - cursor_;
+        if (numToDeliver >= 1) {
+            if (numToDeliver > bufferSize) {
+                numToDeliver = bufferSize;
+            }
+            memcpy(buffer, &buffer_->buffer_[cursor_], numToDeliver);
+            cursor_ += numToDeliver;
+            numRead = numToDeliver;
+        }
+    }
+
+    return numRead;
+}
+
+void Buffer::Reader::ReadItem(void *item, int itemSize) {
+    if (!readFailed_) {
+       if (ReadNonBlocking(item, itemSize) != itemSize) {
+           readFailed_ = true;
+       }
     }
 }
 
-int Buffer::Reader::Read(void *targetBuffer, int targetBufferSize) {
-    int numToDeliver = buffer_->bufferFill_ - cursor_;
-    if (eof_ || (numToDeliver < 1)) {
-        eof_ = true;
-        return 0;
-    }
-    if (numToDeliver > targetBufferSize) {
-        numToDeliver = targetBufferSize;
-    }
-    memcpy(targetBuffer, &buffer_->buffer_[cursor_], numToDeliver);
-    cursor_ += numToDeliver;
-    return numToDeliver;
-}
-    
-bool Buffer::Reader::ReadBlock(void *targetBuffer, int targetBufferSize) {
-    return (Read(targetBuffer, targetBufferSize) == targetBufferSize);
+bool Buffer::Reader::ReadFailed() const {
+    return readFailed_;
 }
 
-void Buffer::Reader::ReadItem(void *outItem, int itemSize) {
-    (void)ReadBlock(outItem, itemSize);
-}
-
-bool Buffer::Reader::Good() const {
-    return !eof_;
-}
-
-bool Buffer::Reader::ErrorState() const {
-    return false;
-}
-
-bool Buffer::Reader::Eof() const {
-    return eof_;
-}
-
-void Buffer::Reader::ClearEof() {
-    eof_ = false;
-}
-
-void Buffer::Reader::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor) {
-    finalResultAcceptor_ = resultAcceptor;
+void Buffer::Reader::ClearReadFailed() {
+    readFailed_ = false;
 }
 
 }    // Namespace Core.

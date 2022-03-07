@@ -1,7 +1,7 @@
 #ifndef K_GEOPOSITIONING_RTCMMESSAGEHANDLERINTERFACE_H_
 #define K_GEOPOSITIONING_RTCMMESSAGEHANDLERINTERFACE_H_
 
-#include <K/IO/DataHandlerInterface.h>
+#include <K/Core/DataHandlerInterface.h>
 
 namespace K {
 namespace GeoPositioning {
@@ -9,7 +9,7 @@ namespace GeoPositioning {
 class RtcmMessage;
 
 //! Interface to entities receiving and processing RTCM messages.
-class RtcmMessageHandlerInterface : public virtual IO::DataHandlerInterface {
+class RtcmMessageHandlerInterface : public virtual Core::DataHandlerInterface {
   public:
     virtual void Handle(const RtcmMessage &message) = 0;
 };

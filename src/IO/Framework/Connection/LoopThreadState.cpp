@@ -28,6 +28,8 @@ Connection::LoopThreadState::LoopThreadState(
           runLoopClientId(0),
           handler(nullptr),
           handlerAssociatedId(0),
+          readFailed(false),
+          writeFailed(false),
           error(false),
           eof(false),
           clientReadPaused(false),

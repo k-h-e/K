@@ -1,7 +1,7 @@
 #include <K/IO/StreamHandlerTee.h>
 
 using std::shared_ptr;
-using K::IO::StreamHandlerInterface;
+using K::Core::StreamHandlerInterface;
 
 namespace K {
 namespace IO {

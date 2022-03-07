@@ -11,20 +11,21 @@
 #ifndef K_CORE_ITEMREADINTERFACE_H_
 #define K_CORE_ITEMREADINTERFACE_H_
 
-#include <K/Core/ReadableStreamInterface.h>
+#include <K/Core/ReadFailedInterface.h>
 
 namespace K {
 namespace Core {
 
-//! Interface to streams providing blocking item reading.
-class ItemReadInterface : public virtual ReadableStreamInterface {
+//! Interface to data readers providing item reading.
+class ItemReadInterface : public virtual ReadFailedInterface {
   public:
     //! Reads a binary item of specified size (in bytes).
     /*!
-     *  Blocks until either the read is complete or it fails. In case of failure, the output item will be undefined and
-     *  error state or EOF will be raised on the stream (or both).
+     *  In case the read operation fails, read failed state will be set (see <c>ReadFailedInterface::ReadFailed()</c>).
+     *  If read failed state has already been set when the method gets called, the read will not execute and the method
+     *  returns immediately.
      */
-    virtual void ReadItem(void *outItem, int itemSize) = 0;
+    virtual void ReadItem(void *item, int itemSize) = 0;
 };
 
 }    // Namespace Core.

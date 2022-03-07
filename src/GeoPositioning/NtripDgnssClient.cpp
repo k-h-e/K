@@ -11,9 +11,9 @@ using std::string;
 using std::to_string;
 using std::stringstream;
 using K::Core::Log;
+using K::Core::StreamHandlerInterface;
 using K::Core::StringTools;
 using K::GeoPositioning::RtcmParser;
-using K::IO::StreamHandlerInterface;
 using K::IO::ConnectionIO;
 
 namespace K {

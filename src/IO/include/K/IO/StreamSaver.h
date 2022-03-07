@@ -3,14 +3,14 @@
 
 #include <memory>
 #include <string>
+#include <K/Core/StreamHandlerInterface.h>
 #include <K/IO/StreamBuffer.h>
-#include <K/IO/StreamHandlerInterface.h>
 
 namespace K {
 namespace IO {
 
 //! Stream handler saving the stream to a file.
-class StreamSaver : public virtual StreamHandlerInterface {
+class StreamSaver : public virtual Core::StreamHandlerInterface {
   public:
     StreamSaver(const std::string &fileName);
     StreamSaver(const StreamSaver &other)            = delete;

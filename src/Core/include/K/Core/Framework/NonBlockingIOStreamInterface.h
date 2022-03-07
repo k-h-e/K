@@ -2,26 +2,24 @@
 ////   ////     K Crossplatform C++ Assets
 ////  ////      (C) Copyright Kai Hergenröther
 //// ////
-////////        - IO / Framework -
+////////        - Core / Framework -
 //// ////
 ////  ////
 ////   ////
 ////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef K_IO_FRAMEWORK_NONBLOCKINGSTREAMINTERFACE_H_
-#define K_IO_FRAMEWORK_NONBLOCKINGSTREAMINTERFACE_H_
+#ifndef K_CORE_FRAMEWORK_NONBLOCKINGSTREAMINTERFACE_H_
+#define K_CORE_FRAMEWORK_NONBLOCKINGSTREAMINTERFACE_H_
 
 #include <memory>
-#include <K/IO/GenericReadInterface.h>
-#include <K/IO/GenericWriteInterface.h>
+#include <K/Core/NonBlockingIOStreamInterface.h>
 
 namespace K {
-namespace IO {
+namespace Core {
 namespace Framework {
 
 //! Interface to framework streams providing nonblocking stream I/O.
-class NonBlockingStreamInterface : public virtual IO::GenericReadInterface,
-                                   public virtual IO::GenericWriteInterface {
+class NonBlockingIOStreamInterface : public virtual Core::NonBlockingIOStreamInterface {
   public:
     //! Interface to handlers for non-blocking framework streams.
     class HandlerInterface : public virtual K::Core::Interface {
@@ -56,7 +54,7 @@ class NonBlockingStreamInterface : public virtual IO::GenericReadInterface,
 };
 
 }    // Namespace Framework.
-}    // Namespace IO.
+}    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_IO_FRAMEWORK_NONBLOCKINGSTREAMINTERFACE_H_
+#endif    // K_CORE_FRAMEWORK_NONBLOCKINGSTREAMINTERFACE_H_

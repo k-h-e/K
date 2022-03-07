@@ -13,8 +13,8 @@
 
 #include <memory>
 #include <optional>
+#include <K/Core/Framework/NonBlockingIOStreamInterface.h>
 #include <K/Core/Framework/RunLoop.h>
-#include <K/IO/Framework/NonBlockingStreamInterface.h>
 
 namespace K {
     namespace Core {
@@ -34,7 +34,7 @@ namespace IO {
 namespace Framework {
 
 //! Connection, for use with a <c>Core::Framework::RunLoop</c>.
-class Connection : public virtual NonBlockingStreamInterface {
+class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface {
   public:
     //! Creates a new connection for the specified UNIX file descriptor.
     /*!
@@ -56,14 +56,16 @@ class Connection : public virtual NonBlockingStreamInterface {
     Connection &operator=(Connection &&other)      = delete;
     ~Connection();
 
-    void Register(NonBlockingStreamInterface::HandlerInterface *handler, int id) override;
+    void Register(NonBlockingIOStreamInterface::HandlerInterface *handler, int id) override;
     void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
-    int Read(void *outBuffer, int bufferSize) override;
-    int Write(const void *data, int dataSize) override;
-    bool Good() const override;
+    int ReadNonBlocking(void *buffer, int bufferSize) override;
+    bool ReadFailed() const override;
+    void ClearReadFailed() override;
+    int WriteNonBlocking(const void *data, int dataSize) override;
+    bool WriteFailed() const override;
+    void ClearWriteFailed() override;
     bool ErrorState() const override;
     bool Eof() const override;
-    void ClearEof() override;
 
   private:
     struct LoopThreadState;

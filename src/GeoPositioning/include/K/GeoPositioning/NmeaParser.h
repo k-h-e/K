@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <string>
-#include <K/IO/StreamHandlerInterface.h>
+#include <K/Core/StreamHandlerInterface.h>
 #include <K/GeoPositioning/NmeaMessage.h>
 
 namespace K {
@@ -12,7 +12,7 @@ namespace GeoPositioning {
 class NmeaMessageHandlerInterface;
 
 //! Parses a binary stream into NMEA messages (sentences).
-class NmeaParser : public virtual IO::StreamHandlerInterface {
+class NmeaParser : public virtual Core::StreamHandlerInterface {
   public:    
     NmeaParser(const std::shared_ptr<NmeaMessageHandlerInterface> &handler);
     NmeaParser(const NmeaParser &other)            = delete;
