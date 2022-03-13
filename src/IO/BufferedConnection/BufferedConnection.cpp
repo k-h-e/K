@@ -2,7 +2,7 @@
 
 #include <unistd.h>
 #include <cassert>
-#include <K/Core/Result.h>
+#include <K/Core/ResultAcceptor.h>
 #include <K/Core/Log.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/IOTools.h>
@@ -12,19 +12,17 @@ using std::shared_ptr;
 using std::make_shared;
 using std::optional;
 using std::to_string;
-using K::Core::Result;
 using K::Core::Log;
+using K::Core::ResultAcceptor;
 using K::Core::StreamHandlerInterface;
 
 namespace K {
 namespace IO {
 
 BufferedConnection::BufferedConnection(
-    optional<int> fd, int bufferSizeThreshold, const shared_ptr<Result> &resultAcceptor,
-    const shared_ptr<ConnectionIO> &connectionIO)
+    optional<int> fd, int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
         : connectionIO_(connectionIO),
-          fd_(fd),
-          finalResultAcceptor_(resultAcceptor) {
+          fd_(fd) {
     sharedState_ = make_shared<SharedState>(bufferSizeThreshold, connectionIO_);
     if (*fd_) {
         if (!connectionIO_->Register(sharedState_, *fd_)) {
@@ -64,9 +62,12 @@ BufferedConnection::~BufferedConnection() {
         error = true;
     }
 
-    Result finalResult(!error);
     if (finalResultAcceptor_) {
-        *finalResultAcceptor_ = finalResult;
+        if (error) {
+            finalResultAcceptor_->OnFailure();
+        } else {
+            finalResultAcceptor_->OnSuccess();
+        }
     }
 }
 
@@ -103,7 +104,7 @@ bool BufferedConnection::ErrorState() const {
     return sharedState_->Error();
 }
 
-void BufferedConnection::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor) {
+void BufferedConnection::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
     finalResultAcceptor_ = resultAcceptor;
 }
 

@@ -3,8 +3,9 @@
 
 #include <memory>
 #include <string>
+#include <K/Core/BinaryWriter.h>
 #include <K/Core/StreamHandlerInterface.h>
-#include <K/IO/StreamBuffer.h>
+
 
 namespace K {
 namespace IO {
@@ -23,7 +24,7 @@ class StreamSaver : public virtual Core::StreamHandlerInterface {
     void HandleError() override;
 
   private:
-    std::unique_ptr<StreamBuffer> stream_;
+    std::unique_ptr<Core::BinaryWriter> writer_;
 };
 
 }    // Namespace IO.

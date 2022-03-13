@@ -13,7 +13,6 @@
 #include <cassert>
 #include <cstring>
 #include <K/Core/NumberTools.h>
-#include <K/Core/Result.h>
 
 using namespace std;
 

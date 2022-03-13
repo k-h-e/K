@@ -13,7 +13,6 @@
 
 #include <K/Core/BlockingReadInterface.h>
 #include <K/Core/EofInterface.h>
-#include <K/Core/ItemReadInterface.h>
 #include <K/Core/StreamInterface.h>
 
 namespace K {
@@ -22,8 +21,7 @@ namespace Core {
 //! Interface to blocking input streams.
 class BlockingInStreamInterface : public virtual StreamInterface,
                                   public virtual EofInterface,
-                                  public virtual BlockingReadInterface,
-                                  public virtual ItemReadInterface {
+                                  public virtual BlockingReadInterface {
   public:
 };
 

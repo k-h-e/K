@@ -2,7 +2,6 @@
 
 using std::shared_ptr;
 using std::string;
-using K::Core::Result;
 using K::Core::Framework::RunLoop;
 using K::IO::ConnectionIO;
 
@@ -13,15 +12,7 @@ namespace Framework {
 UartConnection::UartConnection(
     const string &deviceFileName, Uart::BaudRate baudRate, const shared_ptr<RunLoop> &runLoop,
     const shared_ptr<ConnectionIO> &connectionIO)
-        : Connection(Uart::Open(deviceFileName, baudRate), bufferSizeConstraint, nullptr, runLoop, connectionIO) {
-    // Nop.
-}
-
-UartConnection::UartConnection(
-    const string &deviceFileName, Uart::BaudRate baudRate, const shared_ptr<Result> &resultAcceptor,
-    const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO)
-        : Connection(Uart::Open(deviceFileName, baudRate), bufferSizeConstraint, resultAcceptor, runLoop,
-                     connectionIO) {
+        : Connection(Uart::Open(deviceFileName, baudRate), bufferSizeConstraint, runLoop, connectionIO) {
     // Nop.
 }
 

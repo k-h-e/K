@@ -11,7 +11,7 @@
 #include <K/IO/Framework/Connection.h>
 
 #include <K/Core/Log.h>
-#include <K/Core/Result.h>
+#include <K/Core/ResultAcceptor.h>
 #include <K/Core/Framework/RunLoop.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/IOTools.h>
@@ -24,7 +24,7 @@ using std::optional;
 using std::shared_ptr;
 using std::to_string;
 using K::Core::Log;
-using K::Core::Result;
+using K::Core::ResultAcceptor;
 using K::Core::Framework::RunLoop;
 using K::IO::IOTools;
 
@@ -32,12 +32,11 @@ namespace K {
 namespace IO {
 namespace Framework {
 
-Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_ptr<Result> &resultAcceptor,
-                       const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO)
+Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_ptr<RunLoop> &runLoop,
+                       const shared_ptr<ConnectionIO> &connectionIO)
         : loopThreadState_(make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop, ValidateBufferSizeConstraint(bufferSizeConstraint)),
-              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO)),
-          finalResultAcceptor_(resultAcceptor) {
+              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO)) {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 
@@ -77,13 +76,17 @@ Connection::~Connection() {
     loopThreadState_->runLoop->RemoveClient(loopThreadState_->runLoopClientId);
 
     if (finalResultAcceptor_) {
-        finalResultAcceptor_->Set(success);
+        if (success) {
+            finalResultAcceptor_->OnSuccess();
+        } else {
+            finalResultAcceptor_->OnFailure();
+        }
     }
 
     if (success) {
-        Log::Print(Log::Level::Debug, this, [&]{ return "connection closed successfully, fd=" + to_string(*fd_); });
+        Log::Print(Log::Level::Debug, this, [&]{ return "closed, fd=" + to_string(*fd_); });
     } else {
-        Log::Print(Log::Level::Error, this, [&]{ return "bad connection cleaned up"; });
+        Log::Print(Log::Level::Error, this, [&]{ return "error while closing"; });
     }
 }
 
@@ -99,7 +102,7 @@ void Connection::Register(NonBlockingIOStreamInterface::HandlerInterface *handle
     }
 }
 
-void Connection::SetFinalResultAcceptor(const shared_ptr<Result> &resultAcceptor) {
+void Connection::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
     finalResultAcceptor_ = resultAcceptor;
 }
 
@@ -119,14 +122,6 @@ int Connection::ReadNonBlocking(void *buffer, int bufferSize) {
     }
 
     return numRead;
-}
-
-bool Connection::ReadFailed() const {
-    return loopThreadState_->readFailed;
-}
-
-void Connection::ClearReadFailed() {
-    loopThreadState_->readFailed = false;
 }
 
 int Connection::WriteNonBlocking(const void *data, int dataSize) {
@@ -153,14 +148,6 @@ int Connection::WriteNonBlocking(const void *data, int dataSize) {
     }
 
     return numWritten;
-}
-
-bool Connection::WriteFailed() const {
-    return loopThreadState_->writeFailed;
-}
-
-void Connection::ClearWriteFailed() {
-    loopThreadState_->writeFailed = false;
 }
 
 bool Connection::ErrorState() const {

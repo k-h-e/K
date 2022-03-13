@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <mutex>
-#include <K/IO/BlockingIOStreamCore.h>
+#include <K/Core/BlockingIOStreamInterface.h>
 
 namespace K {
 namespace IO {
@@ -12,12 +12,10 @@ namespace IO {
 /*!
  *  The class is thread-safe (i.e. all public instance methods).
  */
-class Socket : public BlockingIOStreamCore {
+class Socket : public virtual Core::BlockingIOStreamInterface {
   public:
     //! The socket takes ownership over the UNIX file descriptor.
     Socket(int fd);
-    //! The socket takes ownership over the UNIX file descriptor.
-    Socket(int fd, const std::shared_ptr<Core::Result> &resultAcceptor);
     Socket(const Socket &other)             = delete;
     Socket &operator=(const Socket &other)  = delete;
     Socket(const Socket &&other)            = delete;
@@ -28,14 +26,10 @@ class Socket : public BlockingIOStreamCore {
     void ShutDown();
 
     int ReadBlocking(void *buffer, int bufferSize) override;
-    bool ReadFailed() const override;
-    void ClearReadFailed() override;
     int WriteBlocking(const void *data, int dataSize) override;
-    bool WriteFailed() const override;
-    void ClearWriteFailed() override;
     bool Eof() const override;
     bool ErrorState() const override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
     //! Establishes a TCP network stream connection to a host given by name and port, separated by a <c>':'</c>.
     /*!
@@ -53,14 +47,12 @@ class Socket : public BlockingIOStreamCore {
   private:
     void ShutDownSocket();
 
-    mutable std::mutex            lock_;                   // Protects everything below...
-    int                           fd_;
-    bool                          socketDown_;
-    bool                          readFailed_;
-    bool                          writeFailed_;
-    bool                          eof_;
-    bool                          error_;
-    std::shared_ptr<Core::Result> finalResultAcceptor_;
+    mutable std::mutex                    lock_;                   // Protects everything below...
+    int                                   fd_;
+    bool                                  socketDown_;
+    bool                                  eof_;
+    bool                                  error_;
+    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;    // Thread safe.
 
 };
 

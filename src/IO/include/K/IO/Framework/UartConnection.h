@@ -22,11 +22,6 @@ class UartConnection : public Connection {
         const std::string &deviceFileName, Uart::BaudRate baudRate,
         const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
         const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
-    //! Establishes a UART (serial) connection via the specified serial device.
-    UartConnection(
-        const std::string &deviceFileName, Uart::BaudRate baudRate,
-        const std::shared_ptr<Core::Result> &resultAcceptor, const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
-        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     UartConnection(const UartConnection &other)             = delete;
     UartConnection &operator=(const UartConnection &other)  = delete;
     UartConnection(const UartConnection &&other)            = delete;

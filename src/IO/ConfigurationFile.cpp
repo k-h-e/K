@@ -1,8 +1,10 @@
 #include <K/IO/ConfigurationFile.h>
 
-#include <K/Core/StreamOperations.h>
+#include <K/Core/IOOperations.h>
+#include <K/Core/ResultAcceptor.h>
 #include <K/Core/StringTools.h>
-#include <K/Core/Result.h>
+#include <K/Core/TextReader.h>
+#include <K/Core/TextWriter.h>
 #include <K/IO/File.h>
 #include <K/IO/StreamBuffer.h>
 
@@ -12,8 +14,10 @@ using std::to_string;
 using std::unordered_set;
 using std::vector;
 using std::make_shared;
+using K::Core::ResultAcceptor;
 using K::Core::StringTools;
-using K::Core::Result;
+using K::Core::TextReader;
+using K::Core::TextWriter;
 using K::IO::File;
 using K::IO::StreamBuffer;
 
@@ -117,18 +121,19 @@ void ConfigurationFile::GetValue(const string &section, const string &key, bool 
 
 void ConfigurationFile::Save(const string &fileName) {
     if (!errorState_) {
-        auto result = make_shared<Result>();
+        auto result = make_shared<ResultAcceptor>();
         {
-            StreamBuffer stream(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
-                                File::AccessMode::WriteOnly, 4 * 1024, result);
+            TextWriter writer(make_shared<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
+                                                        File::AccessMode::WriteOnly, 4 * 1024));
+            writer.SetFinalResultAcceptor(result);
             bool firstSection = true;
             for (auto &pair : sections_) {
                 if (!firstSection) {
-                    stream << "\n";
+                    writer << "\n";
                 }
-                stream << "[" << pair.first << "]\n";
+                writer << "[" << pair.first << "]\n";
                 for (auto &keyValuePair : pair.second) {
-                    stream << keyValuePair.first << " = " << keyValuePair.second << "\n";
+                    writer << keyValuePair.first << " = " << keyValuePair.second << "\n";
                 }
                 firstSection = false;
             }
@@ -144,15 +149,22 @@ void ConfigurationFile::Load(const string &fileName) {
     sections_.clear();
     errorState_ = false;
 
-    StreamBuffer stream(make_shared<File>(fileName, File::AccessMode::ReadOnly, false),
-                        File::AccessMode::ReadOnly, 4 * 1024);
+    TextReader reader(make_shared<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::ReadOnly, false),
+                                                File::AccessMode::ReadOnly, 4 * 1024));
     unordered_set<char> whiteSpace{ ' ', '\t' };
     string currentSection;
     string line;
-    bool bad = false;
-    while (!stream.ReadFailed() && !stream.Eof() && !bad) {
-        Read(&stream, '\n', &line);
-        if (!stream.ReadFailed()) {
+    bool success = false;
+    bool bad     = false;
+    while (!success && !bad) {
+        reader.Read('\n', &line);
+        if (reader.ReadFailed()) {
+            if (reader.Eof()) {
+                success = true;
+            } else {
+                bad = true;
+            }
+        } else {
             if ((line.length() > 0u) && (line[0] == '[')) {
                 StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
                 currentSection = line;
@@ -174,7 +186,7 @@ void ConfigurationFile::Load(const string &fileName) {
         }
     }
 
-    if (stream.ReadFailed() || bad) {
+    if (bad) {
         sections_.clear();
         errorState_ = true;
     }

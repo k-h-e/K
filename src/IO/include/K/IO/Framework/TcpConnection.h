@@ -5,9 +5,6 @@
 #include <K/IO/Framework/Connection.h>
 
 namespace K {
-    namespace Core {
-        class Result;
-    }
     namespace IO {
         class ConnectionIO;
     }
@@ -23,23 +20,11 @@ class TcpConnection : public Connection {
     //! Establishes a TCP network connection to the specified host, given by name and port, separated by a <c>':'</c>.
     TcpConnection(const std::string &hostAndPort, const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
                   const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
-    //! Establishes a TCP network connection to the specified host, given by name and port, separated by a <c>':'</c>.
-    TcpConnection(const std::string &hostAndPort, const std::shared_ptr<Core::Result> &resultAcceptor,
-                  const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
-                  const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     //! Establishes a TCP network connection to the specified host.
     TcpConnection(const std::string &host, int port, const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
                   const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     //! Establishes a TCP network connection to the specified host.
-    TcpConnection(const std::string &host, int port, const std::shared_ptr<Core::Result> &resultAcceptor,
-                  const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
-                  const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
-    //! Establishes a TCP network connection to the specified host.
     TcpConnection(uint32_t ip4Address, int port,
-                  const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
-                  const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
-    //! Establishes a TCP network connection to the specified host.
-    TcpConnection(uint32_t ip4Address, int port, const std::shared_ptr<Core::Result> &resultAcceptor,
                   const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
                   const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     //! Takes over the already open TCP socket represented by the specified UNIX file descriptor.

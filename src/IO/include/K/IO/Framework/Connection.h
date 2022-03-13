@@ -18,7 +18,7 @@
 
 namespace K {
     namespace Core {
-        class Result;
+        class ResultAcceptor;
         namespace Framework {
             class RunLoop;
         }
@@ -46,8 +46,7 @@ class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface 
      *  The result acceptor is optional.
      */
     Connection(
-        std::optional<int> fd, int bufferSizeConstraint, const std::shared_ptr<Core::Result> &resultAcceptor,
-        const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
+        std::optional<int> fd, int bufferSizeConstraint, const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
         const std::shared_ptr<IO::ConnectionIO> &connectionIO);
     Connection()                                   = delete;
     Connection(const Connection &other)            = delete;
@@ -57,13 +56,9 @@ class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface 
     ~Connection();
 
     void Register(NonBlockingIOStreamInterface::HandlerInterface *handler, int id) override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     int ReadNonBlocking(void *buffer, int bufferSize) override;
-    bool ReadFailed() const override;
-    void ClearReadFailed() override;
     int WriteNonBlocking(const void *data, int dataSize) override;
-    bool WriteFailed() const override;
-    void ClearWriteFailed() override;
     bool ErrorState() const override;
     bool Eof() const override;
 
@@ -73,9 +68,9 @@ class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface 
 
     static int ValidateBufferSizeConstraint(int bufferSizeConstraint);
 
-    std::unique_ptr<LoopThreadState> loopThreadState_;
-    std::optional<int>               fd_;
-    std::shared_ptr<Core::Result>    finalResultAcceptor_;
+    std::unique_ptr<LoopThreadState>      loopThreadState_;
+    std::optional<int>                    fd_;
+    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;
 };
 
 }    // Namespace Framework.

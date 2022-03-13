@@ -30,8 +30,7 @@ class BufferedConnection : public virtual Core::ConnectionStreamInterface {
      *  The result acceptor is optional.
      */
     BufferedConnection(
-        std::optional<int> fd, int bufferSizeThreshold, const std::shared_ptr<Core::Result> &resultAcceptor,
-        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+        std::optional<int> fd, int bufferSizeThreshold, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     BufferedConnection(const BufferedConnection &other)             = delete;
     BufferedConnection &operator=(const BufferedConnection &other)  = delete;
     BufferedConnection(const BufferedConnection &&other)            = delete;
@@ -53,16 +52,16 @@ class BufferedConnection : public virtual Core::ConnectionStreamInterface {
     void ClearWriteFailed() override;
     bool Eof() const override;
     bool ErrorState() const override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::Result> &resultAcceptor) override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
     class SharedState;
 
     std::shared_ptr<SharedState> sharedState_;
 
-    std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
-    std::optional<int>                   fd_;
-    std::shared_ptr<Core::Result>        finalResultAcceptor_;
+    std::shared_ptr<K::IO::ConnectionIO>  connectionIO_;
+    std::optional<int>                    fd_;
+    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;
 };
 
 }    // Namespace IO.

@@ -16,14 +16,14 @@ const char *IOTools::whiteSpace = " \t\r\n";
 bool IOTools::CloseFileDescriptor(int fd, Core::Interface *loggingObject) {
     while (true) {
         if (!close(fd)) {
-            Log::Print(Log::Level::Debug, loggingObject, [&]{ return "fd " + to_string(fd) + " closed successfully"; });
+            Log::Print(Log::Level::Debug, loggingObject, [&]{ return "closed fd " + to_string(fd); });
             return true;
         }
         else {
-            Log::Print(Log::Level::Warning, loggingObject, [&]{
-                return "fd " + to_string(fd) + " closed with error, errno=" + to_string(errno);
-            });
             if (errno != EINTR) {
+                Log::Print(Log::Level::Error, loggingObject, [&]{
+                    return "error while closing fd " + to_string(fd) + ",  errno=" + to_string(errno);
+                });
                 return false;
             }
         }
