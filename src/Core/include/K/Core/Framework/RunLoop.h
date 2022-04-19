@@ -37,7 +37,7 @@ class RunLoop : public virtual Core::Interface {
     class ClientInterface : public virtual Core::Interface {
       public:
         //! Used by the run loop to inject activity into the client on the run loop thread.
-        virtual void Activate() = 0;
+        virtual void Activate(bool deepActivation) = 0;
     };
 
     RunLoop();
@@ -69,12 +69,18 @@ class RunLoop : public virtual Core::Interface {
     //! <b>[Thread safe]</b> Requests the specified client to be activated on the run loop thread.
     /*!
      *  This method is thread safe.
+     *
+     *  \param deepActivation
+     *  Multiple activation requests may be issued for a given client before the client actually gets activated the next
+     *  time. If for at least one of those requests a deep activation has been requested, the client will get activated
+     *  in deep activation mode. Otherwise, it will be a shallow activation.
      */
-    void RequestActivation(int client);
+    void RequestActivation(int client, bool deepActivation);
 
   private:
     struct ClientInfo {
         ClientInterface *client;
+        bool            deepActivationRequested;
 
         ClientInfo();
         ClientInfo(const ClientInfo &other)            = delete;
@@ -88,6 +94,8 @@ class RunLoop : public virtual Core::Interface {
 
     // Expects lock to be held.
     void ClearPendingActivation(int client, std::unique_lock<std::mutex> &critical);
+    // Expects lock to be held.
+    int NumClients(std::unique_lock<std::mutex> &critical);
 
     std::mutex              lock_;                     // Protects everything below...
     std::condition_variable stateChanged_;

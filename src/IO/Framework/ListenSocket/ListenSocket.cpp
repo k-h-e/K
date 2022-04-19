@@ -46,7 +46,7 @@ void ListenSocket::Register(HandlerInterface *handler, int id) {
         loopThreadState_->handler              = handler;
         loopThreadState_->handlerAssociatedId  = id;
         loopThreadState_->newHandlerRegistered = true;
-        loopThreadState_->RequestActivation();
+        loopThreadState_->RequestActivation(false);
     } else {
         loopThreadState_->handler             = nullptr;
         loopThreadState_->handlerAssociatedId = 0;

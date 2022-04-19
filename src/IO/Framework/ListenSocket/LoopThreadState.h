@@ -42,6 +42,7 @@ struct ListenSocket::LoopThreadState : public virtual Core::Framework::RunLoop::
     bool                                            error;
     bool                                            newHandlerRegistered;
     bool                                            activationRequested;
+    bool                                            requestedActivationIsDeep;
 
     LoopThreadState(
         const std::shared_ptr<Core::Framework::RunLoop> &aRunLoop,
@@ -54,8 +55,8 @@ struct ListenSocket::LoopThreadState : public virtual Core::Framework::RunLoop::
     LoopThreadState &operator=(LoopThreadState &&other)      = delete;
     ~LoopThreadState()                                       = default;
 
-    void RequestActivation();
-    void Activate() override;
+    void RequestActivation(bool deepActivation);
+    void Activate(bool deepActivation) override;
 };
 
 }    // Namespace Framework.

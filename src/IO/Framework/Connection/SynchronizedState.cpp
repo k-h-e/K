@@ -10,11 +10,13 @@
 
 #include "SynchronizedState.h"
 
+#include <K/Core/Log.h>
 #include "LoopThreadState.h"
 
 using std::mutex;
 using std::shared_ptr;
 using std::unique_lock;
+using K::Core::Log;
 using K::Core::Framework::RunLoop;
 
 namespace K {
@@ -39,28 +41,34 @@ void Connection::SynchronizedState::SetRunLoopClientId(int id) {
 
 void Connection::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
-
-    readBuffer_.TransferTo(&loopThreadState->readBuffer, loopThreadState->bufferSizeConstraint);
-    if (ioReadPaused_ && (readBuffer_.Size() < bufferSizeConstraint_)) {
-        loopThreadState->unpauseIORead = true;
-        ioReadPaused_ = false;
-    }
-    loopThreadState->writeBuffer.TransferTo(&writeBuffer_, bufferSizeConstraint_);
-    if (ioWritePaused_ && !writeBuffer_.Empty()) {
-        loopThreadState->unpauseIOWrite = true;
-        ioWritePaused_ = false;
-    }
-
+    Log::Print(Log::Level::DebugDebug, this, [&]{ return "Sync()"; });
+    syncRequested_ = false;
     if (error_) {
-        loopThreadState->error = true;
+        if (!loopThreadState->error) {
+            loopThreadState->handlerNeedsReadyRead  = true;
+            loopThreadState->handlerNeedsReadyWrite = true;
+            loopThreadState->error                  = true;
+        }
     } else {
+        readBuffer_.TransferTo(&loopThreadState->readBuffer, loopThreadState->bufferSizeConstraint);
+        if (ioReadPaused_ && (readBuffer_.Size() < bufferSizeConstraint_)) {
+            loopThreadState->unpauseIORead = true;
+            ioReadPaused_ = false;
+        }
+
+        loopThreadState->writeBuffer.TransferTo(&writeBuffer_, bufferSizeConstraint_);
+        if (ioWritePaused_ && !writeBuffer_.Empty()) {
+            loopThreadState->unpauseIOWrite = true;
+            ioWritePaused_ = false;
+        }
+
         if (eof_ && readBuffer_.Empty()) {
-            loopThreadState->eof = true;
+            if (!loopThreadState->eof) {
+                loopThreadState->handlerNeedsReadyRead = true;
+                loopThreadState->eof                   = true;
+            }
         }
     }
-
-    syncRequested_ = false;
-
 }    // ......................................................................................... critical section, end.
 
 bool Connection::SynchronizedState::OnDataRead(const void *data, int dataSize) {
@@ -123,7 +131,7 @@ void Connection::SynchronizedState::RequestSync(unique_lock<mutex> &critical) {
     (void)critical;
     if (!syncRequested_) {
         if (runLoopClientId_) {
-            runLoop_->RequestActivation(*runLoopClientId_);
+            runLoop_->RequestActivation(*runLoopClientId_, true);
         }
         syncRequested_ = true;
     }

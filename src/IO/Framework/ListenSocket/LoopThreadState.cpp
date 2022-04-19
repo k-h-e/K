@@ -37,25 +37,32 @@ ListenSocket::LoopThreadState::LoopThreadState(
           handlerAssociatedId(0),
           error(false),
           newHandlerRegistered(false),
-          activationRequested(false) {
+          activationRequested(false),
+          requestedActivationIsDeep(false) {
     // Nop.
 }
 
-void ListenSocket::LoopThreadState::RequestActivation() {
-    if (!activationRequested) {
-        runLoop->RequestActivation(runLoopClientId);
+void ListenSocket::LoopThreadState::RequestActivation(bool deepActivation) {
+    if (!activationRequested || (deepActivation && !requestedActivationIsDeep)) {
+        runLoop->RequestActivation(runLoopClientId, deepActivation);
         activationRequested = true;
+        if (deepActivation) {
+            requestedActivationIsDeep = true;
+        }
     }
 }
 
-void ListenSocket::LoopThreadState::Activate() {
+void ListenSocket::LoopThreadState::Activate(bool deepActivation) {
+    activationRequested       = false;
+    requestedActivationIsDeep = false;
+
     bool signalErrorState = false;
 
-    bool wasError = error;
-    synchronizedState->Sync(this);
-
-    if (error && !wasError) {
-        signalErrorState = true;
+    if (deepActivation && !error) {
+        synchronizedState->Sync(this);
+        if (error) {
+            signalErrorState = true;
+        }
     }
 
     if (newHandlerRegistered) {
@@ -65,26 +72,22 @@ void ListenSocket::LoopThreadState::Activate() {
         newHandlerRegistered = false;
     }
 
-    activationRequested = false;
-
-    // Handler activation...
-
     if (signalErrorState) {
         if (handler) {
             handler->OnListenSocketErrorState(handlerAssociatedId);
         }
-    }
-
-    while (!acceptedConnections.empty()) {
+    } else if (!error && !acceptedConnections.empty()) {
         unique_ptr<TcpConnection> connection;
         connection.swap(acceptedConnections.front());
         acceptedConnections.pop_front();
-        if (error) {
-            Log::Print(Log::Level::Warning, this, [&]{ return "in error state, closing accepted connection"; });
-        } else if (!handler) {
-            Log::Print(Log::Level::Warning, this, [&]{ return "no handler registered, closing accepted connection"; });
-        } else {
+        if (!acceptedConnections.empty()) {
+            RequestActivation(false);
+        }
+
+        if (handler) {
             handler->OnListenSocketAcceptedConnection(handlerAssociatedId, move(connection));
+        } else {
+            Log::Print(Log::Level::Warning, this, [&]{ return "no handler registered, closing accepted connection"; });
         }
     }
 }

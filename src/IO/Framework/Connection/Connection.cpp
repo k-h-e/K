@@ -52,7 +52,11 @@ Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_
 
     if (fd_) {
         loopThreadState_->connectionIO->SetClientCanRead(loopThreadState_->synchronizedState.get());
-        Log::Print(Log::Level::Debug, this, [&]{ return "connection established, fd=" + to_string(*fd_); });
+        loopThreadState_->connectionIO->SetClientCanWrite(loopThreadState_->synchronizedState.get());
+        Log::Print(Log::Level::Debug, this, [&]{
+            return "connection established, fd=" + to_string(*fd_) + ", run_loop_client_id="
+                + to_string(loopThreadState_->runLoopClientId);
+        });
     } else {
         loopThreadState_->synchronizedState->OnError();
         Log::Print(Log::Level::Error, this, [&]{ return "connection created bad"; });
@@ -92,10 +96,11 @@ Connection::~Connection() {
 
 void Connection::Register(NonBlockingIOStreamInterface::HandlerInterface *handler, int id) {
     if (handler) {
-        loopThreadState_->handler              = handler;
-        loopThreadState_->handlerAssociatedId  = id;
-        loopThreadState_->newHandlerRegistered = true;
-        loopThreadState_->RequestActivation();
+        loopThreadState_->handler                = handler;
+        loopThreadState_->handlerAssociatedId    = id;
+        loopThreadState_->handlerNeedsReadyRead  = true;
+        loopThreadState_->handlerNeedsReadyWrite = true;
+        loopThreadState_->RequestActivation(false);
     } else {
         loopThreadState_->handler             = nullptr;
         loopThreadState_->handlerAssociatedId = 0;
@@ -108,45 +113,39 @@ void Connection::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &result
 
 int Connection::ReadNonBlocking(void *buffer, int bufferSize) {
     int numRead = 0;
-    if (!loopThreadState_->readFailed) {
-        if (ErrorState() || Eof()) {
-            loopThreadState_->readFailed = true;
+    if (!ErrorState() && !Eof()) {
+        numRead = loopThreadState_->readBuffer.Get(buffer, bufferSize);
+        if (numRead) {
+            loopThreadState_->RequestActivation(true);
         } else {
-            numRead = loopThreadState_->readBuffer.Get(buffer, bufferSize);
-            if (numRead) {
-                loopThreadState_->RequestActivation();
-            } else {
-                loopThreadState_->clientReadPaused = true;
-            }
+            loopThreadState_->clientReadPaused = true;
         }
     }
 
+    Log::Print(Log::Level::DebugDebug, this, [&]{ return "ReadNonBlocking(), num_read=" + to_string(numRead); });
     return numRead;
 }
 
 int Connection::WriteNonBlocking(const void *data, int dataSize) {
-    int numWritten = 0;
-    if (!loopThreadState_->writeFailed) {
-        if (ErrorState()) {
-            loopThreadState_->writeFailed = true;
-        } else {
-            if (loopThreadState_->bufferSizeConstraint > loopThreadState_->writeBuffer.Size()) {
-                int numToWrite = std::min(loopThreadState_->bufferSizeConstraint - loopThreadState_->writeBuffer.Size(),
-                                          dataSize);
-                if (numToWrite > 0) {    // Defensive.
-                    loopThreadState_->writeBuffer.Put(data, numToWrite);
-                    numWritten = numToWrite;
-                }
+    int numWritten = 0;  
+    if (!ErrorState()) {
+        if (loopThreadState_->bufferSizeConstraint > loopThreadState_->writeBuffer.Size()) {
+            int numToWrite = std::min(loopThreadState_->bufferSizeConstraint - loopThreadState_->writeBuffer.Size(),
+                                      dataSize);
+            if (numToWrite > 0) {    // Defensive.
+                loopThreadState_->writeBuffer.Put(data, numToWrite);
+                numWritten = numToWrite;
             }
+        }
 
-            if (numWritten) {
-                loopThreadState_->RequestActivation();
-            } else {
-                loopThreadState_->clientWritePaused = true;
-            }
+        if (numWritten) {
+            loopThreadState_->RequestActivation(true);
+        } else {
+            loopThreadState_->clientWritePaused = true;
         }
     }
 
+    Log::Print(Log::Level::DebugDebug, this, [&]{ return "WriteNonBlocking(), num_written=" + to_string(numWritten); });
     return numWritten;
 }
 

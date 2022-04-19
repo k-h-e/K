@@ -33,17 +33,18 @@ struct Connection::LoopThreadState : public virtual Core::Framework::RunLoop::Cl
     int                                             handlerAssociatedId;
     Core::RingBuffer                                readBuffer;
     Core::RingBuffer                                writeBuffer;
-    bool                                            readFailed;
-    bool                                            writeFailed;
     bool                                            error;
     bool                                            eof;
     bool                                            clientReadPaused;
     bool                                            clientWritePaused;
-    bool                                            newHandlerRegistered;
+    bool                                            handlerNeedsReadyRead;
+    bool                                            handlerNeedsReadyWrite;
     bool                                            unpauseIORead;
     bool                                            unpauseIOWrite;
+    bool                                            readIsNext;
     int                                             bufferSizeConstraint;
     bool                                            activationRequested;
+    bool                                            requestedActivationIsDeep;
 
     LoopThreadState(
         const std::shared_ptr<Core::Framework::RunLoop> &aRunLoop,
@@ -56,8 +57,8 @@ struct Connection::LoopThreadState : public virtual Core::Framework::RunLoop::Cl
     LoopThreadState &operator=(LoopThreadState &&other)      = delete;
     ~LoopThreadState()                                       = default;
 
-    void RequestActivation();
-    void Activate() override;
+    void RequestActivation(bool deepActivation);
+    void Activate(bool deepActivation) override;
 };
 
 }    // Namespace Framework.

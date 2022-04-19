@@ -24,7 +24,7 @@ BufferedConnection::BufferedConnection(
         : connectionIO_(connectionIO),
           fd_(fd) {
     sharedState_ = make_shared<SharedState>(bufferSizeThreshold, connectionIO_);
-    if (*fd_) {
+    if (fd_) {
         if (!connectionIO_->Register(sharedState_, *fd_)) {
             (void)IOTools::CloseFileDescriptor(*fd_, this);
             Log::Print(Log::Level::Warning, this, [&]{
@@ -36,7 +36,7 @@ BufferedConnection::BufferedConnection(
         Log::Print(Log::Level::Warning, this, [&]{ return "no file descriptor given"; });
     }
 
-    if (!*fd_) {
+    if (!fd_) {
         sharedState_->SetError();
     }
 }
@@ -46,7 +46,7 @@ BufferedConnection::~BufferedConnection() {
 
     // Note: We're currently not waiting for all remaining buffered write data to be written!
 
-    if (*fd_) {
+    if (fd_) {
         Log::Print(Log::Level::Debug, this, [&]{ return "unregistering fd " + to_string(*fd_) + " from central I/O"; });
         bool finalStreamError = true;
         connectionIO_->Unregister(sharedState_, &finalStreamError);

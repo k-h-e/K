@@ -35,6 +35,7 @@ class TcpConnection;
 //! Listen socket, for use with a <c>Core::Framework::RunLoop</c>.
 class ListenSocket : public virtual Core::ErrorStateInterface {
   public:
+    //! Interface to handlers that clients can register with a listen socket.
     class HandlerInterface : public virtual Core::Interface {
       public:
         //! Hands over a newly accepted connection to the handler.

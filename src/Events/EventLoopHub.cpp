@@ -10,7 +10,9 @@ using std::mutex;
 using std::optional;
 using std::to_string;
 using std::unique_lock;
+using std::unique_ptr;
 using std::chrono::milliseconds;
+using K::Core::Buffer;
 using K::Core::Log;
 
 namespace K {
@@ -50,6 +52,14 @@ void EventLoopHub::UnregisterEventLoop(int clientLoopId) {
     }
 }    // ......................................................................................... critical section, end.
 
+void EventLoopHub::RegisterHandler(int clientLoopId, HandlerInterface *handler) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    LoopInfo *info = GetLoopInfo(clientLoopId);
+    if (info) {
+        info->handler = handler;
+    }
+}    // ......................................................................................... critical section, end.
+
 bool EventLoopHub::RegisterEventIdToSlotMapping(size_t id, int slot) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     auto iter = eventIdToSlotMap_.find(id);
@@ -71,7 +81,7 @@ void EventLoopHub::Post(int clientLoopId, const void *data, int dataSize, bool o
     DoPost(clientLoopId, data, dataSize, onlyPostToOthers);
 }    // ......................................................................................... critical section, end.
 
-bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer) {
+bool EventLoopHub::GetEvents(int clientLoopId, unique_ptr<Buffer> *buffer) {
     (*buffer)->Clear();
 
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
@@ -86,7 +96,7 @@ bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *bu
     }
 }    // ......................................................................................... critical section, end.
 
-bool EventLoopHub::GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer, optional<milliseconds> timeout) {
+bool EventLoopHub::GetEvents(int clientLoopId, unique_ptr<Buffer> *buffer, optional<milliseconds> timeout) {
     (*buffer)->Clear();
 
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
@@ -159,16 +169,16 @@ void EventLoopHub::DoPost(int clientLoopId, const void *data, int dataSize, bool
     for (int i = 0; i < num; ++i) {
         LoopInfo &loopInfo = loops_[i];
         if (loopInfo.inUse) {
+            bool wasEmpty = (loopInfo.buffer->DataSize() == 0);
             if (!(onlyPostToOthers && (i == clientLoopId))) {
                 loopInfo.buffer->Append(data, dataSize);
+                if (loopInfo.waiting) {
+                    loopInfo.stateChanged->notify_all();
+                }
+                if (loopInfo.handler && wasEmpty) {
+                    loopInfo.handler->OnEventsAvailable();
+                }
             }
-        }
-    }
-
-    // Wake up waiting loop threads for which events are present...
-    for (auto &loopInfo : loops_) {
-        if (loopInfo.inUse && loopInfo.waiting && loopInfo.buffer->DataSize()) {
-            loopInfo.stateChanged->notify_all();
         }
     }
 }

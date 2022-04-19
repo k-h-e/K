@@ -10,9 +10,12 @@
 
 #include "LoopThreadState.h"
 
+#include <K/Core/Log.h>
 #include "SynchronizedState.h"
 
 using std::shared_ptr;
+using std::to_string;
+using K::Core::Log;
 using K::Core::Framework::RunLoop;
 
 namespace K {
@@ -28,67 +31,81 @@ Connection::LoopThreadState::LoopThreadState(
           runLoopClientId(0),
           handler(nullptr),
           handlerAssociatedId(0),
-          readFailed(false),
-          writeFailed(false),
           error(false),
           eof(false),
           clientReadPaused(false),
           clientWritePaused(false),
-          newHandlerRegistered(false),
+          handlerNeedsReadyRead(false),
+          handlerNeedsReadyWrite(false),
           unpauseIORead(false),
           unpauseIOWrite(false),
+          readIsNext(false),
           bufferSizeConstraint(aBufferSizeConstraint),
-          activationRequested(false) {
+          activationRequested(false),
+          requestedActivationIsDeep(false) {
     // Nop.
 }
 
-void Connection::LoopThreadState::RequestActivation() {
-    if (!activationRequested) {
-        runLoop->RequestActivation(runLoopClientId);
+void Connection::LoopThreadState::RequestActivation(bool deepActivation) {
+    if (!activationRequested || (deepActivation && !requestedActivationIsDeep)) {
+        runLoop->RequestActivation(runLoopClientId, deepActivation);
         activationRequested = true;
+        if (deepActivation) {
+            requestedActivationIsDeep = true;
+        }
     }
 }
 
-void Connection::LoopThreadState::Activate() {
+void Connection::LoopThreadState::Activate(bool deepActivation) {
+    activationRequested       = false;
+    requestedActivationIsDeep = false;
+
+    Log::Print(Log::Level::DebugDebug, this, [&]{ return "Activate(), deep=" + to_string(deepActivation); });
+
+    if (deepActivation && !error) {
+        synchronizedState->Sync(this);
+        if (unpauseIORead) {
+            connectionIO->SetClientCanRead(synchronizedState.get());
+            unpauseIORead = false;
+        }
+        if (unpauseIOWrite) {
+            connectionIO->SetClientCanWrite(synchronizedState.get());
+            unpauseIOWrite = false;
+        }
+    }
+
     bool signalReadyRead  = false;
     bool signalReadyWrite = false;
 
-    synchronizedState->Sync(this);
-
-    if (clientReadPaused && !readBuffer.Empty()) {
+    if ((clientReadPaused && !readBuffer.Empty()) || handlerNeedsReadyRead) {
         signalReadyRead = true;
-        clientReadPaused = false;
     }
-    if (clientWritePaused && (writeBuffer.Size() < bufferSizeConstraint)) {
+    if ((clientWritePaused && (writeBuffer.Size() < bufferSizeConstraint)) || handlerNeedsReadyWrite) {
         signalReadyWrite = true;
-        clientWritePaused = false;
     }
 
-    if (unpauseIORead) {
-        connectionIO->SetClientCanRead(synchronizedState.get());
-        unpauseIORead = false;
+    if (signalReadyRead && signalReadyWrite) {
+        RequestActivation(false);
+        if (readIsNext) {
+            signalReadyWrite = false;
+        } else {
+            signalReadyRead = false;
+        }
     }
-    if (unpauseIOWrite) {
-        connectionIO->SetClientCanWrite(synchronizedState.get());
-        unpauseIOWrite = false;
-    }
-
-    if (newHandlerRegistered) {
-        signalReadyRead  = true;
-        signalReadyWrite = true;
-        newHandlerRegistered = false;
-    }
-
-    activationRequested = false;
-
-    // Handler activation...
 
     if (signalReadyRead) {
+        clientReadPaused      = false;
+        handlerNeedsReadyRead = false;
+        readIsNext            = false;
+        Log::Print(Log::Level::DebugDebug, this, [&]{ return "ready read"; });
         if (handler) {
             handler->OnStreamReadyRead(handlerAssociatedId);
         }
-    }
-    if (signalReadyWrite) {
+    } else if (signalReadyWrite) {
+        clientWritePaused      = false;
+        handlerNeedsReadyWrite = false;
+        readIsNext             = true;
+        Log::Print(Log::Level::DebugDebug, this, [&]{ return "ready write"; });
         if (handler) {
             handler->OnStreamReadyWrite(handlerAssociatedId);
         }

@@ -95,6 +95,16 @@ class Buffer : public virtual ItemWriteInterface {
      *  If <c>dataSize</c> is <c>0</c>, nothing will happen.
      */
 	void Append(const void *data, int dataSize);
+    //! Appends data to the buffer by reading from the specified reader, potentially invalidating the memory location
+    //! handed out earlier via \ref Data().
+    /*!
+     *  \param maxNumBytes
+     *  Maximum number of bytes to read and append.
+     *
+     *  \return
+     *  The number of bytes actually read and appended. <c>0</c> means the reader has been read "empty".
+     */
+    int AppendFromReader(NonBlockingReadInterface *reader, int maxNumBytes);
     //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
 	/*!
 	 *  The bytes potentially "appended" are undefined.
@@ -113,6 +123,8 @@ class Buffer : public virtual ItemWriteInterface {
     void ClearWriteFailed() override;
 
   private:
+    void Grow();
+
     std::vector<uint8_t>          buffer_;
     int                           bufferFill_;
 };

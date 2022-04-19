@@ -19,16 +19,41 @@ namespace Events {
  */
 class EventLoopHub : public virtual EventReceiverInterface {
   public:
+    class HandlerInterface : public virtual Core::Interface {
+      public:
+        virtual void OnEventsAvailable() = 0;
+    };
+
     EventLoopHub();
     EventLoopHub(const EventLoopHub &other)            = delete;
     EventLoopHub &operator=(const EventLoopHub &other) = delete;
     EventLoopHub(EventLoopHub &&other)                 = delete;
     EventLoopHub &operator=(EventLoopHub &&other)      = delete;
-    
+    ~EventLoopHub()                                    = default;
+
     //! Allocates the resources for another client \ref EventLoop and returns a unique client id for it.
     int RegisterEventLoop();
     //! Unregisters the specified client loop (if such is registered).
+    /*!
+     *  If a handler was registered for the client loop, it is guaranteed that it will not be called again after the
+     *  method has returned.
+     */
     void UnregisterEventLoop(int clientLoopId);
+    //! Registers the specified handler for the specified client loop.
+    /*!
+     *  Pass <c>nullptr</c> to unregister a previously registered handler. An unregistered handler will not be called
+     *  again after the method has returned.
+     *
+     *  The handler is expected to outlive the hub, or as long until it is unregistered via <c>RegisterHandler()</c>, or
+     *  until the respective client loop is unregistered via <c>UnregisterEventLoop()</c>.
+     *
+     *  The handler's methods get activated by the thread posting the respective events to the hub. They must not call
+     *  back into the hub.
+     *
+     *  After registering a handler, a client should initially fetch its events to kick-start the events-available
+     *  signalling.
+     */
+    void RegisterHandler(int clientLoopId, HandlerInterface *handler);
     //! Registers the specified event id-to-slot mapping.
     /*!
      *  \return
@@ -82,16 +107,20 @@ class EventLoopHub : public virtual EventReceiverInterface {
     struct LoopInfo {
         std::unique_ptr<Core::Buffer>            buffer;
         std::unique_ptr<std::condition_variable> stateChanged;
+        HandlerInterface                         *handler;
         bool                                     waiting;
         bool                                     shutDownRequested;
         bool                                     inUse;
+
         LoopInfo()
                 : buffer(new Core::Buffer()),
                   stateChanged(new std::condition_variable()) {
             Reset();
         }
+
         void Reset() {
             buffer->Clear();
+            handler           = nullptr;
             waiting           = false;
             shutDownRequested = false;
             inUse             = false;

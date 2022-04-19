@@ -34,10 +34,9 @@ ListenSocket::SynchronizedState::SynchronizedState(const shared_ptr<RunLoop> &ru
 }
 
 ListenSocket::SynchronizedState::~SynchronizedState() {
-    for (int fd : acceptedConnections_) {
-        (void)IOTools::CloseFileDescriptor(fd, this);
-    }
-}
+    unique_lock<mutex> critical(lock_);    // Critical section .........................................................
+    DropAcceptedConnections(critical);
+}    // ......................................................................................... critical section, end.
 
 void ListenSocket::SynchronizedState::SetRunLoopClientId(int id) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
@@ -46,16 +45,20 @@ void ListenSocket::SynchronizedState::SetRunLoopClientId(int id) {
 
 void ListenSocket::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
-    while (!acceptedConnections_.empty()) {
-        auto connection = make_unique<TcpConnection>(acceptedConnections_.front(), runLoop_,
-                                                     loopThreadState->connectionIO);
-        acceptedConnections_.pop_front();
-        loopThreadState->acceptedConnections.push_back(move(connection));
-    }
-    if (error_) {
-        loopThreadState->error = true;
-    }
     syncRequested_ = false;
+    if (error_) {
+        if (!loopThreadState->error) {
+            loopThreadState->acceptedConnections.clear();
+            loopThreadState->error = true;
+        }
+    } else {
+        while (!acceptedConnections_.empty()) {
+            auto connection = make_unique<TcpConnection>(acceptedConnections_.front(), runLoop_,
+                                                         loopThreadState->connectionIO);
+            acceptedConnections_.pop_front();
+            loopThreadState->acceptedConnections.push_back(move(connection));
+        }
+    }
 }    // ......................................................................................... critical section, end.
 
 void ListenSocket::SynchronizedState::OnListenSocketAcceptedConnection(
@@ -66,13 +69,18 @@ void ListenSocket::SynchronizedState::OnListenSocketAcceptedConnection(
 
 void ListenSocket::SynchronizedState::OnListenSocketAcceptedConnection(int fd) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
-    acceptedConnections_.push_back(fd);
-    RequestSync(critical);
+    if (!error_) {
+        acceptedConnections_.push_back(fd);
+        RequestSync(critical);
+    } else {
+        (void)IOTools::CloseFileDescriptor(fd, this);
+    }
 }    // ......................................................................................... critical section, end.
 
 void ListenSocket::SynchronizedState::OnListenSocketErrorState() {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
     if (!error_) {
+        DropAcceptedConnections(critical);
         error_ = true;
         RequestSync(critical);
     }
@@ -83,10 +91,19 @@ void ListenSocket::SynchronizedState::RequestSync(unique_lock<mutex> &critical) 
     (void)critical;
     if (!syncRequested_) {
         if (runLoopClientId_) {
-            runLoop_->RequestActivation(*runLoopClientId_);
+            runLoop_->RequestActivation(*runLoopClientId_, true);
         }
         syncRequested_ = true;
     }
+}
+
+// Expects lock to be held.
+void ListenSocket::SynchronizedState::DropAcceptedConnections(unique_lock<mutex> &critical) {
+    (void)critical;
+    for (int fd : acceptedConnections_) {
+        (void)IOTools::CloseFileDescriptor(fd, this);
+    }
+    acceptedConnections_.clear();
 }
 
 }    // Namespace Framework.

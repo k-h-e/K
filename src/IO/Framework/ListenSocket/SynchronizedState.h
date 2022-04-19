@@ -44,6 +44,8 @@ class ListenSocket::SynchronizedState : public virtual IO::ListenSocket::Handler
   private:
     // Expects lock to be held.
     void RequestSync(std::unique_lock<std::mutex> &critical);
+    // Expects lock to be held.
+    void DropAcceptedConnections(std::unique_lock<std::mutex> &critical);
 
     std::mutex lock_;    // Protects everything below...
     const std::shared_ptr<Core::Framework::RunLoop> runLoop_;

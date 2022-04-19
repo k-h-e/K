@@ -13,6 +13,7 @@
 #include <K/Core/Log.h>
 
 using std::mutex;
+using std::to_string;
 using std::unique_lock;
 using K::Core::Log;
 
@@ -30,7 +31,9 @@ void RunLoop::Run() {
 
     bool done = false;
     while (!done) {
-        ClientInterface *clientToActivate = nullptr;
+        ClientInterface *clientToActivate  = nullptr;
+        int             clientToActivateId = 0;
+        bool            deepActivation     = false;
         {
             unique_lock<mutex> critical(lock_);    // Critical section..................................................
             while (!clientToActivate && !done) {
@@ -41,7 +44,11 @@ void RunLoop::Run() {
                     int client = clientActivationOrder_.front();
                     clientActivationOrder_.pop_front();
                     clientsToActivate_.erase(client);
-                    clientToActivate = clients_[client].client;
+                    auto &info = clients_[client];
+                    clientToActivate   = info.client;
+                    clientToActivateId = client;
+                    deepActivation     = info.deepActivationRequested;
+                    info.deepActivationRequested = false;
                 } else {
                     stateChanged_.wait(critical);
                 }
@@ -52,7 +59,10 @@ void RunLoop::Run() {
         // happens on the loop thread. Since we're on the loop thread, we can be sure the client reference is valid for
         // the call...
         if (clientToActivate) {
-            clientToActivate->Activate();
+            Log::Print(Log::Level::DebugDebug, this, [&]{
+                return "activating client " + to_string(clientToActivateId) + ", deep=" + to_string(deepActivation);
+            });
+            clientToActivate->Activate(deepActivation);
         }
     }
 
@@ -78,6 +88,9 @@ int RunLoop::AddClient(ClientInterface *client) {
 
     ClientInfo &info = clients_[slot];
     info.client = client;
+    Log::Print(Log::Level::Debug, this, [&]{
+        return "client added, id=" + to_string(slot) + ", num_clients=" + to_string(NumClients(critical));
+    });
     return slot;
 }    // ......................................................................................... critical section, end.
 
@@ -86,14 +99,26 @@ void RunLoop::RemoveClient(int client) {
     ClearPendingActivation(client, critical);
     clients_[client].Reset();
     freeClientSlots_.push_back(client);
+    Log::Print(Log::Level::Debug, this, [&]{
+        return "removed client " + to_string(client) + ", num_clients=" + to_string(NumClients(critical));
+    });
 }    // ......................................................................................... critical section, end.
 
-void RunLoop::RequestActivation(int client) {
+void RunLoop::RequestActivation(int client, bool deepActivation) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    Log::Print(Log::Level::DebugDebug, this, [&]{
+        return "RequestActivation(), client=" + to_string(client) + ", deep=" + to_string(deepActivation);
+    });
+    auto &info = clients_[client];
     if (!clientsToActivate_.contains(client)) {
         clientsToActivate_.insert(client);
         clientActivationOrder_.push_back(client);
+        info.deepActivationRequested = deepActivation;
         stateChanged_.notify_all();
+    } else {
+        if (deepActivation) {
+            info.deepActivationRequested = true;
+        }
     }
 }    // ......................................................................................... critical section, end.
 
@@ -112,12 +137,19 @@ void RunLoop::ClearPendingActivation(int client, unique_lock<mutex> &critical) {
     }
 }
 
+// Expects lock to be held.
+int RunLoop::NumClients(unique_lock<mutex> &critical) {
+    (void)critical;
+    return static_cast<int>(clients_.size()) - static_cast<int>(freeClientSlots_.size());
+}
+
 RunLoop::ClientInfo::ClientInfo() {
     Reset();
 }
 
 void RunLoop::ClientInfo::Reset() {
-    client = nullptr;
+    client                  = nullptr;
+    deepActivationRequested = false;
 }
 
 }    // Namespace Framework.

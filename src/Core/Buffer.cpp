@@ -14,7 +14,7 @@
 #include <cstring>
 #include <K/Core/NumberTools.h>
 
-using namespace std;
+using std::min;
 
 namespace K {
 namespace Core {
@@ -61,16 +61,26 @@ void Buffer::Shrink(int size) {
 void Buffer::Append(const void *data, int dataSize) {
     if (dataSize > 0) {
         int newFill = bufferFill_ + dataSize;
-        if (newFill > (int)buffer_.size()) {
-            int newSize = 2 * (int)buffer_.size();
-            if (newFill > newSize)
-                newSize = newFill;
-            buffer_.resize(newSize);
+        while (newFill > static_cast<int>(buffer_.size())) {
+           Grow();
         }
-        if (data)
+        if (data) {
             memcpy(&buffer_.front() + bufferFill_, data, dataSize);
+        }
         bufferFill_ += dataSize;
     }
+}
+
+int Buffer::AppendFromReader(NonBlockingReadInterface *reader, int maxNumBytes) {
+    assert(maxNumBytes > 0);
+    int numFree = static_cast<int>(buffer_.size()) - bufferFill_;
+    if (!numFree) {
+        Grow();
+        numFree = static_cast<int>(buffer_.size()) - bufferFill_;
+    }
+    int numRead = reader->ReadNonBlocking(&buffer_[bufferFill_], min(numFree, maxNumBytes));
+    bufferFill_ += numRead;
+    return numRead;
 }
 
 void Buffer::WriteItem(const void *item, int itemSize) {
@@ -87,6 +97,10 @@ void Buffer::ClearWriteFailed() {
 
 void Buffer::RestoreToCurrentCapacity() {
     bufferFill_ = (int)buffer_.size();
+}
+
+void Buffer::Grow() {
+    buffer_.resize(2u * buffer_.size());
 }
 
 Buffer::Reader Buffer::GetReader() const {
