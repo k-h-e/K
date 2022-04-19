@@ -29,7 +29,7 @@ namespace Framework {
 
 NetworkEventCouplingServer::Core::Core(
         int port, const string &protocolVersion, const KeepAliveParameters &keepAliveParameters,
-        const shared_ptr<EventLoopHub> &hub, const shared_ptr<RunLoop> &runLoop,
+        const shared_ptr<EventHub> &hub, const shared_ptr<RunLoop> &runLoop,
         const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<Timers> &timers,
         const shared_ptr<ThreadPool> &threadPool)
             : hub_(hub),

@@ -11,7 +11,7 @@ namespace K {
         }
     }
     namespace Events {
-        class EventLoopHub;
+        class EventHub;
     }
 }
 
@@ -45,7 +45,7 @@ class EventNotifier : public virtual Core::Interface {
         virtual void OnEventsAvailable(int id) = 0;
     };
 
-    EventNotifier(const std::shared_ptr<EventLoopHub> &hub, int clientLoopId,
+    EventNotifier(const std::shared_ptr<EventHub> &hub, int clientLoopId,
                   const std::shared_ptr<Core::Framework::RunLoop> &runLoop);
     EventNotifier(const EventNotifier &other)            = delete;
     EventNotifier &operator=(const EventNotifier &other) = delete;

@@ -3,7 +3,7 @@
 #include <K/Core/CompletionHandlerInterface.h>
 #include <K/Core/Log.h>
 #include <K/IO/TcpConnection.h>
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 
 using std::shared_ptr;
 using std::unique_lock;
@@ -17,7 +17,7 @@ namespace Events {
 
 NetworkEventCoupling::SharedState::SharedState(
     const shared_ptr<CompletionHandlerInterface> &completionHandler, int completionId,
-    const shared_ptr<EventLoopHub> &hub, int hubClientId)
+    const shared_ptr<EventHub> &hub, int hubClientId)
         : completionHandler_(completionHandler),
           completionId_(completionId),
           keepAlive_(false),

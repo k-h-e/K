@@ -3,7 +3,7 @@
 #include <cstring>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 #include "SharedState.h"
 
 using std::memcpy;
@@ -17,7 +17,7 @@ using K::Events::EventLoopHub;
 namespace K {
 namespace Events {
 
-NetworkEventCoupling::ReadHandler::ReadHandler(const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
+NetworkEventCoupling::ReadHandler::ReadHandler(const string &protocolVersion, const shared_ptr<EventHub> &hub,
                                                int hubClientId, const shared_ptr<SharedState> &sharedState)
         : sharedState_(sharedState),
           hub_(hub),
@@ -73,7 +73,7 @@ void NetworkEventCoupling::ReadHandler::HandleStreamData(const void *data, int d
                                         int offset = static_cast<int>(sizeof(chunkType));
                                         if (chunkSize_ > offset) {
                                             int eventDataSize = chunkSize_ - offset;
-                                            hub_->Post(hubClientId_, &buffer[cursor_ + offset], eventDataSize, true);
+                                            hub_->Submit(hubClientId_, &buffer[cursor_ + offset], eventDataSize, true);
                                         } else {
                                             EnterErrorState();
                                         }

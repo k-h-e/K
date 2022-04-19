@@ -18,7 +18,7 @@ namespace K {
         class KeepAliveParameters;
     }
     namespace Events {
-        class EventLoopHub;
+        class EventHub;
     }
 }
 
@@ -32,7 +32,7 @@ class NetworkEventCouplingServer : public virtual K::Core::Interface {
   public:
     NetworkEventCouplingServer(
         int port, const std::string &protocolVersion, const IO::KeepAliveParameters &keepAliveParameters,
-        const std::shared_ptr<EventLoopHub> &hub, const std::shared_ptr<K::Core::Framework::RunLoop> &runLoop,
+        const std::shared_ptr<EventHub> &hub, const std::shared_ptr<K::Core::Framework::RunLoop> &runLoop,
         const std::shared_ptr<IO::ConnectionIO> &connectionIO, const std::shared_ptr<K::Core::Timers> &timers,
         const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     NetworkEventCouplingServer()                                                   = delete;

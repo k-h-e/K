@@ -1,5 +1,5 @@
-#ifndef K_EVENTS_EVENTLOOPHUB_H_
-#define K_EVENTS_EVENTLOOPHUB_H_
+#ifndef K_EVENTS_EVENTHUB_H_
+#define K_EVENTS_EVENTHUB_H_
 
 #include <memory>
 #include <queue>
@@ -17,19 +17,19 @@ namespace Events {
 /*!
  *  The class is threadsafe (i.e. all public methods).
  */
-class EventLoopHub : public virtual EventReceiverInterface {
+class EventHub : public virtual EventReceiverInterface {
   public:
     class HandlerInterface : public virtual Core::Interface {
       public:
         virtual void OnEventsAvailable() = 0;
     };
 
-    EventLoopHub();
-    EventLoopHub(const EventLoopHub &other)            = delete;
-    EventLoopHub &operator=(const EventLoopHub &other) = delete;
-    EventLoopHub(EventLoopHub &&other)                 = delete;
-    EventLoopHub &operator=(EventLoopHub &&other)      = delete;
-    ~EventLoopHub()                                    = default;
+    EventHub();
+    EventHub(const EventHub &other)            = delete;
+    EventHub &operator=(const EventHub &other) = delete;
+    EventHub(EventHub &&other)                 = delete;
+    EventHub &operator=(EventHub &&other)      = delete;
+    ~EventHub()                                = default;
 
     //! Allocates the resources for another client \ref EventLoop and returns a unique client id for it.
     int RegisterEventLoop();
@@ -60,34 +60,37 @@ class EventLoopHub : public virtual EventReceiverInterface {
      *  <c>false</c> in case of failure. In this case, the operation had no effect.
      */
     bool RegisterEventIdToSlotMapping(size_t id, int slot);
-    //! Allows a client \ref EventLoop (thread) to post the events represented by the specified serialized event data.
-    void Post(int clientLoopId, const void *data, int dataSize, bool onlyPostToOthers);
-    //! Allows a client \ref EventLoop (thread) to retrieve all events currently scheduled for it.
+    //! Allows a client \ref EventLoop (thread) to both retrieve all events currently scheduled for it and submit all
+    //! posted events it currently has.
     /*!
      *  If there are currently no more events scheduled for the calling client \ref EventLoop, the method returns
      *  immediately.
      *
      *  \param buffer
-     *  Some buffer no longer needed by the client \ref EventLoop. It will be swapped with another buffer containing all
-     *  event data the hub currently has for the calling client \ref EventLoop.
+     *  Buffer holding events to be submitted to the hub. Will be swapped with another buffer containing all event data
+     *  the hub currently has for the calling client \ref EventLoop.
      *
      *  \return <c>false</c> in case shutdown has been requested. The returned buffer will then be cleared.
      */
-    bool GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer);
-    //! Allows a client \ref EventLoop (thread) to retrieve all events currently scheduled for it.
+    bool Sync(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer);
+    //! Allows a client \ref EventLoop (thread) to both retrieve all events currently scheduled for it and submit all
+    //! posted events it currently has.
     /*!
      *  If there are currently no more events scheduled for the calling client \ref EventLoop, the method blocks the
      *  client loop's thread until new events arrive for it, or the specified timeout has elapsed (if given), or
      *  shutdown is requested.
      *
      *  \param buffer
-     *  Some buffer no longer needed by the client \ref EventLoop. It will be swapped with another buffer containing all
-     *  event data the hub currently has for the calling client \ref EventLoop.
+     *  Buffer holding events to be submitted to the hub. Will be swapped with another buffer containing all event data
+     *  the hub currently has for the calling client \ref EventLoop.
      *
      *  \return <c>false</c> in case shutdown has been requested. The returned buffer will then be cleared.
      */
-    bool GetEvents(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer,
-                   std::optional<std::chrono::milliseconds> timeout);
+    bool Sync(int clientLoopId, std::unique_ptr<Core::Buffer> *buffer,
+              std::optional<std::chrono::milliseconds> timeout);
+    //! Allows a client \ref EventLoop (thread) to submit the events represented by the specified serialized event data
+    //! to the hub.
+    void Submit(int clientLoopId, const void *data, int dataSize, bool onlyDeliverToOthers);
     //! Asks all participating client \ref EventLoop s to finish running (but does not wait until that has happened).
     /*!
      *  Client \ref EventLoop s can check for whether shutdown is requested for them by inspecting the return value of
@@ -127,8 +130,9 @@ class EventLoopHub : public virtual EventReceiverInterface {
         }
     };
     
-    void DoPost(int clientLoopId, const void *data, int dataSize, bool onlyPostToOthers);
-    LoopInfo *GetLoopInfo(int clientLoopId);
+    void DoSubmit(std::unique_lock<std::mutex> &critical, int clientLoopId, const void *data, int dataSize,
+                  bool onlyDeliverToOthers);
+    LoopInfo *GetLoopInfo(std::unique_lock<std::mutex> &critical, int clientLoopId);
 
     std::mutex                      lock_;
     std::vector<LoopInfo>           loops_;
@@ -141,5 +145,5 @@ class EventLoopHub : public virtual EventReceiverInterface {
 }    // Namespace Events.
 }    // Namespace K.
 
-#endif    // K_EVENTS_EVENTLOOPHUB_H_
+#endif    // K_EVENTS_EVENTHUB_H_
 

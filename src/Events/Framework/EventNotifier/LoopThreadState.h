@@ -10,14 +10,14 @@ namespace Framework {
 
 //! Notifier state exclusively accessed from the run loop thread.
 struct EventNotifier::LoopThreadState : public virtual Core::Framework::RunLoop::ClientInterface {
-    const std::shared_ptr<EventLoopHub>             hub;
+    const std::shared_ptr<EventHub>                 hub;
     int                                             clientLoopId;
     const std::shared_ptr<Core::Framework::RunLoop> runLoop;
     int                                             runLoopClientId;
     HandlerInterface                                *handler;
     int                                             handlerAssociatedId;
 
-    LoopThreadState(const std::shared_ptr<EventLoopHub> &hub, int clientLoopId,
+    LoopThreadState(const std::shared_ptr<EventHub> &hub, int clientLoopId,
                     const std::shared_ptr<Core::Framework::RunLoop> &runLoop);
     LoopThreadState(const LoopThreadState &other)            = delete;
     LoopThreadState &operator=(const LoopThreadState &other) = delete;

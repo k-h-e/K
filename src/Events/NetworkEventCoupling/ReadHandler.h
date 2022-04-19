@@ -15,7 +15,7 @@ class EventLoopHub;
 //! Asynchronous read handler for the network event coupling.
 class NetworkEventCoupling::ReadHandler : public virtual Core::StreamHandlerInterface {
   public:
-    ReadHandler(const std::string &protocolVersion, const std::shared_ptr<EventLoopHub> &hub, int hubClientId,
+    ReadHandler(const std::string &protocolVersion, const std::shared_ptr<EventHub> &hub, int hubClientId,
                 const std::shared_ptr<SharedState> &sharedState);
     void HandleStreamData(const void *data, int dataSize) override;
     void HandleEof() override;
@@ -29,7 +29,7 @@ class NetworkEventCoupling::ReadHandler : public virtual Core::StreamHandlerInte
     void EnterErrorState();
 
     std::shared_ptr<SharedState>  sharedState_;    // Thread-safe.
-    std::shared_ptr<EventLoopHub> hub_;            // Thread-safe.
+    std::shared_ptr<EventHub>     hub_;            // Thread-safe.
 
     int                      hubClientId_;
     std::string              protocolVersion_;

@@ -23,7 +23,7 @@ namespace K {
         }
     }
     namespace Events {
-        class EventLoopHub;
+        class EventHub;
     }
 }
 
@@ -38,7 +38,7 @@ class NetworkEventCoupling::Core : public virtual IO::Framework::TcpConnection::
                                     public virtual K::Core::Framework::RunLoop::ClientInterface {
   public:
     Core(std::unique_ptr<IO::Framework::TcpConnection> tcpConnection, const std::string &protocolVersion,
-         const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventLoopHub> &hub,
+         const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventHub> &hub,
          const std::shared_ptr<K::Core::Framework::RunLoop> &runLoop, const std::shared_ptr<K::Core::Timers> &timers);
     Core()                             = delete;
     Core(const Core &other)            = delete;
@@ -77,7 +77,7 @@ class NetworkEventCoupling::Core : public virtual IO::Framework::TcpConnection::
     void PushOut();
     void EnterErrorState();
 
-    const std::shared_ptr<EventLoopHub>                hub_;                // Thread safe.
+    const std::shared_ptr<EventHub>                    hub_;                // Thread safe.
 
     std::unique_ptr<IO::Framework::TcpConnection>      tcpConnection_;      // Present <=> not in error state.
     std::unique_ptr<K::Core::Framework::Timer>         timer_;              // Present <=> not in error state.

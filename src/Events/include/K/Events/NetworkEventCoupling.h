@@ -18,7 +18,7 @@ namespace IO {
 namespace K {
 namespace Events {
 
-class EventLoopHub;
+class EventHub;
 
 //! Extends the event mechanism to other nodes across the network.
 class NetworkEventCoupling : public virtual Core::Interface {
@@ -31,7 +31,7 @@ class NetworkEventCoupling : public virtual Core::Interface {
      */
     NetworkEventCoupling(
         const std::shared_ptr<IO::TcpConnection> &tcpConnection, const std::string &protocolVersion,
-        const std::shared_ptr<EventLoopHub> &hub,
+        const std::shared_ptr<EventHub> &hub,
         const std::shared_ptr<Core::CompletionHandlerInterface> &completionHandler, int completionId,
         const std::shared_ptr<Core::ThreadPool> &threadPool, const std::shared_ptr<Core::Timers> &timers);
     ~NetworkEventCoupling();

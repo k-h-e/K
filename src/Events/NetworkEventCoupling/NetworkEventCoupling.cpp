@@ -3,7 +3,7 @@
 #include <K/Core/ThreadPool.h>
 #include <K/Core/Log.h>
 #include <K/IO/TcpConnection.h>
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 #include "SharedState.h"
 #include "Writer.h"
 
@@ -17,14 +17,14 @@ using K::Core::Log;
 using K::Core::ThreadPool;
 using K::Core::Timers;
 using K::IO::TcpConnection;
-using K::Events::EventLoopHub;
+using K::Events::EventHub;
 
 namespace K {
 namespace Events {
 
 NetworkEventCoupling::NetworkEventCoupling(
         const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion,
-        const shared_ptr<EventLoopHub> &hub, const shared_ptr<CompletionHandlerInterface> &completionHandler,
+        const shared_ptr<EventHub> &hub, const shared_ptr<CompletionHandlerInterface> &completionHandler,
         int completionId, const std::shared_ptr<ThreadPool> &threadPool, const std::shared_ptr<Timers> &timers) {
     int hubClientId = hub->RegisterEventLoop();
     sharedState_ = make_shared<SharedState>(completionHandler, completionId, hub, hubClientId);

@@ -7,7 +7,7 @@ namespace K {
 namespace Events {
 namespace Framework {
 
-EventNotifier::LoopThreadState::LoopThreadState(const shared_ptr<EventLoopHub> &hub, int clientLoopId,
+EventNotifier::LoopThreadState::LoopThreadState(const shared_ptr<EventHub> &hub, int clientLoopId,
                                                 const shared_ptr<RunLoop> &runLoop)
         : hub(hub),
           clientLoopId(clientLoopId),

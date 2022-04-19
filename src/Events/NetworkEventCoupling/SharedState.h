@@ -19,7 +19,7 @@ class NetworkEventCoupling::SharedState : public virtual Core::CompletionHandler
                                           public virtual Core::Timers::HandlerInterface {
   public:
     SharedState(const std::shared_ptr<Core::CompletionHandlerInterface> &completionHandler,
-                int completionId, const std::shared_ptr<EventLoopHub> &hub, int hubClientId);
+                int completionId, const std::shared_ptr<EventHub> &hub, int hubClientId);
     void RegisterTcpConnection(IO::TcpConnection *connection);
     void ShutDown();
     void OnKeepAlive();
@@ -33,7 +33,7 @@ class NetworkEventCoupling::SharedState : public virtual Core::CompletionHandler
     int                                               completionId_;
     bool                                              keepAlive_;
     bool                                              writerFinished_;
-    std::shared_ptr<EventLoopHub>                     hub_;
+    std::shared_ptr<EventHub>                         hub_;
     std::optional<int>                                hubClientId_;
     IO::TcpConnection                                 *tcpConnection_;
 };

@@ -4,7 +4,7 @@
 #include <K/Core/StringTools.h>
 #include <K/Core/Framework/Timer.h>
 #include <K/IO/Framework/TcpConnection.h>
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 #include <K/Events/Framework/EventNotifier.h>
 
 using std::make_unique;
@@ -29,7 +29,7 @@ namespace Framework {
 
 NetworkEventCoupling::Core::Core(
     unique_ptr<TcpConnection> tcpConnection, const string &protocolVersion,
-    const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventLoopHub> &hub,
+    const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
     const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
         : hub_(hub),
           tcpConnection_(move(tcpConnection)),
@@ -143,7 +143,8 @@ void NetworkEventCoupling::Core::OnTimer(int id) {
 void NetworkEventCoupling::Core::OnEventsAvailable(int id) {
     (void)id;
     if (!error_) {    // Defensive.
-        if (hub_->GetEvents(hubClientId_, &eventBuffer_)) {
+        eventBuffer_->Clear();
+        if (hub_->Sync(hubClientId_, &eventBuffer_)) {
             Log::Print(Log::Level::Debug, this, [&]{
                 return "events available, size=" + to_string(eventBuffer_->DataSize());
             });
@@ -207,7 +208,7 @@ void NetworkEventCoupling::Core::ProcessIncoming() {
                                     int offset = static_cast<int>(sizeof(chunkType));
                                     if (readChunkSize_ > offset) {
                                         int eventDataSize = readChunkSize_ - offset;
-                                        hub_->Post(hubClientId_, &buffer[readCursor_ + offset], eventDataSize, true);
+                                        hub_->Submit(hubClientId_, &buffer[readCursor_ + offset], eventDataSize, true);
                                     } else {
                                         EnterErrorState();
                                     }

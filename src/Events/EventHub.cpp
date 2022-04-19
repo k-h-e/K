@@ -1,4 +1,4 @@
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 
 #include <cassert>
 #include <cstdio>
@@ -18,12 +18,12 @@ using K::Core::Log;
 namespace K {
 namespace Events {
 
-EventLoopHub::EventLoopHub()
+EventHub::EventHub()
         : shutDownRequested_(false) {
     // Nop.
 }
 
-int EventLoopHub::RegisterEventLoop() {
+int EventHub::RegisterEventLoop() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     int id;
     if (unusedLoopSlots_.empty()) {
@@ -42,9 +42,9 @@ int EventLoopHub::RegisterEventLoop() {
     return id;
 }    // ......................................................................................... critical section, end.
 
-void EventLoopHub::UnregisterEventLoop(int clientLoopId) {
+void EventHub::UnregisterEventLoop(int clientLoopId) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    LoopInfo *info = GetLoopInfo(clientLoopId);
+    LoopInfo *info = GetLoopInfo(critical, clientLoopId);
     if (info) {
         info->Reset();
         unusedLoopSlots_.push(clientLoopId);
@@ -52,15 +52,15 @@ void EventLoopHub::UnregisterEventLoop(int clientLoopId) {
     }
 }    // ......................................................................................... critical section, end.
 
-void EventLoopHub::RegisterHandler(int clientLoopId, HandlerInterface *handler) {
+void EventHub::RegisterHandler(int clientLoopId, HandlerInterface *handler) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    LoopInfo *info = GetLoopInfo(clientLoopId);
+    LoopInfo *info = GetLoopInfo(critical, clientLoopId);
     if (info) {
         info->handler = handler;
     }
 }    // ......................................................................................... critical section, end.
 
-bool EventLoopHub::RegisterEventIdToSlotMapping(size_t id, int slot) {
+bool EventHub::RegisterEventIdToSlotMapping(size_t id, int slot) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     auto iter = eventIdToSlotMap_.find(id);
     if (iter != eventIdToSlotMap_.end()) {
@@ -76,16 +76,14 @@ bool EventLoopHub::RegisterEventIdToSlotMapping(size_t id, int slot) {
     return true;
 }    // ......................................................................................... critical section, end.
 
-void EventLoopHub::Post(int clientLoopId, const void *data, int dataSize, bool onlyPostToOthers) {
+bool EventHub::Sync(int clientLoopId, unique_ptr<Buffer> *buffer) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    DoPost(clientLoopId, data, dataSize, onlyPostToOthers);
-}    // ......................................................................................... critical section, end.
+    if ((*buffer)->DataSize()) {
+        DoSubmit(critical, 0, (*buffer)->Data(), (*buffer)->DataSize(), false);
+        (*buffer)->Clear();
+    }
 
-bool EventLoopHub::GetEvents(int clientLoopId, unique_ptr<Buffer> *buffer) {
-    (*buffer)->Clear();
-
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    LoopInfo *info = GetLoopInfo(clientLoopId);
+    LoopInfo *info = GetLoopInfo(critical, clientLoopId);
     if (!info || info->shutDownRequested || shutDownRequested_) {
         return false;
     } else {
@@ -96,13 +94,16 @@ bool EventLoopHub::GetEvents(int clientLoopId, unique_ptr<Buffer> *buffer) {
     }
 }    // ......................................................................................... critical section, end.
 
-bool EventLoopHub::GetEvents(int clientLoopId, unique_ptr<Buffer> *buffer, optional<milliseconds> timeout) {
-    (*buffer)->Clear();
-
+bool EventHub::Sync(int clientLoopId, unique_ptr<Buffer> *buffer, optional<milliseconds> timeout) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    if ((*buffer)->DataSize()) {
+        DoSubmit(critical, 0, (*buffer)->Data(), (*buffer)->DataSize(), false);
+        (*buffer)->Clear();
+    }
+
     bool didWait = false;
     while (true) {
-        LoopInfo *info = GetLoopInfo(clientLoopId);
+        LoopInfo *info = GetLoopInfo(critical, clientLoopId);
         if (!info || info->shutDownRequested || shutDownRequested_) {
             return false;
         }
@@ -130,7 +131,23 @@ bool EventLoopHub::GetEvents(int clientLoopId, unique_ptr<Buffer> *buffer, optio
     }
 }    // ......................................................................................... critical section, end.
 
-void EventLoopHub::RequestShutDown() {
+void EventHub::Submit(int clientLoopId, const void *data, int dataSize, bool onlyDeliverToOthers) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    DoSubmit(critical, clientLoopId, data, dataSize, onlyDeliverToOthers);
+}    // ......................................................................................... critical section, end.
+
+void EventHub::Post(const Event &event) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    auto iter = eventIdToSlotMap_.find(event.Type().id);
+    assert(iter != eventIdToSlotMap_.end());
+    int slot = iter->second;
+    eventsToSchedule_.Append(&slot, sizeof(slot));
+    event.Serialize(&eventsToSchedule_);
+    DoSubmit(critical, 0, eventsToSchedule_.Data(), eventsToSchedule_.DataSize(), false);
+    eventsToSchedule_.Clear();
+}    // ......................................................................................... critical section, end.
+
+void EventHub::RequestShutDown() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     shutDownRequested_ = true;
     for (auto &loopInfo : loops_) {
@@ -140,9 +157,9 @@ void EventLoopHub::RequestShutDown() {
     }
 }    // ......................................................................................... critical section, end.
 
-void EventLoopHub::RequestShutDown(int clientLoopId) {
+void EventHub::RequestShutDown(int clientLoopId) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    LoopInfo *loopInfo = GetLoopInfo(clientLoopId);
+    LoopInfo *loopInfo = GetLoopInfo(critical, clientLoopId);
     if (loopInfo) {
         loopInfo->shutDownRequested = true;
         loopInfo->stateChanged->notify_all();
@@ -152,25 +169,16 @@ void EventLoopHub::RequestShutDown(int clientLoopId) {
     }
 }    // ......................................................................................... critical section, end.
  
-void EventLoopHub::Post(const Event &event) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    auto iter = eventIdToSlotMap_.find(event.Type().id);
-    assert(iter != eventIdToSlotMap_.end());
-    int slot = iter->second;
-    eventsToSchedule_.Append(&slot, sizeof(slot));
-    event.Serialize(&eventsToSchedule_);
-    DoPost(0, eventsToSchedule_.Data(), eventsToSchedule_.DataSize(), false);
-    eventsToSchedule_.Clear();
-}    // ......................................................................................... critical section, end.
-
 // Expects lock to be held.
-void EventLoopHub::DoPost(int clientLoopId, const void *data, int dataSize, bool onlyPostToOthers) {
+void EventHub::DoSubmit(unique_lock<mutex> &critical, int clientLoopId, const void *data, int dataSize,
+                        bool onlyDeliverToOthers) {
+    (void)critical;
     int num = static_cast<int>(loops_.size());
     for (int i = 0; i < num; ++i) {
         LoopInfo &loopInfo = loops_[i];
         if (loopInfo.inUse) {
             bool wasEmpty = (loopInfo.buffer->DataSize() == 0);
-            if (!(onlyPostToOthers && (i == clientLoopId))) {
+            if (!(onlyDeliverToOthers && (i == clientLoopId))) {
                 loopInfo.buffer->Append(data, dataSize);
                 if (loopInfo.waiting) {
                     loopInfo.stateChanged->notify_all();
@@ -184,7 +192,8 @@ void EventLoopHub::DoPost(int clientLoopId, const void *data, int dataSize, bool
 }
 
 // Expects lock to be held.
-EventLoopHub::LoopInfo *EventLoopHub::GetLoopInfo(int clientLoopId) {
+EventHub::LoopInfo *EventHub::GetLoopInfo(unique_lock<mutex> &critical, int clientLoopId) {
+    (void)critical;
     if ((clientLoopId >= 0) && (clientLoopId < static_cast<int>(loops_.size()))) {
         LoopInfo &info = loops_[clientLoopId];
         if (info.inUse) {

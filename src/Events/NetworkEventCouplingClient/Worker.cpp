@@ -23,7 +23,7 @@ namespace K {
 namespace Events {
 
 NetworkEventCouplingClient::Worker::Worker(
-    const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
+    const string &protocolVersion, const shared_ptr<EventHub> &hub,
     const shared_ptr<ActionInterface> &onConnectedAction, const shared_ptr<ActionInterface> &onFailedToConnectAction,
     const shared_ptr<ActionInterface> &onDisconnectedAction, const shared_ptr<SharedState> &sharedState,
     const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<ThreadPool> &threadPool,

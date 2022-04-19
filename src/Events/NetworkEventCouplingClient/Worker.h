@@ -14,7 +14,7 @@ class EventLoopHub;
 class NetworkEventCouplingClient::Worker : public virtual Core::ActionInterface {
   public:
     Worker(
-       const std::string &protocolVersion, const std::shared_ptr<EventLoopHub> &hub,
+       const std::string &protocolVersion, const std::shared_ptr<EventHub> &hub,
        const std::shared_ptr<K::Core::ActionInterface> &onConnectedAction,
        const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
        const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,
@@ -26,7 +26,7 @@ class NetworkEventCouplingClient::Worker : public virtual Core::ActionInterface 
 
   private:
     std::shared_ptr<SharedState>         sharedState_;     // Thread safe.
-    std::shared_ptr<EventLoopHub>        hub_;             // Thread safe.
+    std::shared_ptr<EventHub>            hub_;             // Thread safe.
     std::shared_ptr<K::IO::ConnectionIO> connectionIO_;    // Thread safe.
     std::shared_ptr<K::Core::ThreadPool> threadPool_;      // Thread safe.
     std::shared_ptr<K::Core::Timers>     timers_;          // Thread safe.

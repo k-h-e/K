@@ -5,13 +5,13 @@
 using std::make_unique;
 using std::shared_ptr;
 using K::Core::Framework::RunLoop;
-using K::Events::EventLoopHub;
+using K::Events::EventHub;
 
 namespace K {
 namespace Events {
 namespace Framework {
 
-EventNotifier::EventNotifier(const shared_ptr<EventLoopHub> &hub, int clientLoopId, const shared_ptr<RunLoop> &runLoop)
+EventNotifier::EventNotifier(const shared_ptr<EventHub> &hub, int clientLoopId, const shared_ptr<RunLoop> &runLoop)
         : loopThreadState_(make_unique<LoopThreadState>(hub, clientLoopId, runLoop)) {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     adapter_ = make_unique<Adapter>(loopThreadState_->runLoop, loopThreadState_->runLoopClientId);

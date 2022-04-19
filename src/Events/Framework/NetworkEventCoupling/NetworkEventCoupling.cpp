@@ -4,7 +4,7 @@
 #include <K/Core/StringTools.h>
 #include <K/Core/Framework/Timer.h>
 #include <K/IO/Framework/TcpConnection.h>
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 #include <K/Events/Framework/EventNotifier.h>
 #include "Core.h"
 
@@ -30,7 +30,7 @@ namespace Framework {
 
 NetworkEventCoupling::NetworkEventCoupling(
     unique_ptr<TcpConnection> tcpConnection, const string &protocolVersion,
-    const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventLoopHub> &hub,
+    const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
     const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
         : core_(make_unique<Core>(move(tcpConnection), protocolVersion, keepAliveParameters, hub, runLoop, timers)) {
     // Nop.

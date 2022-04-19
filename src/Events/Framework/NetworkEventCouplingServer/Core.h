@@ -21,7 +21,7 @@ namespace K {
         class ConnectionIO;
     }
     namespace Events {
-        class EventLoopHub;
+        class EventHub;
     }
 }
 
@@ -36,7 +36,7 @@ class NetworkEventCouplingServer::Core : public virtual IO::Framework::ListenSoc
   public:
     Core(
         int port, const std::string &protocolVersion, const IO::KeepAliveParameters &keepAliveParameters,
-        const std::shared_ptr<EventLoopHub> &hub, const std::shared_ptr<K::Core::Framework::RunLoop> &runLoop,
+        const std::shared_ptr<EventHub> &hub, const std::shared_ptr<K::Core::Framework::RunLoop> &runLoop,
         const std::shared_ptr<IO::ConnectionIO> &connectionIO, const std::shared_ptr<K::Core::Timers> &timers,
         const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     Core()                             = delete;
@@ -60,7 +60,7 @@ class NetworkEventCouplingServer::Core : public virtual IO::Framework::ListenSoc
    void InstallTimer();
    void UninstallTimer();
 
-   const std::shared_ptr<EventLoopHub>        hub_;             // Thread safe.
+   const std::shared_ptr<EventHub>            hub_;             // Thread safe.
    const std::shared_ptr<IO::ConnectionIO>    connectionIO_;    // Thread safe.
    const std::shared_ptr<K::Core::Timers>     timers_;          // Thread safe.
    const std::shared_ptr<K::Core::ThreadPool> threadPool_;      // Thread safe.

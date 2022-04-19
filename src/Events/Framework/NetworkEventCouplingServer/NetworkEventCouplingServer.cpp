@@ -17,7 +17,7 @@ namespace Framework {
 
 NetworkEventCouplingServer::NetworkEventCouplingServer(
         int port, const string &protocolVersion, const KeepAliveParameters &keepAliveParameters,
-        const shared_ptr<EventLoopHub> &hub, const shared_ptr<RunLoop> &runLoop,
+        const shared_ptr<EventHub> &hub, const shared_ptr<RunLoop> &runLoop,
         const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<Timers> &timers,
         const shared_ptr<ThreadPool> &threadPool)
             : core_(make_unique<Core>(port, protocolVersion, keepAliveParameters, hub, runLoop, connectionIO, timers,

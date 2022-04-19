@@ -17,7 +17,7 @@ namespace K {
 namespace K {
 namespace Events {
 
-class EventLoopHub;
+class EventHub;
 
 //! Establishes network connections (at most one at a time) to remote event loop mechanisms and installs local network
 //! event couplings for them.
@@ -36,7 +36,7 @@ class NetworkEventCouplingClient {
      *  down.
      */
     NetworkEventCouplingClient(
-        const std::string &protocolVersion, const std::shared_ptr<EventLoopHub> &hub,
+        const std::string &protocolVersion, const std::shared_ptr<EventHub> &hub,
         const std::shared_ptr<K::Core::ActionInterface> &onConnectedAction,
         const std::shared_ptr<K::Core::ActionInterface> &onFailedToConnectAction,
         const std::shared_ptr<K::Core::ActionInterface> &onDisconnectedAction,

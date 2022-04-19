@@ -19,7 +19,7 @@ namespace K {
         }
     }
     namespace Events {
-        class EventLoopHub;
+        class EventHub;
     }
 }
 
@@ -43,7 +43,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface {
 
     NetworkEventCoupling(
         std::unique_ptr<IO::Framework::TcpConnection> tcpConnection, const std::string &protocolVersion,
-        const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventLoopHub> &hub,
+        const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventHub> &hub,
         const std::shared_ptr<K::Core::Framework::RunLoop> &runLoop, const std::shared_ptr<K::Core::Timers> &timers);
     NetworkEventCoupling()                                             = delete;
     NetworkEventCoupling(const NetworkEventCoupling &other)            = delete;

@@ -26,7 +26,7 @@ class EventLoopHub;
 class NetworkEventCoupling::Writer : public virtual K::Core::ActionInterface {
   public:
     Writer(const std::shared_ptr<K::IO::TcpConnection> &tcpConnection, const std::string &protocolVersion,
-           const std::shared_ptr<EventLoopHub> &hub, int hubClientId, const std::shared_ptr<SharedState> &sharedState,
+           const std::shared_ptr<EventHub> &hub, int hubClientId, const std::shared_ptr<SharedState> &sharedState,
            const std::shared_ptr<Core::Timers> &timers);
     void ExecuteAction();
 
@@ -38,7 +38,7 @@ class NetworkEventCoupling::Writer : public virtual K::Core::ActionInterface {
     std::shared_ptr<SharedState>       sharedState_;    // Thread-safe.
 
     std::shared_ptr<Core::Timers>      timers_;         // Thread-safe.
-    std::shared_ptr<EventLoopHub>      hub_;            // Thread-safe.
+    std::shared_ptr<EventHub>          hub_;            // Thread-safe.
 
     std::shared_ptr<IO::TcpConnection> tcpConnection_;
     IO::KeepAliveParameters            keepAliveParameters_;

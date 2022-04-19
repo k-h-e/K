@@ -4,7 +4,7 @@
 #include <K/Core/PolledCyclicTrigger.h>
 #include <K/Core/StringTools.h>
 #include <K/IO/TcpConnection.h>
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 #include "ReadHandler.h"
 #include "SharedState.h"
 
@@ -27,7 +27,7 @@ namespace K {
 namespace Events {
 
 NetworkEventCoupling::Writer::Writer(
-    const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
+    const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion, const shared_ptr<EventHub> &hub,
     int hubClientId, const shared_ptr<SharedState> &sharedState, const shared_ptr<Timers> &timers)
         : sharedState_(sharedState),
           timers_(timers),
@@ -67,7 +67,8 @@ void NetworkEventCoupling::Writer::ExecuteAction() {
                     timeout = sendKeepAliveTrigger.Remaining();
                 }
 
-                bool shutdownRequested = !hub_->GetEvents(hubClientId_, &buffer, timeout);
+                buffer->Clear();
+                bool shutdownRequested = !hub_->Sync(hubClientId_, &buffer, timeout);
                 if (shutdownRequested) {
                     Log::Print(Log::Level::Debug, this, []{ return "event hub issued shutdown"; });
                     done = true;

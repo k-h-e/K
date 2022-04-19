@@ -9,7 +9,7 @@
 #include <K/Core/Buffer.h>
 #include <K/Events/Event.h>
 #include <K/Events/EventReceiverInterface.h>
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 
 namespace K {
 namespace Events {
@@ -24,7 +24,7 @@ namespace Events {
 template<class EventClass, class EventHandlerClass>
 class EventLoop : public virtual EventReceiverInterface {
   public:
-    EventLoop(std::shared_ptr<EventLoopHub> hub);
+    EventLoop(std::shared_ptr<EventHub> hub);
     EventLoop(const EventLoop &other)            = delete;
     EventLoop &operator=(const EventLoop &other) = delete;
     EventLoop(EventLoop &&other)                 = delete;
@@ -55,11 +55,16 @@ class EventLoop : public virtual EventReceiverInterface {
      *  \return <c>false</c> in case shutdown has been requested.
      */
     bool RunUntilEventOfType(const Event::EventType *eventType);
-    //! Runs a batch of events, including all the events posted up until now.
+    //! Syncs with the hub once (without waiting) and dispatches all scheduled events (up to and including those that
+    //! were retrieved from the hub).
     /*!
+     *  \param doFinalSubmit
+     *  If set to <c>true</c>, any accumulated posted events will be submitted to the hub when dispatching events is
+     *  finished. Otherwise, they remain buffered.
+     *
      *  \return <c>false</c> in case shutdown has been requested.
      */
-    bool RunBatch();
+    bool Dispatch(bool doFinalSubmit);
     //! Posts the specified event for execution on the loop.
     /*!
      *  May get called from event handlers invoked by the loop.
@@ -77,18 +82,20 @@ class EventLoop : public virtual EventReceiverInterface {
 
     std::vector<EventInfo>           events_;
     std::unordered_map<size_t, int>  idToSlotMap_;
+    std::unique_ptr<Core::Buffer>    postedEvents_;
     std::unique_ptr<Core::Buffer>    eventsToDispatch_;
     Core::Buffer::Reader             reader_;
     std::vector<EventHandlerClass *> pendingHandlers_;
     int                              pendingHandlerCursor_;
-    std::shared_ptr<EventLoopHub>    hub_;
+    std::shared_ptr<EventHub>        hub_;
     int                              hubClientId_;
     bool                             running_;
 };
 
 template<class EventClass, class EventHandlerClass>
-EventLoop<EventClass, EventHandlerClass>::EventLoop(std::shared_ptr<EventLoopHub> hub)
-    : eventsToDispatch_(new Core::Buffer()),
+EventLoop<EventClass, EventHandlerClass>::EventLoop(std::shared_ptr<EventHub> hub)
+    : postedEvents_(new Core::Buffer()),
+      eventsToDispatch_(new Core::Buffer()),
       reader_(eventsToDispatch_->GetReader()),
       hub_(hub),
       hubClientId_(hub->RegisterEventLoop()),
@@ -177,10 +184,15 @@ bool EventLoop<EventClass, EventHandlerClass>::RunUntilEventOfType(const Event::
             }
         }
         
-        if (!hub_->GetEvents(hubClientId_, &eventsToDispatch_, std::nullopt)) {
+        if (hub_->Sync(hubClientId_, &postedEvents_, std::nullopt)) {
+            eventsToDispatch_.swap(postedEvents_);
+        } else {
+            eventsToDispatch_->Clear();
             done = true;
         }
+
         reader_ = eventsToDispatch_->GetReader();
+        postedEvents_->Clear();
     }
 
     running_ = false;
@@ -188,25 +200,36 @@ bool EventLoop<EventClass, EventHandlerClass>::RunUntilEventOfType(const Event::
 }
 
 template<class EventClass, class EventHandlerClass>
-bool EventLoop<EventClass, EventHandlerClass>::RunBatch() {
+bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
     assert(!running_);
     running_ = true;
 
-    bool done          = false;
-    bool fetchedEvents = false;
-    while (!done) {
+    bool shutDownRequested = false;
+    bool didSync           = false;
+    while (!shutDownRequested) {
         while (DispatchOne()) {
             // Nop.
         }
 
-        if (fetchedEvents) {
+        if (didSync) {
+            if (doFinalSubmit && postedEvents_->DataSize()) {
+                hub_->Submit(hubClientId_, postedEvents_->Data(), postedEvents_->DataSize(), false);
+                postedEvents_->Clear();
+            }
             running_ = false;
             return true;
         }
 
-        done = !hub_->GetEvents(hubClientId_, &eventsToDispatch_);
+        shutDownRequested = !hub_->Sync(hubClientId_, &postedEvents_);
+        if (shutDownRequested) {
+            eventsToDispatch_->Clear();
+        } else {
+            eventsToDispatch_.swap(postedEvents_);
+        }
+
         reader_ = eventsToDispatch_->GetReader();
-        fetchedEvents = true;
+        postedEvents_->Clear();
+        didSync = true;
     }
 
     running_ = false;
@@ -215,7 +238,11 @@ bool EventLoop<EventClass, EventHandlerClass>::RunBatch() {
 
 template<class EventClass, class EventHandlerClass>
 void EventLoop<EventClass, EventHandlerClass>::Post(const Event &event) {
-    hub_->Post(event);
+    auto iter = idToSlotMap_.find(event.Type().id);
+    assert(iter != idToSlotMap_.end());
+    int slot = iter->second;
+    postedEvents_->Append(&slot, sizeof(slot));
+    event.Serialize(postedEvents_.get());
 }
 
 template<class EventClass, class EventHandlerClass>

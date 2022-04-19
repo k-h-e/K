@@ -1,7 +1,7 @@
 #ifndef K_EVENTS_FRAMEWORK_EVENTNOTIFIER_ADAPTER_H_
 #define K_EVENTS_FRAMEWORK_EVENTNOTIFIER_ADAPTER_H_
 
-#include <K/Events/EventLoopHub.h>
+#include <K/Events/EventHub.h>
 #include <K/Events/Framework/EventNotifier.h>
 
 namespace K {
@@ -9,7 +9,7 @@ namespace Events {
 namespace Framework {
 
 //! To be registered with the event loop hub.
-class EventNotifier::Adapter : public virtual EventLoopHub::HandlerInterface {
+class EventNotifier::Adapter : public virtual EventHub::HandlerInterface {
   public:
     Adapter(const std::shared_ptr<Core::Framework::RunLoop> &runLoop, int runLoopClientId);
     Adapter(const Adapter &other)            = delete;

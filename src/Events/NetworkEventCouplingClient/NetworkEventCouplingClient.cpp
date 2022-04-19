@@ -16,7 +16,7 @@ namespace K {
 namespace Events {
 
 NetworkEventCouplingClient::NetworkEventCouplingClient(
-    const string &protocolVersion, const shared_ptr<EventLoopHub> &hub,
+    const string &protocolVersion, const shared_ptr<EventHub> &hub,
     const shared_ptr<ActionInterface> &onConnectedAction, const shared_ptr<ActionInterface> &onFailedToConnectAction,
     const shared_ptr<ActionInterface> &onDisconnectedAction, const shared_ptr<ConnectionIO> &connectionIO,
     const shared_ptr<ThreadPool> &threadPool, const shared_ptr<Timers> &timers)
