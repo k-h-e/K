@@ -8,7 +8,7 @@
 #include <K/Core/Log.h>
 #include <K/Core/Buffer.h>
 #include <K/Events/Event.h>
-#include <K/Events/EventReceiverInterface.h>
+#include <K/Events/EventBusInterface.h>
 #include <K/Events/EventHub.h>
 
 namespace K {
@@ -22,30 +22,23 @@ namespace Events {
  *  const</c>.
  */
 template<class EventClass, class EventHandlerClass>
-class EventLoop : public virtual EventReceiverInterface {
+class EventLoop : public virtual EventBusInterface<EventClass, EventHandlerClass> {
   public:
-    EventLoop(std::shared_ptr<EventHub> hub);
+    EventLoop(const std::shared_ptr<EventHub> &hub);
+    EventLoop()                                  = delete;
     EventLoop(const EventLoop &other)            = delete;
     EventLoop &operator=(const EventLoop &other) = delete;
     EventLoop(EventLoop &&other)                 = delete;
     EventLoop &operator=(EventLoop &&other)      = delete;
+    ~EventLoop();
 
-    //! Registers the specified event.
-    void RegisterEvent(std::unique_ptr<EventClass> protoType);
-    //! Registers a handler for the specified event, as a weak reference.
-    /*!
-     *  A given handler must be registered for a given event only once.
-     *
-     *  May get called from event handlers invoked by the loop.
-     */
-    void RegisterHandler(const Event::EventType &eventType, EventHandlerClass *handler);
-    //! Unregisters the specified event handler.
-    /*!
-     *  When this method returns, it is guaranteed that the loop will not call the handler again.
-     *
-     *  May get called from event handlers invoked by the loop.
-     */
-    void UnregisterHandler(EventHandlerClass *handler);
+    void RegisterEvent(std::unique_ptr<EventClass> protoType) override;
+    void RegisterHandler(const Event::EventType &eventType, EventHandlerClass *handler) override;
+    void UnregisterHandler(EventHandlerClass *handler) override;
+    void Post(const Event &event) override;
+
+    //! Tells the ID under which the loop is registered as client with the hub.
+    int hubClientId();
     //! Runs the event loop until shutdown is requested (via the hub).
     void Run();
     //! Runs the event loop until the next event of the specified type has been dispatched.
@@ -65,11 +58,6 @@ class EventLoop : public virtual EventReceiverInterface {
      *  \return <c>false</c> in case shutdown has been requested.
      */
     bool Dispatch(bool doFinalSubmit);
-    //! Posts the specified event for execution on the loop.
-    /*!
-     *  May get called from event handlers invoked by the loop.
-     */
-    virtual void Post(const Event &event);
         
   private:
     struct EventInfo {
@@ -93,7 +81,7 @@ class EventLoop : public virtual EventReceiverInterface {
 };
 
 template<class EventClass, class EventHandlerClass>
-EventLoop<EventClass, EventHandlerClass>::EventLoop(std::shared_ptr<EventHub> hub)
+EventLoop<EventClass, EventHandlerClass>::EventLoop(const std::shared_ptr<EventHub> &hub)
     : postedEvents_(new Core::Buffer()),
       eventsToDispatch_(new Core::Buffer()),
       reader_(eventsToDispatch_->GetReader()),
@@ -101,6 +89,11 @@ EventLoop<EventClass, EventHandlerClass>::EventLoop(std::shared_ptr<EventHub> hu
       hubClientId_(hub->RegisterEventLoop()),
       running_(false) {
     // Nop.
+}
+
+template<class EventClass, class EventHandlerClass>
+EventLoop<EventClass, EventHandlerClass>::~EventLoop() {
+    hub_->UnregisterEventLoop(hubClientId_);
 }
 
 template<class EventClass, class EventHandlerClass>
@@ -156,6 +149,20 @@ void EventLoop<EventClass, EventHandlerClass>::UnregisterHandler(EventHandlerCla
             }
         }
     }
+}
+
+template<class EventClass, class EventHandlerClass>
+void EventLoop<EventClass, EventHandlerClass>::Post(const Event &event) {
+    auto iter = idToSlotMap_.find(event.Type().id);
+    assert(iter != idToSlotMap_.end());
+    int slot = iter->second;
+    postedEvents_->Append(&slot, sizeof(slot));
+    event.Serialize(postedEvents_.get());
+}
+
+template<class EventClass, class EventHandlerClass>
+int EventLoop<EventClass, EventHandlerClass>::hubClientId() {
+    return hubClientId_;
 }
 
 template<class EventClass, class EventHandlerClass>
@@ -234,15 +241,6 @@ bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
 
     running_ = false;
     return false;
-}
-
-template<class EventClass, class EventHandlerClass>
-void EventLoop<EventClass, EventHandlerClass>::Post(const Event &event) {
-    auto iter = idToSlotMap_.find(event.Type().id);
-    assert(iter != idToSlotMap_.end());
-    int slot = iter->second;
-    postedEvents_->Append(&slot, sizeof(slot));
-    event.Serialize(postedEvents_.get());
 }
 
 template<class EventClass, class EventHandlerClass>
