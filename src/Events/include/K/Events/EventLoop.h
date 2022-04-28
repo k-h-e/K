@@ -16,7 +16,7 @@ namespace Events {
 
 //! Event loop.
 /*!
- *  The \ref EventLoop s of multiple threads are integrated using an \ref EventLoopHub.
+ *  The \ref EventLoop s of multiple threads are integrated using an \ref EventHub.
  *
  *  <c>EventClass</c> must derive from <c>Event</c> and implement a method <c>void Dispatch(EventHandlerClass *handler)
  *  const</c>.
@@ -52,10 +52,10 @@ class EventLoop : public virtual EventBusInterface<EventClass, EventHandlerClass
     //! were retrieved from the hub).
     /*!
      *  \param doFinalSubmit
-     *  If set to <c>true</c>, any accumulated posted events will be submitted to the hub when dispatching events is
+     *  If set to \p true, any accumulated posted events will be submitted to the hub when dispatching events is
      *  finished. Otherwise, they remain buffered.
      *
-     *  \return <c>false</c> in case shutdown has been requested.
+     *  \return \p false in case shutdown has been requested.
      */
     bool Dispatch(bool doFinalSubmit);
         

@@ -11,6 +11,7 @@
 #ifndef K_EVENTS_FRAMEWORK_EVENTQUEUE_H_
 #define K_EVENTS_FRAMEWORK_EVENTQUEUE_H_
 
+#include <K/Core/Log.h>
 #include <K/Core/Framework/RunLoop.h>
 #include <K/Events/EventLoop.h>
 #include <K/Events/Framework/EventNotifier.h>
@@ -143,6 +144,9 @@ template<class EventClass, class EventHandlerClass>
 void EventQueue<EventClass, EventHandlerClass>::Core::OnEventsAvailable(int id) {
     (void)id;
     if (!eventLoop_.Dispatch(true)) {
+        K::Core::Log::Print(K::Core::Log::Level::Debug, this, [&]{
+            return "event hub signalled termination, requesting run loop termination";
+        });
         runLoop_->RequestTermination();
     }
 }

@@ -47,8 +47,8 @@ class EventHub : public virtual EventReceiverInterface {
      *  The handler is expected to outlive the hub, or as long until it is unregistered via <c>RegisterHandler()</c>, or
      *  until the respective client loop is unregistered via <c>UnregisterEventLoop()</c>.
      *
-     *  The handler's methods get activated by the thread posting the respective events to the hub. They must not call
-     *  back into the hub.
+     *  The handler's methods get activated by the thread posting events to the hub or requesting shutdown. They must
+     *  not call back into the hub.
      *
      *  After registering a handler, a client should initially fetch its events to kick-start the events-available
      *  signalling.
@@ -94,13 +94,13 @@ class EventHub : public virtual EventReceiverInterface {
     //! Asks all participating client \ref EventLoop s to finish running (but does not wait until that has happened).
     /*!
      *  Client \ref EventLoop s can check for whether shutdown is requested for them by inspecting the return value of
-     *  \ref GetEvents().
+     *  \ref Sync().
      */
     void RequestShutDown();
     //! Asks the specified client \ref EventLoop to finish running (but does not wait until that has happened).
     /*!
      *  Client \ref EventLoop s can check for whether shutdown is requested for them by inspecting the return value of
-     *  \ref GetEvents().
+     *  \ref Sync().
      */
     void RequestShutDown(int clientLoopId);
 

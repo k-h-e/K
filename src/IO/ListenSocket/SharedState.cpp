@@ -10,6 +10,7 @@
 using std::make_shared;
 using std::make_unique;
 using std::mutex;
+using std::optional;
 using std::shared_ptr;
 using std::to_string;
 using std::unique_lock;
@@ -43,7 +44,10 @@ ListenSocket::SharedState::~SharedState() {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
     shuttingDown_ = true;
     if (acceptorThreadRunning_) {
-        (void)NetworkTools::ConnectTcp(0x7f000001u, port_, this);    // -> local host.
+        optional<int> socket = NetworkTools::ConnectTcp(0x7f000001u, port_, this);    // -> local host.
+        if (socket) {
+            IOTools::CloseFileDescriptor(*socket, this);
+        }
         while (acceptorThreadRunning_) {
             stateChanged_.wait(critical);
         }

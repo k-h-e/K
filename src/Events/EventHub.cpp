@@ -153,6 +153,9 @@ void EventHub::RequestShutDown() {
     for (auto &loopInfo : loops_) {
         if (loopInfo.inUse) {
             loopInfo.stateChanged->notify_all();
+            if (loopInfo.handler) {
+                loopInfo.handler->OnEventsAvailable();
+            }
         }
     }
 }    // ......................................................................................... critical section, end.
@@ -163,6 +166,9 @@ void EventHub::RequestShutDown(int clientLoopId) {
     if (loopInfo) {
         loopInfo->shutDownRequested = true;
         loopInfo->stateChanged->notify_all();
+        if (loopInfo->handler) {
+            loopInfo->handler->OnEventsAvailable();
+        }
         Log::Print(Log::Level::Debug, this, [&]{
             return "shutdown requested for event loop " + to_string(clientLoopId);
         });

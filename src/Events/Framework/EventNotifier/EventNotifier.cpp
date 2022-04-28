@@ -16,8 +16,6 @@ EventNotifier::EventNotifier(const shared_ptr<EventHub> &hub, int clientLoopId, 
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     adapter_ = make_unique<Adapter>(loopThreadState_->runLoop, loopThreadState_->runLoopClientId);
     loopThreadState_->hub->RegisterHandler(loopThreadState_->clientLoopId, adapter_.get());
-
-    // Initially fetch events, to properly kick-start events-available signalling...
 }
 
 EventNotifier::~EventNotifier() {
