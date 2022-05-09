@@ -3,7 +3,10 @@
 
 #include <memory>
 #include <string>
-#include <K/Core/Interface.h>
+#include <K/Core/Framework/Timer.h>
+#include <K/IO/KeepAliveParameters.h>
+#include <K/IO/Framework/ListenSocket.h>
+#include <K/Events/Framework/NetworkEventCoupling.h>
 
 namespace K {
     namespace Core {
@@ -15,7 +18,6 @@ namespace K {
     }
     namespace IO {
         class ConnectionIO;
-        class KeepAliveParameters;
     }
     namespace Events {
         class EventHub;
@@ -28,7 +30,10 @@ namespace Events {
 namespace Framework {
 
 //! Installs network event couplings for incoming network connections.
-class NetworkEventCouplingServer : public virtual K::Core::Interface {
+class NetworkEventCouplingServer : public virtual K::Core::Interface,
+                                   private virtual IO::Framework::ListenSocket::HandlerInterface,
+                                   private virtual Events::Framework::NetworkEventCoupling::HandlerInterface,
+                                   private virtual K::Core::Framework::Timer::HandlerInterface {
   public:
     NetworkEventCouplingServer(
         int port, const std::string &protocolVersion, const IO::KeepAliveParameters &keepAliveParameters,
@@ -43,9 +48,31 @@ class NetworkEventCouplingServer : public virtual K::Core::Interface {
     ~NetworkEventCouplingServer();
 
   private:
-   class Core;
+    void OnListenSocketAcceptedConnection(int id, std::unique_ptr<IO::Framework::TcpConnection> connection)
+        override;
+    void OnListenSocketErrorState(int id) override;
+    void OnNetworkEventCouplingErrorState(int id) override;
+    void OnTimer(int id) override;
 
-   std::unique_ptr<Core> core_;
+    void InstallListenSocket();
+    void UninstallListenSocket();
+    void InstallCoupling(std::unique_ptr<IO::Framework::TcpConnection> connection);
+    void UninstallCoupling();
+    void InstallTimer();
+    void UninstallTimer();
+
+    const std::shared_ptr<EventHub>            hub_;             // Thread safe.
+    const std::shared_ptr<IO::ConnectionIO>    connectionIO_;    // Thread safe.
+    const std::shared_ptr<K::Core::Timers>     timers_;          // Thread safe.
+    const std::shared_ptr<K::Core::ThreadPool> threadPool_;      // Thread safe.
+
+    const std::shared_ptr<K::Core::Framework::RunLoop> runLoop_;
+    int                                                port_;
+    std::string                                        protocolVersion_;
+    IO::KeepAliveParameters                            keepAliveParameters_;
+    std::unique_ptr<IO::Framework::ListenSocket>       listenSocket_;
+    std::unique_ptr<NetworkEventCoupling>              coupling_;
+    std::unique_ptr<K::Core::Framework::Timer>         timer_;
 };
 
 }    // Namespace Framework.

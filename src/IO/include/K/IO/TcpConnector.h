@@ -11,6 +11,7 @@
 #ifndef K_IO_TCPCONNECTOR_H_
 #define K_IO_TCPCONNECTOR_H_
 
+#include <memory>
 #include <string>
 #include <K/Core/Interface.h>
 

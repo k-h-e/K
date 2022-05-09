@@ -1,8 +1,10 @@
-#include "Core.h"
+#include <K/Events/Framework/NetworkEventCoupling.h>
 
+#include <cstring>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Framework/Timer.h>
+#include <K/IO/KeepAliveParameters.h>
 #include <K/IO/Framework/TcpConnection.h>
 #include <K/Events/EventHub.h>
 #include <K/Events/Framework/EventNotifier.h>
@@ -27,10 +29,10 @@ namespace K {
 namespace Events {
 namespace Framework {
 
-NetworkEventCoupling::Core::Core(
-    unique_ptr<TcpConnection> tcpConnection, const string &protocolVersion,
-    const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
-    const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
+NetworkEventCoupling::NetworkEventCoupling(
+            unique_ptr<TcpConnection> tcpConnection, const string &protocolVersion,
+            const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
+            const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
         : hub_(hub),
           tcpConnection_(move(tcpConnection)),
           runLoop_(runLoop),
@@ -68,7 +70,7 @@ NetworkEventCoupling::Core::Core(
     SendVersionChunk();
 }
 
-NetworkEventCoupling::Core::~Core() {
+NetworkEventCoupling::~NetworkEventCoupling() {
     runLoop_->RemoveClient(runLoopClientId_);
     eventNotifier_.reset();
     timer_.reset();
@@ -78,7 +80,7 @@ NetworkEventCoupling::Core::~Core() {
     // TODO: Check desconstruction.
 }
 
-void NetworkEventCoupling::Core::Register(NetworkEventCoupling::HandlerInterface *handler, int id) {
+void NetworkEventCoupling::Register(NetworkEventCoupling::HandlerInterface *handler, int id) {
     if (handler) {
         handler_             = handler;
         handlerAssociatedId_ = id;
@@ -92,10 +94,10 @@ void NetworkEventCoupling::Core::Register(NetworkEventCoupling::HandlerInterface
     }
 }
 
-bool NetworkEventCoupling::Core::ErrorState() const {
+bool NetworkEventCoupling::ErrorState() const {
     return error_;
 }
-void NetworkEventCoupling::Core::OnStreamReadyRead(int id) {
+void NetworkEventCoupling::OnStreamReadyRead(int id) {
     (void)id;
     bool done = false;
     while (!error_ && !done) {
@@ -112,7 +114,7 @@ void NetworkEventCoupling::Core::OnStreamReadyRead(int id) {
     }
 }
 
-void NetworkEventCoupling::Core::OnStreamReadyWrite(int id) {
+void NetworkEventCoupling::OnStreamReadyWrite(int id) {
     (void)id;
     if (!error_) {    // Defensive.
         canWrite_ = true;
@@ -120,7 +122,7 @@ void NetworkEventCoupling::Core::OnStreamReadyWrite(int id) {
     }
 }
 
-void NetworkEventCoupling::Core::OnTimer(int id) {
+void NetworkEventCoupling::OnTimer(int id) {
     (void)id;
     if (!error_) {    // Defensive.
         SendKeepAliveChunk();
@@ -140,14 +142,11 @@ void NetworkEventCoupling::Core::OnTimer(int id) {
     }
 }
 
-void NetworkEventCoupling::Core::OnEventsAvailable(int id) {
+void NetworkEventCoupling::OnEventsAvailable(int id) {
     (void)id;
     if (!error_) {    // Defensive.
         eventBuffer_->Clear();
         if (hub_->Sync(hubClientId_, &eventBuffer_)) {
-            Log::Print(Log::Level::Debug, this, [&]{
-                return "events available, size=" + to_string(eventBuffer_->DataSize());
-            });
             if (eventBuffer_->DataSize()) {
                 SendEventsChunk(eventBuffer_->Data(), eventBuffer_->DataSize());
             }
@@ -157,7 +156,7 @@ void NetworkEventCoupling::Core::OnEventsAvailable(int id) {
     }
 }
 
-void NetworkEventCoupling::Core::Activate(bool deepActivation) {
+void NetworkEventCoupling::Activate(bool deepActivation) {
     (void)deepActivation;
 
     if (signalErrorState_) {
@@ -168,7 +167,7 @@ void NetworkEventCoupling::Core::Activate(bool deepActivation) {
     }
 }
 
-void NetworkEventCoupling::Core::ProcessIncoming() {
+void NetworkEventCoupling::ProcessIncoming() {
     uint8_t *buffer = static_cast<uint8_t *>(readBuffer_.Data());
 
     uint32_t  chunkSizeU32;
@@ -269,7 +268,7 @@ void NetworkEventCoupling::Core::ProcessIncoming() {
     }
 }
 
-void NetworkEventCoupling::Core::CopyDown() {
+void NetworkEventCoupling::CopyDown() {
     if (readCursor_ >= 4096) {
         int numRemaining = readBuffer_.DataSize() - readCursor_;
         if (numRemaining) {
@@ -280,7 +279,7 @@ void NetworkEventCoupling::Core::CopyDown() {
     }
 }
 
-void NetworkEventCoupling::Core::SendVersionChunk() {
+void NetworkEventCoupling::SendVersionChunk() {
     vector<uint8_t> versionBinary;
     StringTools::Serialize(protocolVersion_, &versionBinary);
 
@@ -292,7 +291,7 @@ void NetworkEventCoupling::Core::SendVersionChunk() {
     PushOut();
 }
 
-void NetworkEventCoupling::Core::SendEventsChunk(const void *data, int dataSize) {
+void NetworkEventCoupling::SendEventsChunk(const void *data, int dataSize) {
     ChunkType chunkType = ChunkType::Events;
     uint32_t  chunkSize = static_cast<uint32_t>(dataSize) + static_cast<uint32_t>(sizeof(chunkType));
     writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
@@ -301,7 +300,7 @@ void NetworkEventCoupling::Core::SendEventsChunk(const void *data, int dataSize)
     PushOut();
 }
 
-void NetworkEventCoupling::Core::SendKeepAliveChunk() {
+void NetworkEventCoupling::SendKeepAliveChunk() {
     ChunkType chunkType = ChunkType::KeepAlive;
     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType));
     writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
@@ -309,7 +308,7 @@ void NetworkEventCoupling::Core::SendKeepAliveChunk() {
     PushOut();
 }
 
-void NetworkEventCoupling::Core::PushOut() {
+void NetworkEventCoupling::PushOut() {
     if (!error_ && canWrite_) {
         writeBuffer_.TransferTo(tcpConnection_.get());
         if (!writeBuffer_.Empty()) {
@@ -321,7 +320,7 @@ void NetworkEventCoupling::Core::PushOut() {
     }
 }
 
-void NetworkEventCoupling::Core::EnterErrorState() {
+void NetworkEventCoupling::EnterErrorState() {
     if (!error_) {
         eventNotifier_.reset();
         timer_.reset();
