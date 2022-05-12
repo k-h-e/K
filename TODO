@@ -1,4 +1,6 @@
+- network event coupling: limit buffer size for outgoing data?
+- Framework::Connection::Register(): document!
 - Optionally write outgoing buffered data when connections get destroyed? -> BufferedConnection, framework connection.
-- IO::IO: NotifyWorker() is void, uses assert. Better solution?
+- IO::IO::NotifyWorker() is void, uses assert. Better solution?
 - Check everywhere regarding default move operations!
 

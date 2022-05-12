@@ -30,11 +30,11 @@ namespace Events {
 namespace Framework {
 
 NetworkEventCoupling::NetworkEventCoupling(
-            unique_ptr<TcpConnection> tcpConnection, const string &protocolVersion,
+            const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion,
             const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
             const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
         : hub_(hub),
-          tcpConnection_(move(tcpConnection)),
+          tcpConnection_(tcpConnection),
           runLoop_(runLoop),
           protocolVersion_(protocolVersion),
           handler_(nullptr),
@@ -42,7 +42,6 @@ NetworkEventCoupling::NetworkEventCoupling(
           state_(State::AcceptingChunkSize),
           readCursor_(0),
           readChunkSize_(0),
-          canWrite_(false),
           protocolVersionMatch_(false),
           keepAliveReceived_(false),
           error_(false),
@@ -116,10 +115,8 @@ void NetworkEventCoupling::OnStreamReadyRead(int id) {
 
 void NetworkEventCoupling::OnStreamReadyWrite(int id) {
     (void)id;
-    if (!error_) {    // Defensive.
-        canWrite_ = true;
-        PushOut();
-    }
+
+    // Missing.
 }
 
 void NetworkEventCoupling::OnTimer(int id) {
@@ -285,39 +282,31 @@ void NetworkEventCoupling::SendVersionChunk() {
 
     ChunkType chunkType = ChunkType::Version;
     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType) + versionBinary.size());
-    writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
-    writeBuffer_.Put(&chunkType, sizeof(chunkType));
-    writeBuffer_.Put(&versionBinary[0], static_cast<int>(versionBinary.size()));
-    PushOut();
+    //writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
+    //writeBuffer_.Put(&chunkType, sizeof(chunkType));
+    //writeBuffer_.Put(&versionBinary[0], static_cast<int>(versionBinary.size()));
+
+    (void)chunkSize;
 }
 
 void NetworkEventCoupling::SendEventsChunk(const void *data, int dataSize) {
     ChunkType chunkType = ChunkType::Events;
     uint32_t  chunkSize = static_cast<uint32_t>(dataSize) + static_cast<uint32_t>(sizeof(chunkType));
-    writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
-    writeBuffer_.Put(&chunkType, sizeof(chunkType));
-    writeBuffer_.Put(data, dataSize);
-    PushOut();
+    //writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
+    //writeBuffer_.Put(&chunkType, sizeof(chunkType));
+    //writeBuffer_.Put(data, dataSize);
+
+    (void)chunkSize;
+    (void)data;
 }
 
 void NetworkEventCoupling::SendKeepAliveChunk() {
     ChunkType chunkType = ChunkType::KeepAlive;
     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType));
-    writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
-    writeBuffer_.Put(&chunkType, sizeof(chunkType));
-    PushOut();
-}
+    //writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
+    //writeBuffer_.Put(&chunkType, sizeof(chunkType));
 
-void NetworkEventCoupling::PushOut() {
-    if (!error_ && canWrite_) {
-        writeBuffer_.TransferTo(tcpConnection_.get());
-        if (!writeBuffer_.Empty()) {
-            canWrite_ = false;
-            if (tcpConnection_->ErrorState()) {
-                EnterErrorState();
-            }
-        }
-    }
+    (void)chunkSize;
 }
 
 void NetworkEventCoupling::EnterErrorState() {

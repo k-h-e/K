@@ -47,7 +47,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     };
 
     NetworkEventCoupling(
-        std::unique_ptr<IO::Framework::TcpConnection> tcpConnection, const std::string &protocolVersion,
+        const std::shared_ptr<IO::Framework::TcpConnection> &tcpConnection, const std::string &protocolVersion,
         const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventHub> &hub,
         const std::shared_ptr<K::Core::Framework::RunLoop> &runLoop, const std::shared_ptr<K::Core::Timers> &timers);
     NetworkEventCoupling()                                             = delete;
@@ -97,13 +97,11 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     void SendEventsChunk(const void *data, int dataSize);
     //! Can enter error state.
     void SendKeepAliveChunk();
-    //! Can enter error state.
-    void PushOut();
     void EnterErrorState();
 
     const std::shared_ptr<EventHub>                    hub_;                // Thread safe.
 
-    std::unique_ptr<IO::Framework::TcpConnection>      tcpConnection_;      // Present <=> not in error state.
+    std::shared_ptr<IO::Framework::TcpConnection>      tcpConnection_;      // Present <=> not in error state.
     std::unique_ptr<K::Core::Framework::Timer>         timer_;              // Present <=> not in error state.
     std::unique_ptr<EventNotifier>                     eventNotifier_;      // Present <=> not in error state.
     const std::shared_ptr<K::Core::Framework::RunLoop> runLoop_;
@@ -117,8 +115,6 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     K::Core::Buffer                                    readBuffer_;
     int                                                readCursor_;
     int                                                readChunkSize_;
-    K::Core::RingBuffer                                writeBuffer_;
-    bool                                               canWrite_;
     std::unique_ptr<K::Core::Buffer>                   eventBuffer_;
     bool                                               protocolVersionMatch_;
     int                                                numKeepAliveSendsUntilCheck_;
