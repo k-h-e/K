@@ -10,7 +10,11 @@ namespace Core {
 class StreamHandlerInterface : public virtual DataHandlerInterface {
   public:
     //! Hands over another portion of stream data to the handler.
-    virtual void HandleStreamData(const void *data, int dataSize) = 0;
+    /*!
+     *  \param id
+     *  Activation ID that was registered together with the handler.
+     */
+    virtual void HandleStreamData(int id, const void *data, int dataSize) = 0;
 };
 
 }    // Namespace Core.

@@ -1,4 +1,6 @@
-- network event coupling: limit buffer size for outgoing data?
+- InteractionConnectionEndPoint
+    - limit buffer size for outgoing data
+    - configure size constraint for dispatched data?
 - Framework::Connection::Register(): document!
 - Optionally write outgoing buffered data when connections get destroyed? -> BufferedConnection, framework connection.
 - IO::IO::NotifyWorker() is void, uses assert. Better solution?

@@ -41,7 +41,7 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
         //! Hands over a newly accepted connection to the handler.
         /*!
          *  \param id
-         *  ID that was given when the handler was registered.
+         *  Activation ID that was registered together with the handler.
          */
         virtual void OnListenSocketAcceptedConnection(int id, std::unique_ptr<TcpConnection> connection) = 0;
         //! Informs the handler that the listen socket has entered error state.

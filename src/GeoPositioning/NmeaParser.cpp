@@ -14,8 +14,9 @@ using K::Core::StringTools;
 namespace K {
 namespace GeoPositioning {
 
-NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler)
+NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler, int activationId)
         : handler_(handler),
+          handlerActivationId_(activationId),
           state_(State::BetweenMessages),
           message_(""),
           numSkipped_(0),
@@ -24,7 +25,8 @@ NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler)
     // Nop.
 }
 
-void NmeaParser::HandleStreamData(const void *data, int dataSize) {
+void NmeaParser::HandleStreamData(int id, const void *data, int dataSize) {
+    (void)id;
     if (!eof_ && !error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
         for (int i = 0; i < dataSize; ++i) {
@@ -73,7 +75,7 @@ void NmeaParser::HandleStreamData(const void *data, int dataSize) {
             case State::AcceptingCheckSum:
                 if (character == '\n') {
                     if (message_.CheckSum() == StringTools::ToLower(token_)) {
-                        handler_->Handle(message_);
+                        handler_->Handle(handlerActivationId_, message_);
                     } else {
                         Log::Print(Log::Level::Warning, this, [&]{
                             return "checksum mismatch: \"" + message_.ToString() + "\", expected_checksum=\"" + token_
@@ -101,16 +103,18 @@ void NmeaParser::HandleStreamData(const void *data, int dataSize) {
     }
 }
 
-void NmeaParser::HandleEof() {
+void NmeaParser::HandleEof(int id) {
+    (void)id;
     if (!eof_) {
-        handler_->HandleEof();
+        handler_->HandleEof(handlerActivationId_);
         eof_ = true;
     }
 }
 
-void NmeaParser::HandleError() {
+void NmeaParser::HandleError(int id) {
+    (void)id;
     if (!error_) {
-        handler_->HandleError();
+        handler_->HandleError(handlerActivationId_);
         error_ = true;
     }
 }

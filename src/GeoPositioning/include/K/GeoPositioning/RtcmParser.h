@@ -14,15 +14,15 @@ class RtcmMessageHandlerInterface;
 //! Parses a binary stream into RTCM messages.
 class RtcmParser : public virtual Core::StreamHandlerInterface {
   public:
-    RtcmParser(const std::shared_ptr<RtcmMessageHandlerInterface> &handler);
+    RtcmParser(const std::shared_ptr<RtcmMessageHandlerInterface> &handler, int handlerActivationId);
     RtcmParser(const RtcmParser &other)            = delete;
     RtcmParser &operator=(const RtcmParser &other) = delete;
     RtcmParser(RtcmParser &&other)                 = delete;
     RtcmParser &operator=(RtcmParser &&other)      = delete;
 
-    void HandleStreamData(const void *data, int dataSize) override;
-    void HandleEof() override;
-    void HandleError() override;
+    void HandleStreamData(int id, const void *data, int dataSize) override;
+    void HandleEof(int id) override;
+    void HandleError(int id) override;
 
   private:
     enum class State { BetweenMessages,
@@ -31,6 +31,7 @@ class RtcmParser : public virtual Core::StreamHandlerInterface {
                        AcceptingCrc      };
 
     std::shared_ptr<RtcmMessageHandlerInterface> handler_;
+    int                                          handlerActivationId_;
     State                                        state_;
     int                                          payloadSize_;
     int                                          numSkipped_;

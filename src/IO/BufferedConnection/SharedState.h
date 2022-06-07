@@ -27,7 +27,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     SharedState &operator=(const SharedState &&other) = delete;
 
     void SetError();
-    bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler);
+    bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler, int activationId);
     void Unregister(const std::shared_ptr<Core::StreamHandlerInterface> &handler);
     void WriteItem(const void *item, int itemSize);
     bool WriteFailed();
@@ -52,6 +52,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     std::condition_variable                       writeCanContinue_;
     std::shared_ptr<ConnectionIO>                 connectionIO_;
     std::shared_ptr<Core::StreamHandlerInterface> handler_;
+    int                                           handlerActivationId_;
     bool                                          handlerCalledInitially_;
     Core::RingBuffer                              writeBuffer_;
     int                                           bufferSizeThreshold_;

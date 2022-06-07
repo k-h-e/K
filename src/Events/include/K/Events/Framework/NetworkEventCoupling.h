@@ -5,8 +5,9 @@
 #include <K/Core/Buffer.h>
 #include <K/Core/ErrorStateInterface.h>
 #include <K/Core/RingBuffer.h>
+#include <K/Core/StreamHandlerInterface.h>
+#include <K/Core/Framework/RunLoop.h>
 #include <K/Core/Framework/Timer.h>
-#include <K/IO/Framework/TcpConnection.h>
 #include <K/Events/Framework/EventNotifier.h>
 
 namespace K {
@@ -18,6 +19,10 @@ namespace K {
     }
     namespace IO {
         class KeepAliveParameters;
+        namespace Framework {
+            class InteractionConnectionEndPoint;
+            class TcpConnection;
+        }
     }
     namespace Events {
         class EventHub;
@@ -30,7 +35,7 @@ namespace Framework {
 
 //! Extends the event mechanism to other nodes across the network.
 class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
-                             private virtual IO::Framework::TcpConnection::HandlerInterface,
+                             private virtual Core::StreamHandlerInterface,
                              private virtual K::Core::Framework::Timer::HandlerInterface,
                              private virtual EventNotifier::HandlerInterface,
                              private virtual K::Core::Framework::RunLoop::ClientInterface {
@@ -83,44 +88,41 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
                        AcceptingChunkData
     };
 
-    void OnStreamReadyRead(int id) override;
-    void OnStreamReadyWrite(int id) override;
+    void HandleStreamData(int id, const void *data, int dataSize) override;
+    void HandleError(int id) override;
+    void HandleEof(int id) override;
     void OnTimer(int id) override;
     void OnEventsAvailable(int id) override;
     void Activate(bool deepActivation) override;
 
-    void ProcessIncoming();
     void CopyDown();
-    //! Can enter error state.
     void SendVersionChunk();
-    //! Can enter error state.
     void SendEventsChunk(const void *data, int dataSize);
-    //! Can enter error state.
     void SendKeepAliveChunk();
     void EnterErrorState();
 
-    const std::shared_ptr<EventHub>                    hub_;                // Thread safe.
+    const std::shared_ptr<EventHub>                               hub_;              // Thread safe.
 
-    std::shared_ptr<IO::Framework::TcpConnection>      tcpConnection_;      // Present <=> not in error state.
-    std::unique_ptr<K::Core::Framework::Timer>         timer_;              // Present <=> not in error state.
-    std::unique_ptr<EventNotifier>                     eventNotifier_;      // Present <=> not in error state.
-    const std::shared_ptr<K::Core::Framework::RunLoop> runLoop_;
-    int                                                runLoopClientId_;
-    std::string                                        protocolVersion_;
-    int                                                numSendsBetweenKeepAliveChecks_;
-    int                                                hubClientId_;
-    NetworkEventCoupling::HandlerInterface             *handler_;
-    int                                                handlerAssociatedId_;
-    State                                              state_;
-    K::Core::Buffer                                    readBuffer_;
-    int                                                readCursor_;
-    int                                                readChunkSize_;
-    std::unique_ptr<K::Core::Buffer>                   eventBuffer_;
-    bool                                               protocolVersionMatch_;
-    int                                                numKeepAliveSendsUntilCheck_;
-    bool                                               keepAliveReceived_;
-    bool                                               error_;
-    bool                                               signalErrorState_;
+    std::unique_ptr<IO::Framework::InteractionConnectionEndPoint> tcpConnection_;    // Present <=> not in error state.
+    std::unique_ptr<K::Core::Framework::Timer>                    timer_;            // Present <=> not in error state.
+    std::unique_ptr<EventNotifier>                                eventNotifier_;    // Present <=> not in error state.
+    const std::shared_ptr<K::Core::Framework::RunLoop>            runLoop_;
+    int                                                           runLoopClientId_;
+    std::string                                                   protocolVersion_;
+    int                                                           numSendsBetweenKeepAliveChecks_;
+    int                                                           hubClientId_;
+    NetworkEventCoupling::HandlerInterface                        *handler_;
+    int                                                           handlerAssociatedId_;
+    State                                                         state_;
+    K::Core::Buffer                                               readBuffer_;
+    int                                                           readCursor_;
+    int                                                           readChunkSize_;
+    std::unique_ptr<K::Core::Buffer>                              eventBuffer_;
+    bool                                                          protocolVersionMatch_;
+    int                                                           numKeepAliveSendsUntilCheck_;
+    bool                                                          keepAliveReceived_;
+    bool                                                          error_;
+    bool                                                          signalErrorState_;
 };
 
 }    // Namespace Framework.

@@ -11,7 +11,12 @@ class NmeaMessage;
 //! Interface to entities receiving and processing NMEA messages.
 class NmeaMessageHandlerInterface : public virtual Core::DataHandlerInterface {
   public:
-    virtual void Handle(const NmeaMessage &message) = 0;
+    //! Asks the handler to process the specified NMEA message.
+    /*!
+     *  \param id
+     *  Activation ID that was registered together with the handler.
+     */
+    virtual void Handle(int id, const NmeaMessage &message) = 0;
 };
 
 }    // Namespace GeoPositioning.

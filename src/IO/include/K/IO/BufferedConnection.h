@@ -45,7 +45,7 @@ class BufferedConnection : public virtual Core::ConnectionStreamInterface {
      *  method returns.
      */
     void TriggerErrorState();
-    bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler) override;
+    bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler, int activationId) override;
     void Unregister(const std::shared_ptr<Core::StreamHandlerInterface> &handler) override;
     void WriteItem(const void *item, int itemSize) override;
     bool WriteFailed() const override;

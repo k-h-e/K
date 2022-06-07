@@ -10,20 +10,22 @@ namespace IO {
 //! Stream handler tee piece: forwards a stream to two stream handlers.
 class StreamHandlerTee : public virtual Core::StreamHandlerInterface {
   public:
-    StreamHandlerTee(const std::shared_ptr<StreamHandlerInterface> &streamHandler1,
-                     const std::shared_ptr<StreamHandlerInterface> &streamHandler2);
+    StreamHandlerTee(const std::shared_ptr<StreamHandlerInterface> &streamHandler1, int activationId1,
+                     const std::shared_ptr<StreamHandlerInterface> &streamHandler2, int activationId2);
     StreamHandlerTee(const StreamHandlerTee &other)            = delete;
     StreamHandlerTee &operator=(const StreamHandlerTee &other) = delete;
     StreamHandlerTee(StreamHandlerTee &&other)                 = delete;
     StreamHandlerTee &operator=(StreamHandlerTee &&other)      = delete;
 
-    void HandleStreamData(const void *data, int dataSize) override;
-    void HandleEof() override;
-    void HandleError() override;
+    void HandleStreamData(int id, const void *data, int dataSize) override;
+    void HandleEof(int id) override;
+    void HandleError(int id) override;
 
   private:
     std::shared_ptr<Core::StreamHandlerInterface> streamHandler1_;
+    int                                           activationId1_;
     std::shared_ptr<Core::StreamHandlerInterface> streamHandler2_;
+    int                                           activationId2_;
 };
 
 }    // Namespace IO.

@@ -19,9 +19,9 @@ class StreamSaver : public virtual Core::StreamHandlerInterface {
     StreamSaver(StreamSaver &&other)                 = delete;
     StreamSaver &operator=(StreamSaver &&other)      = delete;
 
-    void HandleStreamData(const void *data, int dataSize) override;
-    void HandleEof() override;
-    void HandleError() override;
+    void HandleStreamData(int id, const void *data, int dataSize) override;
+    void HandleEof(int id) override;
+    void HandleError(int id) override;
 
   private:
     std::unique_ptr<Core::BinaryWriter> writer_;

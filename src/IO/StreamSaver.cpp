@@ -19,7 +19,8 @@ StreamSaver::StreamSaver(const string &fileName)
     // Nop.
 }
 
-void StreamSaver::HandleStreamData(const void *data, int dataSize) {
+void StreamSaver::HandleStreamData(int id, const void *data, int dataSize) {
+    (void)id;
     if (writer_) {
         writer_->WriteItem(data, dataSize);
         if (writer_->WriteFailed()) {
@@ -28,11 +29,13 @@ void StreamSaver::HandleStreamData(const void *data, int dataSize) {
     }
 }
 
-void StreamSaver::HandleEof() {
+void StreamSaver::HandleEof(int id) {
+    (void)id;
     writer_.reset();
 }
 
-void StreamSaver::HandleError() {
+void StreamSaver::HandleError(int id) {
+    (void)id;
     writer_.reset();
 }
 

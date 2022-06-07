@@ -10,17 +10,19 @@ using K::Core::Log;
 namespace K {
 namespace GeoPositioning {
 
-RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler)
-        : handler_(handler),
-          state_(State::BetweenMessages),
-          payloadSize_(0),
-          numSkipped_(0),
-          eof_(false),
-          error_(false) {
+RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler, int handlerActivationId)
+        : handler_{handler},
+          handlerActivationId_{handlerActivationId},
+          state_{State::BetweenMessages},
+          payloadSize_{0},
+          numSkipped_{0},
+          eof_{false},
+          error_{false} {
    // Nop.
 }
 
-void RtcmParser::HandleStreamData(const void *data, int dataSize) {
+void RtcmParser::HandleStreamData(int id, const void *data, int dataSize) {
+    (void)id;
     if (!eof_ && !error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
         for (int i = 0; i < dataSize; ++i) {
@@ -43,7 +45,7 @@ void RtcmParser::HandleStreamData(const void *data, int dataSize) {
                 case State::AcceptingCrc:
                     message_.AppendToImage(&byte, 1);
                     if (message_.ImageSize() == payloadSize_ + 6) {
-                        handler_->Handle(message_);
+                        handler_->Handle(handlerActivationId_, message_);
                         message_.Reset();
                         payloadSize_ = 0;
                         state_ = State::BetweenMessages;
@@ -69,16 +71,18 @@ void RtcmParser::HandleStreamData(const void *data, int dataSize) {
     }
 }
 
-void RtcmParser::HandleEof() {
+void RtcmParser::HandleEof(int id) {
+    (void)id;
     if (!eof_) {
-        handler_->HandleEof();
+        handler_->HandleEof(handlerActivationId_);
         eof_ = true;
     }
 }
 
-void RtcmParser::HandleError() {
+void RtcmParser::HandleError(int id) {
+    (void)id;
     if (!error_) {
-        handler_->HandleError();
+        handler_->HandleError(handlerActivationId_);
         error_ = true;
     }
 }

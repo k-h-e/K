@@ -32,8 +32,8 @@ bool NmeaDevice::Register(const std::shared_ptr<NmeaMessageHandlerInterface> &ha
     }
 
     if (!error_) {
-        auto parser = make_shared<NmeaParser>(handler);
-        if (connection_->Register(parser)) {
+        auto parser = make_shared<NmeaParser>(handler, 0);
+        if (connection_->Register(parser, 0)) {
             parser_  = parser;
             handler_ = handler;
         }

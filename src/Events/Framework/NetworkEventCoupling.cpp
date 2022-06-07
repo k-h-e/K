@@ -5,6 +5,7 @@
 #include <K/Core/StringTools.h>
 #include <K/Core/Framework/Timer.h>
 #include <K/IO/KeepAliveParameters.h>
+#include <K/IO/Framework/InteractionConnectionEndPoint.h>
 #include <K/IO/Framework/TcpConnection.h>
 #include <K/Events/EventHub.h>
 #include <K/Events/Framework/EventNotifier.h>
@@ -23,6 +24,7 @@ using K::Core::Timers;
 using K::Core::Framework::Timer;
 using K::Core::Framework::RunLoop;
 using K::IO::KeepAliveParameters;
+using K::IO::Framework::InteractionConnectionEndPoint;
 using K::IO::Framework::TcpConnection;
 
 namespace K {
@@ -34,7 +36,7 @@ NetworkEventCoupling::NetworkEventCoupling(
             const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
             const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
         : hub_(hub),
-          tcpConnection_(tcpConnection),
+          tcpConnection_(make_unique<InteractionConnectionEndPoint>(tcpConnection, runLoop)),
           runLoop_(runLoop),
           protocolVersion_(protocolVersion),
           handler_(nullptr),
@@ -96,75 +98,10 @@ void NetworkEventCoupling::Register(NetworkEventCoupling::HandlerInterface *hand
 bool NetworkEventCoupling::ErrorState() const {
     return error_;
 }
-void NetworkEventCoupling::OnStreamReadyRead(int id) {
+
+void NetworkEventCoupling::HandleStreamData(int id, const void *data, int dataSize) {
     (void)id;
-    bool done = false;
-    while (!error_ && !done) {
-        int numRead = readBuffer_.AppendFromReader(tcpConnection_.get(), 2 * 1024);
-        if (numRead) {
-            ProcessIncoming();
-        } else {
-            if (tcpConnection_->ErrorState() || tcpConnection_->Eof()) {
-                EnterErrorState();
-            } else {
-                done = true;
-            }
-        }
-    }
-}
-
-void NetworkEventCoupling::OnStreamReadyWrite(int id) {
-    (void)id;
-
-    // Missing.
-}
-
-void NetworkEventCoupling::OnTimer(int id) {
-    (void)id;
-    if (!error_) {    // Defensive.
-        SendKeepAliveChunk();
-        if (!error_) {
-            --numKeepAliveSendsUntilCheck_;
-            if (numKeepAliveSendsUntilCheck_ <= 0) {
-                if (keepAliveReceived_) {
-                    keepAliveReceived_           = false;
-                    numKeepAliveSendsUntilCheck_ = numSendsBetweenKeepAliveChecks_;
-                    Log::Print(Log::Level::Debug, this, [&]{ return "keep-alive check OK"; });
-                } else {
-                    Log::Print(Log::Level::Error, this, [&]{ return "keep-alive not received in time"; });
-                    EnterErrorState();
-                }
-            }
-        }
-    }
-}
-
-void NetworkEventCoupling::OnEventsAvailable(int id) {
-    (void)id;
-    if (!error_) {    // Defensive.
-        eventBuffer_->Clear();
-        if (hub_->Sync(hubClientId_, &eventBuffer_)) {
-            if (eventBuffer_->DataSize()) {
-                SendEventsChunk(eventBuffer_->Data(), eventBuffer_->DataSize());
-            }
-        } else {
-            EnterErrorState();
-        }
-    }
-}
-
-void NetworkEventCoupling::Activate(bool deepActivation) {
-    (void)deepActivation;
-
-    if (signalErrorState_) {
-        signalErrorState_ = false;
-        if (handler_) {
-            handler_->OnNetworkEventCouplingErrorState(handlerAssociatedId_);
-        }
-    }
-}
-
-void NetworkEventCoupling::ProcessIncoming() {
+    readBuffer_.Append(data, dataSize);
     uint8_t *buffer = static_cast<uint8_t *>(readBuffer_.Data());
 
     uint32_t  chunkSizeU32;
@@ -265,6 +202,60 @@ void NetworkEventCoupling::ProcessIncoming() {
     }
 }
 
+void NetworkEventCoupling::HandleError(int id) {
+    (void)id;
+    EnterErrorState();
+}
+
+void NetworkEventCoupling::HandleEof(int id) {
+    (void)id;
+    EnterErrorState();
+}
+
+void NetworkEventCoupling::OnTimer(int id) {
+    (void)id;
+    if (!error_) {    // Defensive.
+        SendKeepAliveChunk();
+        if (!error_) {
+            --numKeepAliveSendsUntilCheck_;
+            if (numKeepAliveSendsUntilCheck_ <= 0) {
+                if (keepAliveReceived_) {
+                    keepAliveReceived_           = false;
+                    numKeepAliveSendsUntilCheck_ = numSendsBetweenKeepAliveChecks_;
+                    Log::Print(Log::Level::Debug, this, [&]{ return "keep-alive check OK"; });
+                } else {
+                    Log::Print(Log::Level::Error, this, [&]{ return "keep-alive not received in time"; });
+                    EnterErrorState();
+                }
+            }
+        }
+    }
+}
+
+void NetworkEventCoupling::OnEventsAvailable(int id) {
+    (void)id;
+    if (!error_) {    // Defensive.
+        eventBuffer_->Clear();
+        if (hub_->Sync(hubClientId_, &eventBuffer_)) {
+            if (eventBuffer_->DataSize()) {
+                SendEventsChunk(eventBuffer_->Data(), eventBuffer_->DataSize());
+            }
+        } else {
+            EnterErrorState();
+        }
+    }
+}
+
+void NetworkEventCoupling::Activate(bool deepActivation) {
+    (void)deepActivation;
+    if (signalErrorState_) {
+        signalErrorState_ = false;
+        if (handler_) {
+            handler_->OnNetworkEventCouplingErrorState(handlerAssociatedId_);
+        }
+    }
+}
+
 void NetworkEventCoupling::CopyDown() {
     if (readCursor_ >= 4096) {
         int numRemaining = readBuffer_.DataSize() - readCursor_;
@@ -282,31 +273,24 @@ void NetworkEventCoupling::SendVersionChunk() {
 
     ChunkType chunkType = ChunkType::Version;
     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType) + versionBinary.size());
-    //writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
-    //writeBuffer_.Put(&chunkType, sizeof(chunkType));
-    //writeBuffer_.Put(&versionBinary[0], static_cast<int>(versionBinary.size()));
-
-    (void)chunkSize;
+    tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
+    tcpConnection_->WriteItem(&chunkType, sizeof(chunkType));
+    tcpConnection_->WriteItem(&versionBinary[0], static_cast<int>(versionBinary.size()));
 }
 
 void NetworkEventCoupling::SendEventsChunk(const void *data, int dataSize) {
     ChunkType chunkType = ChunkType::Events;
     uint32_t  chunkSize = static_cast<uint32_t>(dataSize) + static_cast<uint32_t>(sizeof(chunkType));
-    //writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
-    //writeBuffer_.Put(&chunkType, sizeof(chunkType));
-    //writeBuffer_.Put(data, dataSize);
-
-    (void)chunkSize;
-    (void)data;
+    tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
+    tcpConnection_->WriteItem(&chunkType, sizeof(chunkType));
+    tcpConnection_->WriteItem(data, dataSize);
 }
 
 void NetworkEventCoupling::SendKeepAliveChunk() {
     ChunkType chunkType = ChunkType::KeepAlive;
     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType));
-    //writeBuffer_.Put(&chunkSize, sizeof(chunkSize));
-    //writeBuffer_.Put(&chunkType, sizeof(chunkType));
-
-    (void)chunkSize;
+    tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
+    tcpConnection_->WriteItem(&chunkType, sizeof(chunkType));
 }
 
 void NetworkEventCoupling::EnterErrorState() {
