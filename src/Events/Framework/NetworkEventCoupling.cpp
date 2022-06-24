@@ -222,7 +222,7 @@ void NetworkEventCoupling::OnTimer(int id) {
                 if (keepAliveReceived_) {
                     keepAliveReceived_           = false;
                     numKeepAliveSendsUntilCheck_ = numSendsBetweenKeepAliveChecks_;
-                    Log::Print(Log::Level::Debug, this, [&]{ return "keep-alive check OK"; });
+                    //Log::Print(Log::Level::Debug, this, [&]{ return "keep-alive check OK"; });
                 } else {
                     Log::Print(Log::Level::Error, this, [&]{ return "keep-alive not received in time"; });
                     EnterErrorState();

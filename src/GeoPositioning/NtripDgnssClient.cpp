@@ -55,7 +55,7 @@ NtripDgnssClient::~NtripDgnssClient() {
 }
 
 void NtripDgnssClient::SendGga(const std::string &gga) {
-    Log::Print(Log::Level::Debug, this, [&]{ return "sending position: \"" + gga + "\""; });
+    //Log::Print(Log::Level::Debug, this, [&]{ return "sending position: \"" + gga + "\""; });
     string lineBreak = "\r\n";
     connection_.WriteItem(&gga[0], static_cast<int>(gga.size()));
     connection_.WriteItem(&lineBreak[0], static_cast<int>(lineBreak.size()));

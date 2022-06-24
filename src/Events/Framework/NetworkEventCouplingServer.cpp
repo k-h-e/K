@@ -33,9 +33,13 @@ NetworkEventCouplingServer::NetworkEventCouplingServer(
           timers_{timers},
           threadPool_{threadPool},
           runLoop_{runLoop},
+          handler_{nullptr},
+          handlerActivationId_{0},
           port_{port},
           protocolVersion_{protocolVersion},
-          keepAliveParameters_{keepAliveParameters} {
+          keepAliveParameters_{keepAliveParameters},
+          signalCouplingInstallation_{false} {
+    runLoopClientId_ = runLoop_->AddClient(this);
     InstallListenSocket();
 }
 
@@ -44,12 +48,42 @@ NetworkEventCouplingServer::~NetworkEventCouplingServer() {
     UninstallTimer();
     UninstallListenSocket();
 
+    runLoop_->RemoveClient(runLoopClientId_);
+
     // TODO: Check deconstruction.
+}
+
+void NetworkEventCouplingServer::Register(HandlerInterface *handler, int id) {
+    handler_             = handler;
+    handlerActivationId_ = handler ? id : 0;
+
+    if (handler_) {
+        if (coupling_) {
+            signalCouplingInstallation_ = true;
+            runLoop_->RequestActivation(runLoopClientId_, false);
+        }
+    } else {
+        signalCouplingInstallation_ = false;
+    }
+}
+
+void NetworkEventCouplingServer::Activate(bool deepActivation) {
+    (void)deepActivation;
+    if (signalCouplingInstallation_) {
+        if (handler_) {
+            handler_->OnNetworkEventCouplingInstalled(handlerActivationId_);
+        }
+        signalCouplingInstallation_ = false;
+    }
 }
 
 void NetworkEventCouplingServer::OnListenSocketAcceptedConnection(int id, unique_ptr<TcpConnection> connection) {
     (void)id;
     InstallCoupling(move(connection));
+
+    if (handler_) {
+        handler_->OnNetworkEventCouplingInstalled(handlerActivationId_);
+    }
 }
 
 void NetworkEventCouplingServer::OnListenSocketErrorState(int id) {
@@ -61,6 +95,10 @@ void NetworkEventCouplingServer::OnListenSocketErrorState(int id) {
 void NetworkEventCouplingServer::OnNetworkEventCouplingErrorState(int id) {
     (void)id;
     UninstallCoupling();
+
+    if (handler_) {
+        handler_->OnNetworkEventCouplingUninstalled(handlerActivationId_);
+    }
 }
 
 void NetworkEventCouplingServer::OnTimer(int id) {
