@@ -32,6 +32,8 @@ class ConfigurationFile : public virtual Core::ErrorStateInterface {
     //! Gets the value of the specified key.
     void GetValue(const std::string &section, const std::string &key, std::string *outValue);
     //! Gets the value of the specified key.
+    void GetValue(const std::string &section, const std::string &key, int *outValue);
+    //! Gets the value of the specified key.
     void GetValue(const std::string &section, const std::string &key, float *outValue);
     //! Gets the value of the specified key.
     void GetValue(const std::string &section, const std::string &key, double *outValue);

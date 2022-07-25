@@ -21,7 +21,7 @@ namespace K {
 namespace IO {
 
 optional<int> NetworkTools::ConnectTcp(const string &hostAndPort, Core::Interface *loggingObject) {
-    vector<string> tokens = StringTools::Tokenize(hostAndPort, ':');
+    vector<string> tokens = StringTools::Tokenize(hostAndPort, ":", false);
     if (tokens.size() == 2) {
         int port;
         if (StringTools::Parse(tokens[1], &port)) {

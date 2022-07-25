@@ -73,6 +73,20 @@ void ConfigurationFile::GetValue(const string &section, const string &key, strin
     errorState_ = true;
 }
 
+void ConfigurationFile::GetValue(const string &section, const string &key, int *outValue) {
+    if (!errorState_) {
+        string value;
+        GetValue(section, key, &value);
+        if (!errorState_) {
+            if (StringTools::Parse(value, outValue)) {
+                return;
+            }
+        }
+    }
+
+    errorState_ = true;
+}
+
 void ConfigurationFile::GetValue(const string &section, const string &key, float *outValue) {
     if (!errorState_) {
         string value;
@@ -156,7 +170,7 @@ void ConfigurationFile::Load(const string &fileName) {
     string line;
     bool success = false;
     bool bad     = false;
-    while (!success && !bad) {
+    while (!success && !bad && !errorState_) {
         reader.Read('\n', &line);
         if (reader.ReadFailed()) {
             if (reader.Eof()) {
@@ -170,7 +184,7 @@ void ConfigurationFile::Load(const string &fileName) {
                 currentSection = line;
             }
             else {
-                vector<string> tokens = StringTools::Tokenize(line, '=');
+                vector<string> tokens = StringTools::Tokenize(line, "=", false);
                 if (tokens.size() == 2u) {
                     StringTools::Trim(&tokens[0], whiteSpace);
                     StringTools::Trim(&tokens[1], whiteSpace);
@@ -186,22 +200,22 @@ void ConfigurationFile::Load(const string &fileName) {
         }
     }
 
-    if (bad) {
+    if (bad || errorState_) {
         sections_.clear();
         errorState_ = true;
     }
 }
 
 bool ConfigurationFile::IsSectionName(const string &text) {
-    return IsValue(text);
+    return (IsValue(text) && !text.empty());
 }
 
 bool ConfigurationFile::IsKey(const string &text) {
-    return IsValue(text);
+    return (IsValue(text) && !text.empty());
 }
 
 bool ConfigurationFile::IsValue(const string &text) {
-    return validCharacters_.IsValid(text);
+    return (text.empty() || validCharacters_.IsValid(text));
 }
 
 }    // Namespace IO.

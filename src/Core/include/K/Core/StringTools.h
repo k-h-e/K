@@ -25,7 +25,6 @@ class ItemWriteInterface;
 //! Tool functions dealing with strings.
 class StringTools {
   public:
-    static std::vector<std::string> Tokenize(const std::string &text, char separator);
     static std::vector<std::string> Tokenize(const std::string &text, const std::string &separators,
                                              bool suppressEmptyTokens);
     static std::string Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString);

@@ -34,16 +34,6 @@ namespace Core {
 const char * const StringTools::base64EncodeTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const char * const StringTools::hexEncodeTable    = "0123456789abcdef";
 
-vector<string> StringTools::Tokenize(const string &text, char separator) {
-    vector<string> tokens;
-    istringstream  stream(text);
-    string         token;
-    while (getline(stream, token, separator)) {
-        tokens.push_back(token);
-    }
-    return tokens;
-}
-
 vector<string> StringTools::Tokenize(const std::string &text, const std::string &separators, bool suppressEmptyTokens) {
     vector<string> tokens;
     string         remainder = text;
