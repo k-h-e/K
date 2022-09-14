@@ -17,7 +17,6 @@ using K::Core::Log;
 namespace K {
 namespace IO {
 
-
 StreamBuffer::StreamBuffer(const shared_ptr<SeekableBlockingIOStreamInterface> &stream, File::AccessMode accessMode,
                            int bufferSize)
         : stream_(stream),
@@ -61,8 +60,6 @@ StreamBuffer::~StreamBuffer() {
 
     if (error_) {
         Log::Print(Log::Level::Error, this, [&]{ return "error while closing"; });
-    } else {
-        Log::Print(Log::Level::Debug, this, [&]{ return "closed"; });
     }
 }
 
@@ -143,7 +140,7 @@ int StreamBuffer::WriteBlocking(const void *data, int dataSize) {
 void StreamBuffer::Seek(int64_t position) {
     if (!error_) {
         if (position >= 0) {
-            int newBufferPosition = BufferPositionFor(position);
+            int64_t newBufferPosition = BufferPositionFor(position);
             if (newBufferPosition != bufferPosition_) {
                 if (Flush()) {
                     if (SetUpBuffer(position)) {
@@ -151,7 +148,7 @@ void StreamBuffer::Seek(int64_t position) {
                     }
                 }
             } else {
-                cursor_ = position - bufferPosition_;
+                cursor_ = static_cast<int>(position - bufferPosition_);
                 return;
             }
         }
@@ -196,7 +193,7 @@ bool StreamBuffer::SetUpBuffer(int64_t position) {
                 }
                 bufferPosition_ = newBufferPosition;
                 fill_           = numReadTotal;
-                cursor_         = position - newBufferPosition;
+                cursor_         = static_cast<int>(position - newBufferPosition);
                 dirty_          = false;
                 return true;
             }
@@ -204,7 +201,7 @@ bool StreamBuffer::SetUpBuffer(int64_t position) {
     } else {
         bufferPosition_ = newBufferPosition;
         fill_           = 0;
-        cursor_         = position - newBufferPosition;
+        cursor_         = static_cast<int>(position - newBufferPosition);
         dirty_          = false;
         for (vector<bool>::reference bit : dirtyBytes_) {
             bit = false;

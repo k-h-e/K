@@ -39,8 +39,6 @@ BinaryWriter::~BinaryWriter() {
 
     if (error_ || writeFailed_) {
         Log::Print(Log::Level::Error, this, []{ return "error while closing"; });
-    } else {
-        Log::Print(Log::Level::Debug, this, []{ return "closed"; });
     }
 }
 

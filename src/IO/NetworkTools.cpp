@@ -110,8 +110,7 @@ string NetworkTools::Ip4ToString(uint32_t ip4Address) {
 }
 
 bool NetworkTools::PrepareSocket(int fd, Core::Interface *loggingObject) {
-    static_assert(K_PLATFORM_SET);
-#if defined(K_PLATFORM_APPLE)
+#if defined(K_PLATFORM_MAC) || defined(K_PLATFORM_IOS)
     int enabled = 1;
     if (setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &enabled, sizeof(enabled))) {
         Log::Print(Log::Level::Warning, loggingObject, [&]{
@@ -119,10 +118,12 @@ bool NetworkTools::PrepareSocket(int fd, Core::Interface *loggingObject) {
         return false;
     }
     return true;
-#else
+#elif defined(K_PLATFORM_LINUX)
     (void)fd;
     (void)loggingObject;
     return true;
+#else
+#error Unknown platform.
 #endif
 }
 
