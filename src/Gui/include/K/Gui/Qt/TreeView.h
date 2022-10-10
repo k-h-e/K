@@ -1,5 +1,5 @@
-#ifndef K_UI_QT_TREEVIEW_H_
-#define K_UI_QT_TREEVIEW_H_
+#ifndef K_GUI_QT_TREEVIEW_H_
+#define K_GUI_QT_TREEVIEW_H_
 
 #include <memory>
 #include <QTreeView>
@@ -17,8 +17,8 @@ namespace SceneGraph {
 }
 
 namespace K {
-//! UI elements.
-namespace UI {
+//! Graphical user interface elements.
+namespace Gui {
 //! <c>Qt</c>-based UI elements.
 namespace Qt {
 
@@ -47,7 +47,7 @@ class TreeView : public QTreeView {
 };
 
 }    // Namespace Qt.
-}    // Namespace UI.
+}    // Namespace Gui.
 }    // Namespace K.
 
-#endif    // K_UI_QT_TREEVIEW_H_
+#endif    // K_GUI_QT_TREEVIEW_H_

@@ -1,10 +1,10 @@
-#ifndef K_UI_QT_TREEVIEW_TREEMODEL_H
-#define K_UI_QT_TREEVIEW_TREEMODEL_H
+#ifndef K_GUI_QT_TREEVIEW_TREEMODEL_H
+#define K_GUI_QT_TREEVIEW_TREEMODEL_H
 
 #include <QAbstractItemModel>
 #include <QModelIndex>
 #include <QVariant>
-#include <K/UI/Qt/TreeView.h>
+#include <K/Gui/Qt/TreeView.h>
 
 namespace K {
 namespace Core {
@@ -13,7 +13,7 @@ namespace Core {
 }
 
 namespace K {
-namespace UI {
+namespace Gui {
 namespace Qt {
 
 //! Adapted from Qt tree view example.
@@ -46,7 +46,7 @@ class TreeView::TreeModel : public QAbstractItemModel {
 };
 
 }    // Namespace Qt.
-}    // Namespace UI.
+}    // Namespace Gui.
 }    // Namespace K.
 
-#endif    // K_UI_QT_TREEVIEW_TREEMODEL_H
+#endif    // K_GUI_QT_TREEVIEW_TREEMODEL_H

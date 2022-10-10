@@ -1,4 +1,4 @@
-#include <K/UI/Qt/TreeView.h>
+#include <K/Gui/Qt/TreeView.h>
 
 #include <K/Core/Interface.h>
 #include "TreeItem.h"
@@ -8,7 +8,7 @@ using std::shared_ptr;
 using K::Core::Interface;
 
 namespace K {
-namespace UI {
+namespace Gui {
 namespace Qt {
 
 TreeView::TreeView(const QString &title, QWidget *parent)
@@ -36,5 +36,5 @@ TreeView::TreeItem *TreeView::AddItem(const QString &label, bool checked, const 
 }
 
 }    // Namespace Qt.
-}    // Namespace UI.
+}    // Namespace Gui.
 }    // Namespace K.

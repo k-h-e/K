@@ -1,12 +1,12 @@
-#ifndef K_UI_QT_TREEVIEW_TREEITEM_H
-#define K_UI_QT_TREEVIEW_TREEITEM_H
+#ifndef K_GUI_QT_TREEVIEW_TREEITEM_H
+#define K_GUI_QT_TREEVIEW_TREEITEM_H
 
 #include <memory>
 #include <QVector>
-#include <K/UI/Qt/TreeView.h>
+#include <K/Gui/Qt/TreeView.h>
 
 namespace K {
-namespace UI {
+namespace Gui {
 namespace Qt {
 
 //! Adapted from Qt tree view example.
@@ -40,7 +40,7 @@ class TreeView::TreeItem {
 };
 
 }    // Namespace Qt.
-}    // Namespace UI.
+}    // Namespace Gui.
 }    // Namespace K.
 
-#endif    // K_UI_QT_TREEVIEW_TREEITEM_H
+#endif    // K_GUI_QT_TREEVIEW_TREEITEM_H

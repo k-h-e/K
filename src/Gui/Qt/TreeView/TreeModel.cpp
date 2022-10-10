@@ -6,7 +6,7 @@ using std::shared_ptr;
 using K::Core::Interface;
 
 namespace K {
-namespace UI {
+namespace Gui {
 namespace Qt {
 
 TreeView::TreeModel::TreeModel(const QString &title, QObject *parent)
@@ -131,5 +131,5 @@ int TreeView::TreeModel::rowCount(const QModelIndex &parent) const {
 }
 
 }    // Namespace Qt.
-}    // Namespace UI.
+}    // Namespace Gui.
 }    // Namespace K.

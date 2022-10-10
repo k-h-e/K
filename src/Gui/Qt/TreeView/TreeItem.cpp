@@ -6,7 +6,7 @@ using std::shared_ptr;
 using K::Core::Interface;
 
 namespace K {
-namespace UI {
+namespace Gui {
 namespace Qt {
 
 TreeView::TreeItem::TreeItem(const QString &label, const shared_ptr<Interface> &parameter, TreeItem *parent)
@@ -72,5 +72,5 @@ int TreeView::TreeItem::Row() const {
 }
 
 }    // Namespace Qt.
-}    // Namespace UI.
+}    // Namespace Gui.
 }    // Namespace K.
