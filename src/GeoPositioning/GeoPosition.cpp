@@ -55,8 +55,8 @@ double GeoPosition::Longitude() const {
 string GeoPosition::ToString() const {
     char latitudeText[40];
     char longitudeText[40];
-    std::sprintf(latitudeText,  "%.8f", latitude_);
-    std::sprintf(longitudeText, "%.8f", longitude_);
+    std::snprintf(latitudeText, 40, "%.8f", latitude_);
+    std::snprintf(longitudeText, 40, "%.8f", longitude_);
     return string("(lat=") + latitudeText + ", lng=" + longitudeText + ")";
 }
 

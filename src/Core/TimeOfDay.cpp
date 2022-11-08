@@ -41,7 +41,7 @@ TimeOfDay::TimeOfDay(int hours, int minutes, int seconds, int milliSeconds)
 
 string TimeOfDay::ToString() const {
     char line[80];
-    std::sprintf(line, "%02d:%02d:%02d.%03d", hours_, minutes_, seconds_, milliSeconds_);
+    std::snprintf(line, 80, "%02d:%02d:%02d.%03d", hours_, minutes_, seconds_, milliSeconds_);
     return string(line);
 }
 

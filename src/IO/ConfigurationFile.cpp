@@ -44,13 +44,13 @@ void ConfigurationFile::SetValue(const string &section, const string &key, const
 
 void ConfigurationFile::SetValue(const string &section, const string &key, float value) {
     char buffer[100];
-    sprintf(buffer, "%f", value);
+    snprintf(buffer, 100, "%f", value);
     SetValue(section, key, string(buffer));
 }
 
 void ConfigurationFile::SetValue(const string &section, const string &key, double value) {
     char buffer[100];
-    sprintf(buffer, "%.8f", value);
+    snprintf(buffer, 100, "%.8f", value);
     SetValue(section, key, string(buffer));
 }
 
