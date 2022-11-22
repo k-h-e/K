@@ -23,12 +23,27 @@ class BlockingInStreamInterface;
 class BinaryReader : public virtual BinaryReaderInterface {
   public:
     BinaryReader(const std::shared_ptr<BlockingInStreamInterface> &stream);
+    //! The stream is expected to outlive the reader.
+    BinaryReader(BlockingInStreamInterface *stream);
     BinaryReader()                                     = delete;
     BinaryReader(const BinaryReader &other)            = delete;
     BinaryReader &operator=(const BinaryReader &other) = delete;
     BinaryReader(BinaryReader &&other)                 = delete;
     BinaryReader &operator=(BinaryReader &&other)      = delete;
     ~BinaryReader()                                    = default;
+
+    //! Resets the binary reader.
+    /*!
+     *  The stream remains set and unchanged.
+     */
+    void Reset();
+    //! Resets the binary reader and registers another stream via dumb pointer.
+    /*!
+     *  The stream is expected to outlive the reader.
+     *
+     *  If the previous stream was also registered as dumb pointer, the operation is fast.
+     */
+    void Reset(BlockingInStreamInterface *stream);
 
     void ReadItem(void *item, int itemSize) override;
     int ReadInt() override;
@@ -42,10 +57,11 @@ class BinaryReader : public virtual BinaryReaderInterface {
     bool ErrorState() const override;
 
   private:
-    const std::shared_ptr<BlockingInStreamInterface> stream_;
-    bool                                             readFailed_;
-    bool                                             eof_;
-    bool                                             error_;
+    std::shared_ptr<BlockingInStreamInterface> stream_;
+    BlockingInStreamInterface                  *streamDumb_;
+    bool                                       readFailed_;
+    bool                                       eof_;
+    bool                                       error_;
 };
 
 }    // Namespace Core.

@@ -5,6 +5,7 @@
 #include <K/Core/BinaryWriterInterface.h>
 #include <K/Core/BlockingReadInterface.h>
 #include <K/Core/BlockingWriteInterface.h>
+#include <K/Core/StringTools.h>
 #include <K/Core/TextWriterInterface.h>
 
 using std::string;
@@ -27,6 +28,11 @@ BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, uint32_t &value
     return reader;
 }
 
+BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, uint64_t &value) {
+    reader.ReadItem(&value, sizeof(value));
+    return reader;
+}
+
 BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, float &value) {
     value = reader.ReadFloat();
     return reader;
@@ -34,6 +40,11 @@ BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, float &value) {
 
 BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, double &value) {
     value = reader.ReadDouble();
+    return reader;
+}
+
+BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, string &text) {
+    StringTools::Deserialize(&text, &reader);
     return reader;
 }
 
@@ -52,6 +63,11 @@ BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, uint32_t value)
     return writer;
 }
 
+BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, uint64_t value) {
+    writer.WriteItem(&value, sizeof(value));
+    return writer;
+}
+
 BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, float value) {
     writer.Write(value);
     return writer;
@@ -59,6 +75,11 @@ BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, float value) {
 
 BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, double value) {
     writer.Write(value);
+    return writer;
+}
+
+BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, const string &text) {
+    StringTools::Serialize(text, &writer);
     return writer;
 }
 

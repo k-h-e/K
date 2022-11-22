@@ -1,14 +1,13 @@
 #include <K/GeoPositioning/GeoPosition.h>
 
 #include <cmath>
-#include <K/Core/ItemReadInterface.h>
-#include <K/Core/ItemWriteInterface.h>
+#include <K/Core/IOOperations.h>
 #include <K/Core/NumberTools.h>
 
 using std::isfinite;
 using std::string;
-using K::Core::ItemReadInterface;
-using K::Core::ItemWriteInterface;
+using K::Core::BinaryReaderInterface;
+using K::Core::BinaryWriterInterface;
 using K::Core::NumberTools;
 
 namespace K {
@@ -60,14 +59,14 @@ string GeoPosition::ToString() const {
     return string("(lat=") + latitudeText + ", lng=" + longitudeText + ")";
 }
 
-void GeoPosition::Serialize(ItemWriteInterface *stream) const {
-    stream->WriteItem(&latitude_, sizeof(latitude_));
-    stream->WriteItem(&longitude_, sizeof(longitude_));
+void GeoPosition::Serialize(BinaryWriterInterface *writer) const {
+    (*writer) << latitude_;
+    (*writer) << longitude_;
 }
 
-void GeoPosition::Deserialize(ItemReadInterface *stream) {
-    stream->ReadItem(&latitude_, sizeof(latitude_));
-    stream->ReadItem(&longitude_, sizeof(longitude_));
+void GeoPosition::Deserialize(BinaryReaderInterface *reader) {
+    (*reader) >> latitude_;
+    (*reader) >> longitude_;
 }
 
 }    // Namespace GeoPositioning.

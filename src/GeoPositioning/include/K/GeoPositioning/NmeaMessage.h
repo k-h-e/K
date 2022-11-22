@@ -49,8 +49,8 @@ class NmeaMessage : public virtual K::Core::SerializableInterface {
     //! Writes the NMEA message to the specified stream.
     void WriteTo(Core::ItemWriteInterface *stream) const;
 
-    void Serialize(K::Core::ItemWriteInterface *stream) const override;
-    void Deserialize(K::Core::ItemReadInterface *stream) override;
+    void Serialize(K::Core::BinaryWriterInterface *writer) const override;
+    void Deserialize(K::Core::BinaryReaderInterface *reader) override;
 
   private:
     std::string              type_;

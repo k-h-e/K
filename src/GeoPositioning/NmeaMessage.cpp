@@ -2,7 +2,8 @@
 
 #include <sstream>
 #include <iomanip>
-#include <K/Core/ItemReadInterface.h>
+#include <K/Core/BinaryReaderInterface.h>
+#include <K/Core/IOOperations.h>
 #include <K/Core/ItemWriteInterface.h>
 #include <K/Core/StringTools.h>
 
@@ -12,7 +13,8 @@ using std::hex;
 using std::setw;
 using std::setfill;
 using std::vector;
-using K::Core::ItemReadInterface;
+using K::Core::BinaryReaderInterface;
+using K::Core::BinaryWriterInterface;
 using K::Core::ItemWriteInterface;
 using K::Core::StringTools;
 
@@ -95,24 +97,24 @@ void NmeaMessage::WriteTo(ItemWriteInterface *stream) const {
     stream->WriteItem(text.c_str(), static_cast<int>(text.length()));
 }
 
-void NmeaMessage::Serialize(K::Core::ItemWriteInterface *stream) const {
-    StringTools::Serialize(type_, stream);
+void NmeaMessage::Serialize(BinaryWriterInterface *writer) const {
     uint32_t numFields = static_cast<uint32_t>(fields_.size());
-    stream->WriteItem(&numFields, sizeof(numFields));
+    (*writer) << type_;
+    (*writer) << numFields;
     for (uint32_t i = 0u; i < numFields; ++i) {
-        StringTools::Serialize(fields_[i], stream);
+        (*writer) << fields_[i];
     }
 }
 
-void NmeaMessage::Deserialize(K::Core::ItemReadInterface *stream) {
-    StringTools::Deserialize(&type_, stream);
+void NmeaMessage::Deserialize(BinaryReaderInterface *reader) {
     uint32_t numFields;
-    stream->ReadItem(&numFields, sizeof(numFields));
-    if (!stream->ReadFailed()) {
+    (*reader) >> type_;
+    (*reader) >> numFields;
+    if (!reader->ReadFailed()) {
         fields_.clear();
         for (uint32_t i = 0u; i < numFields; ++i) {
             string field;
-            StringTools::Deserialize(&field, stream);
+            (*reader) >> field;
             fields_.push_back(field);
         }
     }

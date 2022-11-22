@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <stack>
 #include <condition_variable>
+#include <K/Core/BinaryWriter.h>
 #include <K/Core/Buffer.h>
 #include <K/Events/EventReceiverInterface.h>
 
@@ -138,7 +139,8 @@ class EventHub : public virtual EventReceiverInterface {
     std::vector<LoopInfo>           loops_;
     std::stack<int>                 unusedLoopSlots_;
     std::unordered_map<size_t, int> eventIdToSlotMap_;
-    Core::Buffer                    eventsToSchedule_;
+    std::shared_ptr<Core::Buffer>   eventsToSchedule_;
+    Core::BinaryWriter              scheduledEventsWriter_;
     bool                            shutDownRequested_;
 };
 

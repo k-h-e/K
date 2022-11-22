@@ -33,8 +33,8 @@ class TimeOfDay : public virtual SerializableInterface {
 
     std::string ToString() const;
 
-    void Serialize(ItemWriteInterface *stream) const override;
-    void Deserialize(ItemReadInterface *stream) override;
+    void Serialize(BinaryWriterInterface *writer) const override;
+    void Deserialize(BinaryReaderInterface *reader) override;
 
     //! Returns the current time of day in UTC.
     static TimeOfDay NowUtc();

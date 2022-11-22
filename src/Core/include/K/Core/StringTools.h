@@ -19,8 +19,8 @@ namespace K {
 namespace Core {
 
 class Interface;
-class ItemReadInterface;
-class ItemWriteInterface;
+class BinaryReaderInterface;
+class BinaryWriterInterface;
 
 //! Tool functions dealing with strings.
 class StringTools {
@@ -37,8 +37,8 @@ class StringTools {
     static std::string ToHex(const void *data, int dataSize);
     static std::string GetCleanClassName(const Interface *instance);
     static std::string GetCleanClassName(const Interface *instance, int maxNumSegments);
-    static void Serialize(const std::string &text, ItemWriteInterface *stream);
-    static void Deserialize(std::string *text, ItemReadInterface *stream);
+    static void Serialize(const std::string &text, BinaryWriterInterface *writer);
+    static void Deserialize(std::string *text, BinaryReaderInterface *reader);
     static void Serialize(const std::string &text, std::vector<uint8_t> *outBinary);
     static bool Deserialize(std::string *text, const void *binary, int binarySize);
 

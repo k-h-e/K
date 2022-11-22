@@ -13,15 +13,15 @@
 
 #include <stdint.h>
 #include <vector>
-#include <K/Core/ItemReadInterface.h>
-#include <K/Core/ItemWriteInterface.h>
+#include <K/Core/BlockingInStreamInterface.h>
+#include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/NonBlockingReadInterface.h>
 
 namespace K {
 namespace Core {
 
 //! Binary buffer, allowing iterative composition and readout.
-class Buffer : public virtual ItemWriteInterface {
+class Buffer : public virtual BlockingOutStreamInterface {
   public:
     //! Allows for iterative buffer readout.
 	/*!
@@ -29,8 +29,8 @@ class Buffer : public virtual ItemWriteInterface {
      *  interleaved with adding data via \ref Append().
 	 */
 
-    class Reader : public virtual NonBlockingReadInterface,
-                   public virtual ItemReadInterface {
+    class Reader : public virtual BlockingInStreamInterface,
+                   public virtual NonBlockingReadInterface {
 	  public:
         Reader()                               = default;
         Reader(const Reader &other)            = default;
@@ -39,30 +39,30 @@ class Buffer : public virtual ItemWriteInterface {
         Reader &operator=(Reader &&other)      = default;
         ~Reader()                              = default;
 
+        bool ErrorState() const override;
+        bool Eof() const override;
+        int ReadBlocking(void *buffer, int bufferSize) override;
+        void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
         int ReadNonBlocking(void *buffer, int bufferSize) override;
-        void ReadItem(void *item, int itemSize) override;
-        bool ReadFailed() const override;
-        void ClearReadFailed() override;
 
 	  private:
 		friend class Buffer;
 
 		Reader(const Buffer *buffer);
 
-        const Buffer *buffer_;
-        int          cursor_;
-        bool         readFailed_;
+        const Buffer                          *buffer_;
+        int                                   cursor_;
 	};
 
 	//! Creates a buffer of the given initial size, but does not initialize its contents.
 	Buffer(int initialSize);
     //! Creates an empty buffer.
     Buffer();
-    Buffer(const Buffer &other);
-    Buffer &operator=(const Buffer &other);
+    Buffer(const Buffer &other)            = delete;
+    Buffer &operator=(const Buffer &other) = delete;
     Buffer(Buffer &&other)                 = delete;
     Buffer &operator=(Buffer &&other)      = delete;
-    ~Buffer()                              = default;
+    ~Buffer();
 
     //! Grants access to the buffer's data. Note that the handed-out memory location gets invalidated by subsequent
     //! calls to \ref Append().
@@ -118,15 +118,16 @@ class Buffer : public virtual ItemWriteInterface {
 	 */
 	Reader GetReader() const;
 
-    void WriteItem(const void *item, int itemSize) override;
-    bool WriteFailed() const override;
-    void ClearWriteFailed() override;
+    bool ErrorState() const override;
+    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
+    int WriteBlocking(const void *data, int dataSize) override;
 
   private:
     void Grow();
 
-    std::vector<uint8_t>          buffer_;
-    int                           bufferFill_;
+    std::vector<uint8_t>                  buffer_;
+    int                                   bufferFill_;
+    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;
 };
 
 }    // Namespace Core.

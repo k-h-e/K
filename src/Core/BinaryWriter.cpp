@@ -23,9 +23,17 @@ namespace Core {
 
 BinaryWriter::BinaryWriter(const shared_ptr<BlockingOutStreamInterface> &stream)
         : stream_(stream),
+          streamDumb_(nullptr),
           writeFailed_(false),
           error_(false) {
     // Nop.
+}
+
+BinaryWriter::BinaryWriter(BlockingOutStreamInterface *stream)
+        : streamDumb_(stream),
+          writeFailed_(false),
+          error_(false) {
+    assert (stream);
 }
 
 BinaryWriter::~BinaryWriter() {
@@ -42,12 +50,28 @@ BinaryWriter::~BinaryWriter() {
     }
 }
 
+void BinaryWriter::Reset() {
+    writeFailed_ = false;
+    error_       = false;
+}
+
+void BinaryWriter::Reset(BlockingOutStreamInterface *stream) {
+    assert (stream);
+    if (!streamDumb_) {
+        stream_.reset();
+    }
+    streamDumb_  = stream;
+
+    writeFailed_ = false;
+    error_       = false;
+}
+
 void BinaryWriter::WriteItem(const void *item, int itemSize) {
     if (!writeFailed_) {
         if (error_) {
             writeFailed_ = true;
         } else {
-            if (!Core::WriteItem(stream_.get(), item, itemSize)) {
+            if (!Core::WriteItem(streamDumb_ ? streamDumb_ : stream_.get(), item, itemSize)) {
                 writeFailed_ = true;
                 error_       = true;
             }
@@ -89,7 +113,7 @@ bool BinaryWriter::ErrorState() const {
 
 void BinaryWriter::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
     finalResultAcceptor_ = resultAcceptor;
-    stream_->SetFinalResultAcceptor(resultAcceptor);
+    (streamDumb_ ? streamDumb_ : stream_.get())->SetFinalResultAcceptor(resultAcceptor);
 }
 
 }    // Namespace Core.

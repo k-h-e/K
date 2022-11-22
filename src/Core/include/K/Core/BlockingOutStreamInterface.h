@@ -20,7 +20,6 @@ namespace Core {
 //! Interface to blocking output streams.
 class BlockingOutStreamInterface : public virtual StreamInterface,
                                    public virtual BlockingWriteInterface {
-  public:
 };
 
 }    // Namespace Core.

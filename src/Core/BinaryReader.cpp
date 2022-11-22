@@ -20,10 +20,37 @@ namespace Core {
 
 BinaryReader::BinaryReader(const shared_ptr<BlockingInStreamInterface> &stream)
         : stream_(stream),
+          streamDumb_(nullptr),
           readFailed_(false),
           eof_(false),
           error_(false) {
     // Nop.
+}
+
+BinaryReader::BinaryReader(BlockingInStreamInterface *stream)
+        : streamDumb_(stream),
+          readFailed_(false),
+          eof_(false),
+          error_(false) {
+    // Nop.
+}
+
+void BinaryReader::Reset() {
+    readFailed_ = false;
+    eof_        = false;
+    error_      = false;
+}
+
+void BinaryReader::Reset(BlockingInStreamInterface *stream) {
+    assert (stream);
+    if (!streamDumb_) {
+        stream_.reset();
+    }
+    streamDumb_  = stream;
+
+    readFailed_ = false;
+    eof_        = false;
+    error_      = false;
 }
 
 void BinaryReader::ReadItem(void *item, int itemSize) {
@@ -35,13 +62,13 @@ void BinaryReader::ReadItem(void *item, int itemSize) {
             uint8_t *dest   = static_cast<uint8_t *>(item);
             int     numLeft = itemSize;
             while (numLeft) {
-                int numRead = stream_->ReadBlocking(dest, numLeft);
+                int numRead = (streamDumb_ ? streamDumb_ : stream_.get())->ReadBlocking(dest, numLeft);
                 if (numRead) {
                     dest    += numRead;
                     numLeft -= numRead;
                 } else {
                     readFailed_ = true;
-                    if (stream_->Eof()) {
+                    if ((streamDumb_ ? streamDumb_ : stream_.get())->Eof()) {
                         eof_ = true;
                     } else {
                         error_ = true;

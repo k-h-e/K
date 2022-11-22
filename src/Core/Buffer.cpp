@@ -13,8 +13,10 @@
 #include <cassert>
 #include <cstring>
 #include <K/Core/NumberTools.h>
+#include <K/Core/ResultAcceptor.h>
 
 using std::min;
+using std::shared_ptr;
 
 namespace K {
 namespace Core {
@@ -27,14 +29,10 @@ Buffer::Buffer(int initialSize)
 	    : buffer_(initialSize > 0 ? initialSize : 1),
 		  bufferFill_((int)buffer_.size()) {}
 
-Buffer::Buffer(const Buffer &other) {
-    *this = other;
-}
-
-Buffer &Buffer::operator=(const Buffer &other) {
-    buffer_     = other.buffer_;
-    bufferFill_ = other.bufferFill_;
-    return *this;
+Buffer::~Buffer() {
+    if (finalResultAcceptor_) {
+        finalResultAcceptor_->OnSuccess();
+    }
 }
 
 void *Buffer::Data() {
@@ -83,18 +81,6 @@ int Buffer::AppendFromReader(NonBlockingReadInterface *reader, int maxNumBytes) 
     return numRead;
 }
 
-void Buffer::WriteItem(const void *item, int itemSize) {
-    Append(item, itemSize);
-}
-
-bool Buffer::WriteFailed() const {
-    return false;
-}
-
-void Buffer::ClearWriteFailed() {
-    // Nop.
-}
-
 void Buffer::RestoreToCurrentCapacity() {
     bufferFill_ = (int)buffer_.size();
 }
@@ -103,47 +89,60 @@ void Buffer::Grow() {
     buffer_.resize(2u * buffer_.size());
 }
 
+bool Buffer::ErrorState() const {
+    return false;
+}
+
+void Buffer::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+    finalResultAcceptor_ = resultAcceptor;
+}
+
+int Buffer::WriteBlocking(const void *data, int dataSize) {
+    assert (dataSize > 0);
+    Append(data, dataSize);
+    return dataSize;
+}
+
 Buffer::Reader Buffer::GetReader() const {
     return Reader(this);
 }
 
 Buffer::Reader::Reader(const Buffer *buffer)
 	: buffer_(buffer),
-      cursor_(0),
-      readFailed_(false) {
+      cursor_(0) {
 }
 
-int Buffer::Reader::ReadNonBlocking(void *buffer, int bufferSize) {
+bool Buffer::Reader::ErrorState() const {
+    return false;
+}
+
+bool Buffer::Reader::Eof() const {
+    return (cursor_ >= buffer_->bufferFill_);
+}
+
+int Buffer::Reader::ReadBlocking(void *buffer, int bufferSize) {
     int numRead = 0;
-    if (!readFailed_) {
-        int numToDeliver = buffer_->bufferFill_ - cursor_;
-        if (numToDeliver >= 1) {
-            if (numToDeliver > bufferSize) {
-                numToDeliver = bufferSize;
-            }
-            memcpy(buffer, &buffer_->buffer_[cursor_], numToDeliver);
-            cursor_ += numToDeliver;
-            numRead = numToDeliver;
+
+    int numToDeliver = buffer_->bufferFill_ - cursor_;
+    if (numToDeliver >= 1) {
+        if (numToDeliver > bufferSize) {
+            numToDeliver = bufferSize;
         }
+        memcpy(buffer, &buffer_->buffer_[cursor_], numToDeliver);
+        cursor_ += numToDeliver;
+        numRead = numToDeliver;
     }
 
     return numRead;
 }
 
-void Buffer::Reader::ReadItem(void *item, int itemSize) {
-    if (!readFailed_) {
-       if (ReadNonBlocking(item, itemSize) != itemSize) {
-           readFailed_ = true;
-       }
-    }
+void Buffer::Reader::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+    (void)resultAcceptor;
+    // Nop.
 }
 
-bool Buffer::Reader::ReadFailed() const {
-    return readFailed_;
-}
-
-void Buffer::Reader::ClearReadFailed() {
-    readFailed_ = false;
+int Buffer::Reader::ReadNonBlocking(void *buffer, int bufferSize) {
+    return ReadBlocking(buffer, bufferSize);
 }
 
 }    // Namespace Core.

@@ -3,9 +3,11 @@
 #include <cassert>
 #include <cstdio>
 #include <K/Core/Buffer.h>
+#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
 #include <K/Events/Event.h>
 
+using std::make_shared;
 using std::mutex;
 using std::optional;
 using std::to_string;
@@ -19,7 +21,9 @@ namespace K {
 namespace Events {
 
 EventHub::EventHub()
-        : shutDownRequested_(false) {
+        : eventsToSchedule_(make_shared<Buffer>()),
+          scheduledEventsWriter_(eventsToSchedule_),
+          shutDownRequested_(false) {
     // Nop.
 }
 
@@ -141,10 +145,11 @@ void EventHub::Post(const Event &event) {
     auto iter = eventIdToSlotMap_.find(event.Type().id);
     assert(iter != eventIdToSlotMap_.end());
     int slot = iter->second;
-    eventsToSchedule_.Append(&slot, sizeof(slot));
-    event.Serialize(&eventsToSchedule_);
-    DoSubmit(critical, 0, eventsToSchedule_.Data(), eventsToSchedule_.DataSize(), false);
-    eventsToSchedule_.Clear();
+    scheduledEventsWriter_ << slot;
+    event.Serialize(&scheduledEventsWriter_);
+    DoSubmit(critical, 0, eventsToSchedule_->Data(), eventsToSchedule_->DataSize(), false);
+    eventsToSchedule_->Clear();
+    scheduledEventsWriter_.Reset();
 }    // ......................................................................................... critical section, end.
 
 void EventHub::RequestShutDown() {

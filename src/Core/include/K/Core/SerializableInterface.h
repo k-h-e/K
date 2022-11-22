@@ -16,22 +16,22 @@
 namespace K {
 namespace Core {
 
-class ItemReadInterface;
-class ItemWriteInterface;
+class BinaryReaderInterface;
+class BinaryWriterInterface;
 
 //! Interface to entities capable of serialization and deserialization.
 class SerializableInterface : public virtual Interface {
   public:
-    //! Serializes the object to the specified stream.
+    //! Serializes the object to the specified binary writer.
     /*!
-     *  The operation was successful only if the stream is not in error state afterwards.
+     *  The operation was successful only if the writer is not in write failed state afterwards.
      */
-    virtual void Serialize(ItemWriteInterface *stream) const = 0;
-    //! Deserializes the object from the specified stream.
+    virtual void Serialize(BinaryWriterInterface *writer) const = 0;
+    //! Deserializes the object from the specified binary reader.
     /*!
-     *  The operation was successful only if the stream is neither in error nor EOF state afterwards.
+     *  The operation was successful only if the reader is not in read failed state afterwards.
      */
-    virtual void Deserialize(ItemReadInterface *stream) = 0;
+    virtual void Deserialize(BinaryReaderInterface *reader) = 0;
 };
 
 }    // Namespace Core.

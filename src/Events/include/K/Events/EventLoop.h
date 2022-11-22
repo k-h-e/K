@@ -5,7 +5,9 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
+#include <K/Core/BinaryReader.h>
 #include <K/Core/Buffer.h>
 #include <K/Events/Event.h>
 #include <K/Events/EventBusInterface.h>
@@ -68,23 +70,27 @@ class EventLoop : public virtual EventBusInterface<EventClass, EventHandlerClass
     
     EventClass *DispatchOne();
 
-    std::vector<EventInfo>           events_;
-    std::unordered_map<size_t, int>  idToSlotMap_;
-    std::unique_ptr<Core::Buffer>    postedEvents_;
-    std::unique_ptr<Core::Buffer>    eventsToDispatch_;
-    Core::Buffer::Reader             reader_;
-    std::vector<EventHandlerClass *> pendingHandlers_;
-    int                              pendingHandlerCursor_;
-    std::shared_ptr<EventHub>        hub_;
-    int                              hubClientId_;
-    bool                             running_;
+    std::vector<EventInfo>                events_;
+    std::unordered_map<size_t, int>       idToSlotMap_;
+    std::unique_ptr<Core::Buffer>         postedEvents_;
+    Core::BinaryWriter                    binaryWriter_;
+    std::unique_ptr<Core::Buffer>         eventsToDispatch_;
+    Core::Buffer::Reader                  reader_;
+    Core::BinaryReader                    binaryReader_;
+    std::vector<EventHandlerClass *>      pendingHandlers_;
+    int                                   pendingHandlerCursor_;
+    std::shared_ptr<EventHub>             hub_;
+    int                                   hubClientId_;
+    bool                                  running_;
 };
 
 template<class EventClass, class EventHandlerClass>
 EventLoop<EventClass, EventHandlerClass>::EventLoop(const std::shared_ptr<EventHub> &hub)
-    : postedEvents_(new Core::Buffer()),
-      eventsToDispatch_(new Core::Buffer()),
+    : postedEvents_(std::make_unique<Core::Buffer>()),
+      binaryWriter_(postedEvents_.get()),
+      eventsToDispatch_(std::make_unique<Core::Buffer>()),
       reader_(eventsToDispatch_->GetReader()),
+      binaryReader_(&reader_),
       hub_(hub),
       hubClientId_(hub->RegisterEventLoop()),
       running_(false) {
@@ -156,8 +162,8 @@ void EventLoop<EventClass, EventHandlerClass>::Post(const Event &event) {
     auto iter = idToSlotMap_.find(event.Type().id);
     assert(iter != idToSlotMap_.end());
     int slot = iter->second;
-    postedEvents_->Append(&slot, sizeof(slot));
-    event.Serialize(postedEvents_.get());
+    binaryWriter_ << slot;
+    event.Serialize(&binaryWriter_);
 }
 
 template<class EventClass, class EventHandlerClass>
@@ -185,8 +191,7 @@ bool EventLoop<EventClass, EventHandlerClass>::RunUntilEventOfType(const Event::
                     running_ = false;
                     return true;
                 }
-            }
-            else {
+            } else {
                 haveEvents = false;
             }
         }
@@ -199,7 +204,9 @@ bool EventLoop<EventClass, EventHandlerClass>::RunUntilEventOfType(const Event::
         }
 
         reader_ = eventsToDispatch_->GetReader();
+        binaryReader_.Reset(&reader_);
         postedEvents_->Clear();
+        binaryWriter_.Reset(postedEvents_.get());
     }
 
     running_ = false;
@@ -222,6 +229,7 @@ bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
             if (doFinalSubmit && postedEvents_->DataSize()) {
                 hub_->Submit(hubClientId_, postedEvents_->Data(), postedEvents_->DataSize(), false);
                 postedEvents_->Clear();
+                binaryWriter_.Reset(postedEvents_.get());
             }
             running_ = false;
             return true;
@@ -235,7 +243,9 @@ bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
         }
 
         reader_ = eventsToDispatch_->GetReader();
+        binaryReader_.Reset(&reader_);
         postedEvents_->Clear();
+        binaryWriter_.Reset(postedEvents_.get());
         didSync = true;
     }
 
@@ -246,11 +256,11 @@ bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
 template<class EventClass, class EventHandlerClass>
 EventClass *EventLoop<EventClass, EventHandlerClass>::DispatchOne() {
     int slot;
-    reader_.ReadItem(&slot, sizeof(slot));
-    if (!reader_.ReadFailed()) {
+    binaryReader_ >> slot;
+    if (!binaryReader_.ReadFailed()) {
         EventInfo  &info  = events_[slot];
         EventClass &event = *(info.prototype);
-        event.Deserialize(&reader_);
+        event.Deserialize(&binaryReader_);
 
         // We allow handlers to be registered and deregistered from event handlers, so we copy the list of handlers for
         // the current event before beginning to dispatch it. Wenn a handler is unregistered during dispatch, it also

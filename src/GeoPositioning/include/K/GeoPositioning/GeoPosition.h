@@ -23,8 +23,8 @@ class GeoPosition : public K::Core::SerializableInterface {
     double Longitude() const;
     std::string ToString() const;
 
-    void Serialize(K::Core::ItemWriteInterface *stream) const override;
-    void Deserialize(K::Core::ItemReadInterface *stream) override;
+    void Serialize(K::Core::BinaryWriterInterface *writer) const override;
+    void Deserialize(K::Core::BinaryReaderInterface *reader) override;
 
   private:
     double latitude_;

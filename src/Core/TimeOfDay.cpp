@@ -11,8 +11,7 @@
 #include <K/Core/TimeOfDay.h>
 
 #include <sys/time.h>
-#include <K/Core/ItemReadInterface.h>
-#include <K/Core/ItemWriteInterface.h>
+#include <K/Core/IOOperations.h>
 #include <K/Core/NumberTools.h>
 
 using std::string;
@@ -45,18 +44,18 @@ string TimeOfDay::ToString() const {
     return string(line);
 }
 
-void TimeOfDay::Serialize(ItemWriteInterface *stream) const {
-    stream->WriteItem(&hours_, sizeof(hours_));
-    stream->WriteItem(&minutes_, sizeof(minutes_));
-    stream->WriteItem(&seconds_, sizeof(seconds_));
-    stream->WriteItem(&milliSeconds_, sizeof(milliSeconds_));
+void TimeOfDay::Serialize(BinaryWriterInterface *writer) const {
+    (*writer) << hours_;
+    (*writer) << minutes_;
+    (*writer) << seconds_;
+    (*writer) << milliSeconds_;
 }
 
-void TimeOfDay::Deserialize(ItemReadInterface *stream) {
-    stream->ReadItem(&hours_, sizeof(hours_));
-    stream->ReadItem(&minutes_, sizeof(minutes_));
-    stream->ReadItem(&seconds_, sizeof(seconds_));
-    stream->ReadItem(&milliSeconds_, sizeof(milliSeconds_));
+void TimeOfDay::Deserialize(BinaryReaderInterface *reader) {
+    (*reader) >> hours_;
+    (*reader) >> minutes_;
+    (*reader) >> seconds_;
+    (*reader) >> milliSeconds_;
 }
 
 TimeOfDay TimeOfDay::NowUtc() {
