@@ -1,15 +1,13 @@
 #include <K/GeoPositioning/RtcmMessage.h>
 
-#include <K/Core/BinaryReaderInterface.h>
-#include <K/Core/BinaryWriterInterface.h>
+#include <K/Core/BlockingInStreamInterface.h>
+#include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/IOOperations.h>
-#include <K/Core/ItemWriteInterface.h>
 #include <K/Core/Log.h>
 
 using std::to_string;
-using K::Core::BinaryReaderInterface;
-using K::Core::BinaryWriterInterface;
-using K::Core::ItemWriteInterface;
+using K::Core::BlockingInStreamInterface;
+using K::Core::BlockingOutStreamInterface;
 using K::Core::Log;
 
 namespace K {
@@ -54,26 +52,26 @@ int RtcmMessage::PayloadSize() const {
     return 0;
 }
 
-void RtcmMessage::WriteTo(ItemWriteInterface *stream) const {
+void RtcmMessage::WriteTo(BlockingOutStreamInterface *stream) const {
     if (image_.size()) {
-        stream->WriteItem(&image_[0], static_cast<int>(image_.size()));
+        WriteItem(stream, &image_[0], static_cast<int>(image_.size()));
     }
 }
 
-void RtcmMessage::Serialize(BinaryWriterInterface *writer) const {
+void RtcmMessage::Serialize(BlockingOutStreamInterface *stream) const {
     uint32_t size = static_cast<uint32_t>(image_.size());
-    (*writer) << size;
+    (*stream) << size;
     if (size) {
-        writer->WriteItem(&image_[0], static_cast<int>(size));
+        WriteItem(stream, &image_[0], static_cast<int>(size));
     }
 }
 
-void RtcmMessage::Deserialize(BinaryReaderInterface *reader) {
+void RtcmMessage::Deserialize(BlockingInStreamInterface *stream) {
     uint32_t size;
-    (*reader) >> size;
-    if (!reader->ReadFailed() && size) {
+    (*stream) >> size;
+    if (!stream->ErrorState() && size) {
         image_.resize(size);
-        reader->ReadItem(&image_[0], static_cast<int>(size));
+        ReadItem(stream, &image_[0], static_cast<int>(size));
     }
 }
 

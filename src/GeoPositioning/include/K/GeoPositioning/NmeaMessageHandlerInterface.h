@@ -16,7 +16,7 @@ class NmeaMessageHandlerInterface : public virtual Core::DataHandlerInterface {
      *  \param id
      *  Activation ID that was registered together with the handler.
      */
-    virtual void Handle(int id, const NmeaMessage &message) = 0;
+    virtual void OnNmeaMessage(int id, const NmeaMessage &message) = 0;
 };
 
 }    // Namespace GeoPositioning.

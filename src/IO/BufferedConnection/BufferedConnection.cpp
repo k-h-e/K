@@ -15,6 +15,7 @@ using std::to_string;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::StreamHandlerInterface;
+using K::Core::StreamInterface;
 
 namespace K {
 namespace IO {
@@ -62,11 +63,11 @@ BufferedConnection::~BufferedConnection() {
         error = true;
     }
 
-    if (finalResultAcceptor_) {
+    if (closeResultAcceptor_) {
         if (error) {
-            finalResultAcceptor_->OnFailure();
+            closeResultAcceptor_->OnFailure();
         } else {
-            finalResultAcceptor_->OnSuccess();
+            closeResultAcceptor_->OnSuccess();
         }
     }
 }
@@ -84,28 +85,22 @@ void BufferedConnection::Unregister(const shared_ptr<StreamHandlerInterface> &ha
     sharedState_->Unregister(handler);
 }
 
-void BufferedConnection::WriteItem(const void *item, int itemSize) {
-    sharedState_->WriteItem(item, itemSize);
-}
-
-bool BufferedConnection::WriteFailed() const {
-    return sharedState_->WriteFailed();
-}
-
-void BufferedConnection::ClearWriteFailed() {
-    sharedState_->ClearWriteFailed();
-}
-
-bool BufferedConnection::Eof() const {
-    return sharedState_->Eof();
+int BufferedConnection::WriteBlocking(const void *data, int dataSize) {
+    assert(dataSize > 0);
+    sharedState_->WriteItem(data, dataSize);
+    return dataSize;
 }
 
 bool BufferedConnection::ErrorState() const {
     return sharedState_->Error();
 }
 
-void BufferedConnection::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
-    finalResultAcceptor_ = resultAcceptor;
+StreamInterface::Error BufferedConnection::StreamError() const {
+    return sharedState_->StreamError();
+}
+
+void BufferedConnection::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+    closeResultAcceptor_ = resultAcceptor;
 }
 
 }    // Namesapce IO.

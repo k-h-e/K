@@ -12,7 +12,7 @@
 
 #include <cassert>
 #include <cstring>
-#include <K/Core/NonBlockingWriteInterface.h>
+#include <K/Core/NonBlockingOutStreamInterface.h>
 
 namespace K {
 namespace Core {
@@ -103,11 +103,11 @@ void RingBuffer::TransferTo(RingBuffer *other, int maxSize) {
     }
 }
 
-void RingBuffer::TransferTo(NonBlockingWriteInterface *writer) {
+void RingBuffer::TransferTo(NonBlockingOutStreamInterface *stream) {
     bool done = false;
     while (fill_ && !done) {
         int numToTransfer = std::min(capacity_ - cursor_, fill_);    // >= 1.
-        int numWritten    = writer->WriteNonBlocking(&buffer_[cursor_], numToTransfer);
+        int numWritten    = stream->WriteNonBlocking(&buffer_[cursor_], numToTransfer);
         if (numWritten) {
             cursor_ += numWritten;
             if (cursor_ == capacity_) {

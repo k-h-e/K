@@ -23,10 +23,11 @@ class StreamBuffer : public virtual Core::SeekableBlockingIOStreamInterface {
     int ReadBlocking(void *buffer, int bufferSize) override;
     int WriteBlocking(const void *data, int dataSize) override;
     void Seek(int64_t position) override;
+    void RecoverAndSeek(int64_t position) override;
     int64_t StreamPosition() const override;
-    bool Eof() const override;
     bool ErrorState() const override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
+    Error StreamError() const override;
+    void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
     int64_t BufferPositionFor(int64_t position);
@@ -44,9 +45,8 @@ class StreamBuffer : public virtual Core::SeekableBlockingIOStreamInterface {
     int                                                      fill_;
     std::vector<bool>                                        dirtyBytes_;             // Only used in write-only mode.
     bool                                                     dirty_;
-    bool                                                     eof_;
-    bool                                                     error_;
-    std::shared_ptr<Core::ResultAcceptor>                    finalResultAcceptor_;
+    Error                                                    error_;
+    std::shared_ptr<Core::ResultAcceptor>                    closeResultAcceptor_;
 };
 
 }    // Namespace IO.

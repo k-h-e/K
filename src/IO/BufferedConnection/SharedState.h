@@ -32,8 +32,8 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     void WriteItem(const void *item, int itemSize);
     bool WriteFailed();
     void ClearWriteFailed();
-    bool Eof();
     bool Error();
+    StreamInterface::Error StreamError();
 
     // ConnectionIO::ClientInterface...
     bool OnDataRead(const void *data, int dataSize) override;
@@ -57,9 +57,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     Core::RingBuffer                              writeBuffer_;
     int                                           bufferSizeThreshold_;
     bool                                          canNotWrite_;
-    bool                                          writeFailed_;
-    bool                                          eof_;
-    bool                                          error_;
+    StreamInterface::Error                        error_;
 };
 
 }    // Namespace IO.

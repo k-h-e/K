@@ -47,12 +47,10 @@ class BufferedConnection : public virtual Core::ConnectionStreamInterface {
     void TriggerErrorState();
     bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler, int activationId) override;
     void Unregister(const std::shared_ptr<Core::StreamHandlerInterface> &handler) override;
-    void WriteItem(const void *item, int itemSize) override;
-    bool WriteFailed() const override;
-    void ClearWriteFailed() override;
-    bool Eof() const override;
+    int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
+    Error StreamError() const override;
+    void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
     class SharedState;
@@ -61,7 +59,7 @@ class BufferedConnection : public virtual Core::ConnectionStreamInterface {
 
     std::shared_ptr<K::IO::ConnectionIO>  connectionIO_;
     std::optional<int>                    fd_;
-    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;
+    std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
 };
 
 }    // Namespace IO.

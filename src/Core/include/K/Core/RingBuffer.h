@@ -17,7 +17,7 @@
 namespace K {
 namespace Core {
 
-class NonBlockingWriteInterface;
+class NonBlockingOutStreamInterface;
 
 //! Ring buffer with FIFO semantics.
 class RingBuffer {
@@ -54,8 +54,8 @@ class RingBuffer {
     //! Transfers data to the specified other ring buffer, as long as the other ring buffer's size does not exceed the
     //! size specified.
     void TransferTo(RingBuffer *other, int maxSize);
-    //! Transfers data to the specified writer, as long as the writer accepts more data.
-    void TransferTo(NonBlockingWriteInterface *writer);
+    //! Transfers data to the specified stream, as long as the stream accepts more data.
+    void TransferTo(NonBlockingOutStreamInterface *stream);
 
   private:
     void Grow();

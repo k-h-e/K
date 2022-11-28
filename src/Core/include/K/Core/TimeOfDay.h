@@ -17,9 +17,6 @@
 namespace K {
 namespace Core {
 
-class ItemReadInterface;
-class ItemWriteInterface;
-
 //! Holds a time of day in 24h format.
 class TimeOfDay : public virtual SerializableInterface {
   public:
@@ -33,8 +30,8 @@ class TimeOfDay : public virtual SerializableInterface {
 
     std::string ToString() const;
 
-    void Serialize(BinaryWriterInterface *writer) const override;
-    void Deserialize(BinaryReaderInterface *reader) override;
+    void Serialize(BlockingOutStreamInterface *stream) const override;
+    void Deserialize(BlockingInStreamInterface *stream) override;
 
     //! Returns the current time of day in UTC.
     static TimeOfDay NowUtc();

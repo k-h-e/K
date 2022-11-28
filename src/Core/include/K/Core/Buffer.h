@@ -15,10 +15,11 @@
 #include <vector>
 #include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
-#include <K/Core/NonBlockingReadInterface.h>
 
 namespace K {
 namespace Core {
+
+class NonBlockingInStreamInterface;
 
 //! Binary buffer, allowing iterative composition and readout.
 class Buffer : public virtual BlockingOutStreamInterface {
@@ -29,8 +30,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
      *  interleaved with adding data via \ref Append().
 	 */
 
-    class Reader : public virtual BlockingInStreamInterface,
-                   public virtual NonBlockingReadInterface {
+    class Reader : public virtual BlockingInStreamInterface {
 	  public:
         Reader()                               = default;
         Reader(const Reader &other)            = default;
@@ -40,10 +40,8 @@ class Buffer : public virtual BlockingOutStreamInterface {
         ~Reader()                              = default;
 
         bool ErrorState() const override;
-        bool Eof() const override;
+        Error StreamError() const override;
         int ReadBlocking(void *buffer, int bufferSize) override;
-        void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
-        int ReadNonBlocking(void *buffer, int bufferSize) override;
 
 	  private:
 		friend class Buffer;
@@ -52,6 +50,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
 
         const Buffer                          *buffer_;
         int                                   cursor_;
+        Error                                 error_;
 	};
 
 	//! Creates a buffer of the given initial size, but does not initialize its contents.
@@ -95,16 +94,16 @@ class Buffer : public virtual BlockingOutStreamInterface {
      *  If <c>dataSize</c> is <c>0</c>, nothing will happen.
      */
 	void Append(const void *data, int dataSize);
-    //! Appends data to the buffer by reading from the specified reader, potentially invalidating the memory location
+    //! Appends data to the buffer by reading from the specified stream, potentially invalidating the memory location
     //! handed out earlier via \ref Data().
     /*!
      *  \param maxNumBytes
      *  Maximum number of bytes to read and append.
      *
      *  \return
-     *  The number of bytes actually read and appended. <c>0</c> means the reader has been read "empty".
+     *  The number of bytes actually read and appended.
      */
-    int AppendFromReader(NonBlockingReadInterface *reader, int maxNumBytes);
+    int Append(NonBlockingInStreamInterface *stream, int maxNumBytes);
     //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
 	/*!
 	 *  The bytes potentially "appended" are undefined.
@@ -119,7 +118,8 @@ class Buffer : public virtual BlockingOutStreamInterface {
 	Reader GetReader() const;
 
     bool ErrorState() const override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
+    Error StreamError() const override;
+    void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     int WriteBlocking(const void *data, int dataSize) override;
 
   private:
@@ -127,7 +127,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
 
     std::vector<uint8_t>                  buffer_;
     int                                   bufferFill_;
-    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;
+    std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
 };
 
 }    // Namespace Core.

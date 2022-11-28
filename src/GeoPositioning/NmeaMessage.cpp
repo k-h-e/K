@@ -2,9 +2,8 @@
 
 #include <sstream>
 #include <iomanip>
-#include <K/Core/BinaryReaderInterface.h>
+#include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/IOOperations.h>
-#include <K/Core/ItemWriteInterface.h>
 #include <K/Core/StringTools.h>
 
 using std::string;
@@ -13,9 +12,8 @@ using std::hex;
 using std::setw;
 using std::setfill;
 using std::vector;
-using K::Core::BinaryReaderInterface;
-using K::Core::BinaryWriterInterface;
-using K::Core::ItemWriteInterface;
+using K::Core::BlockingInStreamInterface;
+using K::Core::BlockingOutStreamInterface;
 using K::Core::StringTools;
 
 namespace K {
@@ -92,29 +90,29 @@ string NmeaMessage::ToString() const {
     return string("$") + type_ + "," + StringTools::Concatenate(fields_, ",") + "*" + CheckSum();
 }
 
-void NmeaMessage::WriteTo(ItemWriteInterface *stream) const {
+void NmeaMessage::WriteTo(BlockingOutStreamInterface *stream) const {
     string text = ToString() + "\r\n";
-    stream->WriteItem(text.c_str(), static_cast<int>(text.length()));
+    WriteItem(stream, text.c_str(), static_cast<int>(text.length()));
 }
 
-void NmeaMessage::Serialize(BinaryWriterInterface *writer) const {
+void NmeaMessage::Serialize(BlockingOutStreamInterface *stream) const {
     uint32_t numFields = static_cast<uint32_t>(fields_.size());
-    (*writer) << type_;
-    (*writer) << numFields;
+    (*stream) << type_;
+    (*stream) << numFields;
     for (uint32_t i = 0u; i < numFields; ++i) {
-        (*writer) << fields_[i];
+        (*stream) << fields_[i];
     }
 }
 
-void NmeaMessage::Deserialize(BinaryReaderInterface *reader) {
+void NmeaMessage::Deserialize(BlockingInStreamInterface *stream) {
     uint32_t numFields;
-    (*reader) >> type_;
-    (*reader) >> numFields;
-    if (!reader->ReadFailed()) {
+    (*stream) >> type_;
+    (*stream) >> numFields;
+    if (!stream->ErrorState()) {
         fields_.clear();
         for (uint32_t i = 0u; i < numFields; ++i) {
             string field;
-            (*reader) >> field;
+            (*stream) >> field;
             fields_.push_back(field);
         }
     }

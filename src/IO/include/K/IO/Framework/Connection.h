@@ -56,11 +56,11 @@ class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface 
     ~Connection();
 
     void Register(NonBlockingIOStreamInterface::HandlerInterface *handler, int id) override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
+    void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     int ReadNonBlocking(void *buffer, int bufferSize) override;
     int WriteNonBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
-    bool Eof() const override;
+    Error StreamError() const override;
 
   private:
     struct LoopThreadState;
@@ -70,7 +70,7 @@ class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface 
 
     std::unique_ptr<LoopThreadState>      loopThreadState_;
     std::optional<int>                    fd_;
-    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;
+    std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
 };
 
 }    // Namespace Framework.

@@ -14,8 +14,8 @@
 #include <limits>
 #include <sstream>
 #include <typeinfo>
-#include <K/Core/BinaryReaderInterface.h>
-#include <K/Core/BinaryWriterInterface.h>
+#include <K/Core/BlockingInStreamInterface.h>
+#include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/IOOperations.h>
 #include <K/Core/NumberTools.h>
 
@@ -202,22 +202,22 @@ string StringTools::GetCleanClassName(const Interface *instance, int maxNumSegme
     return StringTools::Concatenate(tokens, "::");
 }
 
-void StringTools::Serialize(const string &text, BinaryWriterInterface *writer) {
+void StringTools::Serialize(const string &text, BlockingOutStreamInterface *stream) {
     uint32_t size = static_cast<uint32_t>(text.size());
-    (*writer) << size;
+    (*stream) << size;
     if (size) {
-        writer->WriteItem(&text[0], size * sizeof(string::value_type));
+        WriteItem(stream, &text[0], size * sizeof(string::value_type));
     }
 }
 
-void StringTools::Deserialize(string *text, BinaryReaderInterface *reader) {
+void StringTools::Deserialize(string *text, BlockingInStreamInterface *stream) {
     uint32_t size;
-    (*reader) >> size;
-    if (!reader->ReadFailed()) {
+    (*stream) >> size;
+    if (!stream->ErrorState()) {
         text->clear();
         if (size) {
             text->resize(size);
-            reader->ReadItem(&(*text)[0], size * sizeof(string::value_type));
+            ReadItem(stream, &(*text)[0], size * sizeof(string::value_type));
         }
     }
 }

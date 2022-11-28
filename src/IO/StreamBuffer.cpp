@@ -11,8 +11,9 @@ using std::shared_ptr;
 using std::make_shared;
 using std::vector;
 using std::to_string;
-using K::Core::ResultAcceptor;
 using K::Core::Log;
+using K::Core::ResultAcceptor;
+using K::Core::StreamInterface;
 
 namespace K {
 namespace IO {
@@ -24,8 +25,7 @@ StreamBuffer::StreamBuffer(const shared_ptr<SeekableBlockingIOStreamInterface> &
           cursor_(0),
           fill_(0),
           dirty_(false),
-          eof_(false),
-          error_(false) {
+          error_(Error::None) {
     if (bufferSize < 1) {
         bufferSize = 4096;
     }
@@ -37,38 +37,38 @@ StreamBuffer::StreamBuffer(const shared_ptr<SeekableBlockingIOStreamInterface> &
     dirtyBytes_.resize(bufferSize_);
 
     if (!SetUpBuffer(0)) {
-        error_ = true;
+        error_ = Error::IO;
     }
 }
 
 StreamBuffer::~StreamBuffer() {
-    if (!error_) {
+    if (error_ == Error::None) {
         if (!Flush()) {
-            error_ = true;
+            error_ = Error::IO;
         }
     }
 
     delete[] buffer_;
 
-    if (finalResultAcceptor_) {
-        if (error_) {
-            finalResultAcceptor_->OnFailure();
+    if (closeResultAcceptor_) {
+        if (error_ != Error::None) {
+            closeResultAcceptor_->OnFailure();
         } else {
-            finalResultAcceptor_->OnSuccess();
+            closeResultAcceptor_->OnSuccess();
         }
     }
 
-    if (error_) {
-        Log::Print(Log::Level::Error, this, [&]{ return "error while closing"; });
+    if (error_ != Error::None) {
+        Log::Print(Log::Level::Error, this, [&]{ return "failed to properly close!"; });
     }
 }
 
 int StreamBuffer::ReadBlocking(void *buffer, int bufferSize) {
     assert(bufferSize > 0);
     int numRead = 0;
-    if (!error_ && !eof_) {
+    if (!ErrorState()) {
         if (!readable_) {
-            error_ = true;
+            error_ = Error::User;
         } else {
             int numToRead = fill_ > cursor_ ? fill_ - cursor_ : 0;
             if (bufferSize < numToRead) {
@@ -80,7 +80,7 @@ int StreamBuffer::ReadBlocking(void *buffer, int bufferSize) {
                 int newCursor = cursor_ + numToRead;
                 if (newCursor == bufferSize_) {
                     Seek(bufferPosition_ + bufferSize_);
-                    if (!error_) {
+                    if (!ErrorState()) {
                         numRead = numToRead;
                     } else {
                         Log::Print(Log::Level::Error, this, [&]{ return "error while reading"; });
@@ -90,7 +90,7 @@ int StreamBuffer::ReadBlocking(void *buffer, int bufferSize) {
                     numRead = numToRead;
                 }
             } else {
-                eof_ = true;
+                error_ = Error::Eof;
             }
         }
     }
@@ -101,9 +101,9 @@ int StreamBuffer::ReadBlocking(void *buffer, int bufferSize) {
 int StreamBuffer::WriteBlocking(const void *data, int dataSize) {
     assert(dataSize > 0);
     int numWritten = 0;  
-    if (!error_) {
+    if (!ErrorState()) {
         if (!writable_) {
-            error_ = true;
+            error_ = Error::User;
         } else {
             int numToWrite = std::min(dataSize, bufferSize_ - cursor_);    // > 0 !
             std::memcpy(&buffer_[cursor_], data, numToWrite);
@@ -121,10 +121,9 @@ int StreamBuffer::WriteBlocking(const void *data, int dataSize) {
 
             if (newCursor == bufferSize_) {
                 Seek(bufferPosition_ + bufferSize_);
-                if (!error_) {
+                if (!ErrorState()) {
                     numWritten = numToWrite;
                 } else {
-                    error_ = true;
                     Log::Print(Log::Level::Error, this, []{ return "error while writing"; });
                 }
             } else {
@@ -138,7 +137,7 @@ int StreamBuffer::WriteBlocking(const void *data, int dataSize) {
 }
 
 void StreamBuffer::Seek(int64_t position) {
-    if (!error_) {
+    if (!ErrorState()) {
         if (position >= 0) {
             int64_t newBufferPosition = BufferPositionFor(position);
             if (newBufferPosition != bufferPosition_) {
@@ -153,27 +152,36 @@ void StreamBuffer::Seek(int64_t position) {
             }
         }
 
-        error_ = true;
+        if (!ErrorState()) {
+            error_ = Error::Unspecific;
+        }
         Log::Print(Log::Level::Error, this, [&]{
             return "error while seeking to position " + to_string(position); });
     }
+}
+
+void StreamBuffer::RecoverAndSeek(int64_t position) {
+    if (error_ == Error::Eof) {
+        error_ = Error::None;    // EOF error state was set in ReadBlocking() from valid error-free state.
+    }
+    Seek(position);
 }
 
 int64_t StreamBuffer::StreamPosition() const {
     return bufferPosition_ + static_cast<int64_t>(cursor_);
 }
 
-bool StreamBuffer::Eof() const {
-    return (eof_ && !error_);
+bool StreamBuffer::ErrorState() const {
+    return (error_ != Error::None);
 }
 
-bool StreamBuffer::ErrorState() const {
+StreamInterface::Error StreamBuffer::StreamError() const {
     return error_;
 }
 
-void StreamBuffer::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
-    finalResultAcceptor_ = resultAcceptor;
-    stream_->SetFinalResultAcceptor(resultAcceptor);
+void StreamBuffer::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+    closeResultAcceptor_ = resultAcceptor;
+    stream_->SetCloseResultAcceptor(resultAcceptor);
 }
 
 int64_t StreamBuffer::BufferPositionFor(int64_t position) {
@@ -184,10 +192,10 @@ bool StreamBuffer::SetUpBuffer(int64_t position) {
     int64_t newBufferPosition = BufferPositionFor(position);
     if (readable_) {
         int numReadTotal = 0;
-        stream_->Seek(newBufferPosition);
+        stream_->RecoverAndSeek(newBufferPosition);
         while (!stream_->ErrorState()) {
             numReadTotal += stream_->ReadBlocking(&buffer_[numReadTotal], bufferSize_ - numReadTotal);
-            if ((numReadTotal == bufferSize_) || stream_->Eof()) {
+            if ((numReadTotal == bufferSize_) || (stream_->StreamError() == Error::Eof)) {
                 if (numReadTotal < bufferSize_) {
                     std::memset(&buffer_[numReadTotal], 0, bufferSize_ - numReadTotal);
                 }
@@ -267,8 +275,9 @@ bool StreamBuffer::Flush() {
 }
 
 bool StreamBuffer::FlushDirtyRange(int cursor, int numBytes) {
-    stream_->Seek(bufferPosition_ + cursor);
-    if (Core::WriteItem(stream_.get(), &buffer_[cursor], numBytes)) {
+    stream_->RecoverAndSeek(bufferPosition_ + cursor);
+    Core::WriteItem(stream_.get(), &buffer_[cursor], numBytes);
+    if (!stream_->ErrorState()) {
         return true;
     } else {
         Log::Print(Log::Level::Error, this, [&]{

@@ -12,8 +12,8 @@
 #define K_IO_FRAMEWORK_INTERACTIONCONNECTIONENDPOINT_H_
 
 #include <memory>
+#include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/Buffer.h>
-#include <K/Core/ItemWriteInterface.h>
 #include <K/Core/RingBuffer.h>
 #include <K/Core/Framework/RunLoop.h>
 #include <K/Core/Framework/NonBlockingIOStreamInterface.h>
@@ -33,7 +33,7 @@ namespace IO {
 namespace Framework {
 
 //! Convenience endpoint for nonblocking connection streams that are operated in an interaction-like fashion.
-class InteractionConnectionEndPoint : public virtual Core::ItemWriteInterface,
+class InteractionConnectionEndPoint : public virtual Core::BlockingOutStreamInterface,
                                       private virtual Core::Framework::RunLoop::ClientInterface,
                                       private virtual Core::Framework::NonBlockingIOStreamInterface::HandlerInterface {
   public:
@@ -59,9 +59,10 @@ class InteractionConnectionEndPoint : public virtual Core::ItemWriteInterface,
      *  with multiple end points.
      */
     void Register(Core::StreamHandlerInterface *handler, int activationId);
-    void WriteItem(const void *item, int itemSize) override;
-    bool WriteFailed() const override;
-    void ClearWriteFailed() override;
+    int WriteBlocking(const void *data, int dataSize) override;
+    bool ErrorState() const override;
+    Error StreamError() const override;
+    void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
     void Activate(bool deepActivation) override;
@@ -80,11 +81,9 @@ class InteractionConnectionEndPoint : public virtual Core::ItemWriteInterface,
     bool                                                                 readyRead_;
     Core::RingBuffer                                                     writeBuffer_;
     bool                                                                 readyWrite_;
-    bool                                                                 writeFailed_;
-    bool                                                                 error_;
-    bool                                                                 eof_;
+    Error                                                                error_;
     bool                                                                 signalError_;
-    bool                                                                 signalEof_;
+    std::shared_ptr<Core::ResultAcceptor>                                closeResultAcceptor_;
 };
 
 }    // Namespace Framework.

@@ -15,45 +15,35 @@
 
 namespace K {
     namespace Core {
-        class BinaryReaderInterface;
-        class BinaryWriterInterface;
-        class BlockingReadInterface;
-        class BlockingWriteInterface;
-        class TextWriterInterface;
+        class BlockingInStreamInterface;
+        class BlockingOutStreamInterface;
     }
 }
 
 namespace K {
 namespace Core {
 
-BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, int &value);
-BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, uint8_t &value);
-BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, uint32_t &value);
-BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, uint64_t &value);
-BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, float &value);
-BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, double &value);
-BinaryReaderInterface &operator>>(BinaryReaderInterface &reader, std::string &text);
-
-BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, int value);
-BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, uint8_t value);
-BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, uint32_t value);
-BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, uint64_t value);
-BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, float value);
-BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, double value);
-BinaryWriterInterface &operator<<(BinaryWriterInterface &writer, const std::string &text);
-
-TextWriterInterface &operator<<(TextWriterInterface &writer, const std::string &text);
-
 //! Reads a binary item of specified size (in bytes).
-/*!
- *  \return <c>false</c> in case of failure.
- */
-bool ReadItem(BlockingReadInterface *stream, void *item, int itemSize);
+void ReadItem(BlockingInStreamInterface *stream, void *item, int itemSize);
+
+template<typename T>
+BlockingInStreamInterface &operator>>(BlockingInStreamInterface &stream, T &outValue) {
+    ReadItem(&stream, &outValue, sizeof(T));
+    return stream;
+}
+
+BlockingInStreamInterface &operator>>(BlockingInStreamInterface &stream, std::string &outValue);
+
 //! Writes a binary item of specified size (in bytes).
-/*!
- *  \return <c>false</c> in case of failure.
- */
-bool WriteItem(BlockingWriteInterface *stream, const void *item, int itemSize);
+void WriteItem(BlockingOutStreamInterface *stream, const void *item, int itemSize);
+
+template<typename T>
+BlockingOutStreamInterface &operator<<(BlockingOutStreamInterface &stream, const T &value) {
+    WriteItem(&stream, &value, sizeof(T));
+    return stream;
+}
+
+BlockingOutStreamInterface &operator<<(BlockingOutStreamInterface &stream, const std::string &value);
 
 }    // Namespace Core.
 }    // namespace K.

@@ -27,9 +27,9 @@ class Socket : public virtual Core::BlockingIOStreamInterface {
 
     int ReadBlocking(void *buffer, int bufferSize) override;
     int WriteBlocking(const void *data, int dataSize) override;
-    bool Eof() const override;
     bool ErrorState() const override;
-    void SetFinalResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
+    Error StreamError() const override;
+    void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
     //! Establishes a TCP network stream connection to a host given by name and port, separated by a <c>':'</c>.
     /*!
@@ -50,9 +50,8 @@ class Socket : public virtual Core::BlockingIOStreamInterface {
     mutable std::mutex                    lock_;                   // Protects everything below...
     int                                   fd_;
     bool                                  socketDown_;
-    bool                                  eof_;
-    bool                                  error_;
-    std::shared_ptr<Core::ResultAcceptor> finalResultAcceptor_;    // Thread safe.
+    Error                                 error_;
+    std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;    // Thread safe.
 
 };
 

@@ -17,9 +17,10 @@ using std::string;
 using std::to_string;
 using std::unique_lock;
 using std::vector;
-using K::Core::ResultAcceptor;
-using K::Core::StringTools;
 using K::Core::Log;
+using K::Core::ResultAcceptor;
+using K::Core::StreamInterface;
+using K::Core::StringTools;
 using K::IO::IOTools;
 using K::IO::NetworkTools;
 
@@ -28,13 +29,12 @@ namespace IO {
 
 Socket::Socket(int fd)
         : socketDown_(false),
-          eof_(false),
-          error_(false) {
+          error_(Error::None) {
     Log::Print(Log::Level::Debug, this, [=]{ return "fd=" + to_string(fd); });
     if (fd < 0) {
         fd          = -1;
         socketDown_ = true;
-        error_      = true;
+        error_      = Error::IO;
     }
 
     fd_ = fd;
@@ -45,20 +45,20 @@ Socket::~Socket() {
     ShutDownSocket();
     if (fd_ != -1) {
         if (!IOTools::CloseFileDescriptor(fd_, this)) {
-            error_ = true;
+            error_ = Error::IO;
         }
     }
 
-    if (finalResultAcceptor_) {
-        if (error_) {
-            finalResultAcceptor_->OnFailure();
+    if (closeResultAcceptor_) {
+        if (error_ != Error::None) {
+            closeResultAcceptor_->OnFailure();
         } else {
-            finalResultAcceptor_->OnSuccess();
+            closeResultAcceptor_->OnSuccess();
         }
     }
 
-    if (error_) {
-        Log::Print(Log::Level::Error, this, [&]{ return "error while closing, fd=" + to_string(fd_); });
+    if (error_ != Error::None) {
+        Log::Print(Log::Level::Error, this, [&]{ return "error state after closing, fd=" + to_string(fd_); });
     } else {
         Log::Print(Log::Level::Debug, this, [&]{ return "closed, fd=" + to_string(fd_); });
     }
@@ -73,15 +73,15 @@ int Socket::ReadBlocking(void *buffer, int bufferSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
-        if (error_) {
+        if (error_ != Error::None) {
             return 0;
         }
 
         if (socketDown_) {
-            eof_ = true;
+            error_ = Error::Eof;
         }
 
-        if (eof_) {
+        if (error_ != Error::None) {
             return 0;
         }
 
@@ -93,14 +93,18 @@ int Socket::ReadBlocking(void *buffer, int bufferSize) {
         if (num == 0) {
             unique_lock<mutex> critical(lock_);    // Critical section..................................................
             ShutDownSocket();
-            eof_ = true;
+            if (error_ == Error::None) {
+                error_ = Error::Eof;
+            }
             return 0;
         }    // ................................................................................. critical section, end.
         else if (num == -1) {
             if (errno != EINTR) {
                 unique_lock<mutex> critical(lock_);    // Critical section..............................................
                 ShutDownSocket();
-                error_ = true;
+                if (error_ == Error::None) {
+                    error_ = Error::IO;
+                }
                 return 0;
             }    // ............................................................................. critical section, end.
         }
@@ -114,12 +118,12 @@ int Socket::WriteBlocking(const void *data, int dataSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
-        if (error_) {
+        if (error_ != Error::None) {
             return 0;
         }
 
         if (socketDown_) {
-            error_ = true;
+            error_ = Error::IO;
             return 0;
         }
 
@@ -132,7 +136,9 @@ int Socket::WriteBlocking(const void *data, int dataSize) {
             if (errno != EINTR) {
                 unique_lock<mutex> critical(lock_);    // Critical section..............................................
                 ShutDownSocket();
-                error_ = true;
+                if (error_ == Error::None) {
+                    error_ = Error::IO;
+                }
                 return 0;
             }    // ............................................................................. critical section, end.
         } else {
@@ -143,19 +149,20 @@ int Socket::WriteBlocking(const void *data, int dataSize) {
     }
 }
 
-bool Socket::Eof() const {
+bool Socket::ErrorState() const {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    return (eof_ && !error_);
+    return (error_ != Error::None);
 }    // ......................................................................................... critical section, end.
 
-bool Socket::ErrorState() const {
+StreamInterface::Error Socket::StreamError() const {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
 }    // ......................................................................................... critical section, end.
 
-void Socket::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+
+void Socket::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    finalResultAcceptor_ = resultAcceptor;
+    closeResultAcceptor_ = resultAcceptor;
 }    // ......................................................................................... critical section, end.
 
 shared_ptr<Socket> Socket::ConnectTcp(const string &host, Core::Interface *loggingObject) {
@@ -173,7 +180,9 @@ void Socket::ShutDownSocket() {
     if (fd_ != -1) {
         if (!socketDown_) {
             if (!shutdown(fd_, SHUT_RDWR)) {
-                error_ = true;
+                if (error_ == Error::None) {
+                    error_ = Error::IO;
+                }
             }
             socketDown_ = true;
             Log::Print(Log::Level::Debug, this, [&]{ return "socket " + to_string(fd_) + " shut down"; });

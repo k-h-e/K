@@ -21,34 +21,33 @@ namespace Core {
 
 TextReader::TextReader(const shared_ptr<SeekableBlockingInStreamInterface> &stream)
         : stream_(stream),
-          readFailed_(false),
-          eof_(false),
-          error_(false) {
+          error_(Error::None) {
     // Nop.
 }
 
 void TextReader::Read(char delimiter, string *outString) {
     outString->clear();
-    if (!readFailed_) {
-        if (error_ || eof_) {
-            readFailed_ = true;
+    if (!ErrorState()) {
+        if (stream_->StreamError() == Error::Eof) {
+            error_ = Error::Eof;
         } else {
             char character;
             bool success = false;
-            while (!success && !readFailed_) {
-                if (Core::ReadItem(stream_.get(), &character, static_cast<int>(sizeof(character)))) {
+            while (!success && !ErrorState()) {
+                Core::ReadItem(stream_.get(), &character, static_cast<int>(sizeof(character)));
+                if (!stream_->ErrorState()) {
                     if (character == delimiter) {
                         success = true;
                     } else {
                         outString->push_back(character);
                     }
                 } else {
-                    if (stream_->Eof()) {
-                        eof_    = true;
+                    Error error = stream_->StreamError();
+                    assert(error != Error::None);
+                    if (error == Error::Eof) {
                         success = true;
                     } else {
-                        readFailed_ = true;
-                        error_      = true;
+                        error_ = error;
                     }
                 }
             }
@@ -58,15 +57,16 @@ void TextReader::Read(char delimiter, string *outString) {
 
 void TextReader::Read(const string &validCharacters, bool readOther, string *outString) {
     outString->clear();
-    if (!readFailed_) {
-        if (error_ || eof_) {
-            readFailed_ = true;
+    if (!ErrorState()) {
+        if (stream_->StreamError() == Error::Eof) {
+            error_ = Error::Eof;
         } else {
             char character;
             bool success = false;
-            while (!success && !readFailed_) {
+            while (!success && !ErrorState()) {
                 int64_t position = stream_->StreamPosition();
-                if (Core::ReadItem(stream_.get(), &character, static_cast<int>(sizeof(character)))) {
+                Core::ReadItem(stream_.get(), &character, static_cast<int>(sizeof(character)));
+                if (!stream_->ErrorState()) {
                     bool characterValid = (validCharacters.find(character) != string::npos);
                     if (readOther) {
                         characterValid = !characterValid;
@@ -79,12 +79,12 @@ void TextReader::Read(const string &validCharacters, bool readOther, string *out
                         success = true;
                     }
                 } else {
-                    if (stream_->Eof()) {
-                        eof_    = true;
+                    Error error = stream_->StreamError();
+                    assert(error != Error::None);
+                    if (error == Error::Eof) {
                         success = true;
                     } else {
-                        readFailed_ = true;
-                        error_      = true;
+                        error_ = error;
                     }
                 }
             }
@@ -93,15 +93,16 @@ void TextReader::Read(const string &validCharacters, bool readOther, string *out
 }
 
 void TextReader::Skip(const string &charactersToSkip, bool skipOther) {
-    if (!readFailed_) {
-        if (error_ || eof_) {
-            readFailed_ = true;
+    if (!ErrorState()) {
+        if (stream_->StreamError() == Error::Eof) {
+            error_ = Error::Eof;
         } else {
             char character;
             bool success = false;
-            while (!success && !readFailed_) {
+            while (!success && !ErrorState()) {
                 int64_t position = stream_->StreamPosition();
-                if (Core::ReadItem(stream_.get(), &character, static_cast<int>(sizeof(character)))) {
+                Core::ReadItem(stream_.get(), &character, static_cast<int>(sizeof(character)));
+                if (!stream_->ErrorState()) {
                     bool skip = (charactersToSkip.find(character) != string::npos);
                     if (skipOther) {
                         skip = !skip;
@@ -112,12 +113,12 @@ void TextReader::Skip(const string &charactersToSkip, bool skipOther) {
                         success = true;
                     }
                 } else {
-                    if (stream_->Eof()) {
-                        eof_    = true;
+                    Error error = stream_->StreamError();
+                    assert(error != Error::None);
+                    if (error == Error::Eof) {
                         success = true;
                     } else {
-                        readFailed_ = true;
-                        error_      = true;
+                        error_ = error;
                     }
                 }
             }
@@ -125,19 +126,11 @@ void TextReader::Skip(const string &charactersToSkip, bool skipOther) {
     }
 }
 
-bool TextReader::ReadFailed() const {
-    return readFailed_;
-}
-
-void TextReader::ClearReadFailed() {
-    readFailed_ = false;
-}
-
-bool TextReader::Eof() const {
-    return (eof_ && !error_);
-}
-
 bool TextReader::ErrorState() const {
+    return (error_ != Error::None);
+}
+
+StreamInterface::Error TextReader::StreamError() const {
     return error_;
 }
 

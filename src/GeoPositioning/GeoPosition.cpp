@@ -6,8 +6,8 @@
 
 using std::isfinite;
 using std::string;
-using K::Core::BinaryReaderInterface;
-using K::Core::BinaryWriterInterface;
+using K::Core::BlockingInStreamInterface;
+using K::Core::BlockingOutStreamInterface;
 using K::Core::NumberTools;
 
 namespace K {
@@ -59,14 +59,14 @@ string GeoPosition::ToString() const {
     return string("(lat=") + latitudeText + ", lng=" + longitudeText + ")";
 }
 
-void GeoPosition::Serialize(BinaryWriterInterface *writer) const {
-    (*writer) << latitude_;
-    (*writer) << longitude_;
+void GeoPosition::Serialize(BlockingOutStreamInterface *stream) const {
+    (*stream) << latitude_;
+    (*stream) << longitude_;
 }
 
-void GeoPosition::Deserialize(BinaryReaderInterface *reader) {
-    (*reader) >> latitude_;
-    (*reader) >> longitude_;
+void GeoPosition::Deserialize(BlockingInStreamInterface *stream) {
+    (*stream) >> latitude_;
+    (*stream) >> longitude_;
 }
 
 }    // Namespace GeoPositioning.

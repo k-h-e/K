@@ -1,6 +1,5 @@
 #include <K/IO/ConfigurationFile.h>
 
-#include <K/Core/IOOperations.h>
 #include <K/Core/ResultAcceptor.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/TextReader.h>
@@ -16,6 +15,7 @@ using std::vector;
 using std::make_shared;
 using K::Core::ResultAcceptor;
 using K::Core::StringTools;
+using K::Core::StreamInterface;
 using K::Core::TextReader;
 using K::Core::TextWriter;
 using K::IO::File;
@@ -139,7 +139,7 @@ void ConfigurationFile::Save(const string &fileName) {
         {
             TextWriter writer(make_shared<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
                                                         File::AccessMode::WriteOnly, 4 * 1024));
-            writer.SetFinalResultAcceptor(result);
+            writer.SetCloseResultAcceptor(result);
             bool firstSection = true;
             for (auto &pair : sections_) {
                 if (!firstSection) {
@@ -172,8 +172,8 @@ void ConfigurationFile::Load(const string &fileName) {
     bool bad     = false;
     while (!success && !bad && !errorState_) {
         reader.Read('\n', &line);
-        if (reader.ReadFailed()) {
-            if (reader.Eof()) {
+        if (reader.ErrorState()) {
+            if (reader.StreamError() == StreamInterface::Error::Eof) {
                 success = true;
             } else {
                 bad = true;

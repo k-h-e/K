@@ -44,10 +44,10 @@ void Connection::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
     Log::Print(Log::Level::DebugDebug, this, [&]{ return "Sync()"; });
     syncRequested_ = false;
     if (error_) {
-        if (!loopThreadState->error) {
+        if (loopThreadState->error == Error::None) {
             loopThreadState->handlerNeedsReadyRead  = true;
             loopThreadState->handlerNeedsReadyWrite = true;
-            loopThreadState->error                  = true;
+            loopThreadState->error                  = Error::IO;
         }
     } else {
         readBuffer_.TransferTo(&loopThreadState->readBuffer, loopThreadState->bufferSizeConstraint);

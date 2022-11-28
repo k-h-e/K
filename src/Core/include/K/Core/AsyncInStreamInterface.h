@@ -2,13 +2,14 @@
 #define K_CORE_ASYNCREADINTERFACE_H_
 
 #include <memory>
+#include <K/Core/InStreamInterface.h>
 #include <K/Core/StreamHandlerInterface.h>
 
 namespace K {
 namespace Core {
 
-//! Interface to data readers providing asynchronous reading.
-class AsyncReadInterface : public virtual Interface {
+//! Interface to input streams providing asynchronous reading.
+class AsyncInStreamInterface : public virtual InStreamInterface {
   public:
     //! Registers the specified read handler.
     /*!

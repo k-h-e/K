@@ -31,7 +31,7 @@ Connection::LoopThreadState::LoopThreadState(
           runLoopClientId(0),
           handler(nullptr),
           handlerAssociatedId(0),
-          error(false),
+          error(Error::None),
           eof(false),
           clientReadPaused(false),
           clientWritePaused(false),
@@ -62,7 +62,7 @@ void Connection::LoopThreadState::Activate(bool deepActivation) {
 
     Log::Print(Log::Level::DebugDebug, this, [&]{ return "Activate(), deep=" + to_string(deepActivation); });
 
-    if (deepActivation && !error) {
+    if (deepActivation && (error == Error::None)) {
         synchronizedState->Sync(this);
         if (unpauseIORead) {
             connectionIO->SetClientCanRead(synchronizedState.get());

@@ -25,6 +25,7 @@ using std::shared_ptr;
 using std::to_string;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
+using K::Core::StreamInterface;
 using K::Core::Framework::RunLoop;
 using K::IO::IOTools;
 
@@ -79,11 +80,11 @@ Connection::~Connection() {
 
     loopThreadState_->runLoop->RemoveClient(loopThreadState_->runLoopClientId);
 
-    if (finalResultAcceptor_) {
+    if (closeResultAcceptor_) {
         if (success) {
-            finalResultAcceptor_->OnSuccess();
+            closeResultAcceptor_->OnSuccess();
         } else {
-            finalResultAcceptor_->OnFailure();
+            closeResultAcceptor_->OnFailure();
         }
     }
 
@@ -107,18 +108,22 @@ void Connection::Register(NonBlockingIOStreamInterface::HandlerInterface *handle
     }
 }
 
-void Connection::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
-    finalResultAcceptor_ = resultAcceptor;
+void Connection::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+    closeResultAcceptor_ = resultAcceptor;
 }
 
 int Connection::ReadNonBlocking(void *buffer, int bufferSize) {
     int numRead = 0;
-    if (!ErrorState() && !Eof()) {
+    if (!ErrorState()) {
         numRead = loopThreadState_->readBuffer.Get(buffer, bufferSize);
         if (numRead) {
             loopThreadState_->RequestActivation(true);
         } else {
-            loopThreadState_->clientReadPaused = true;
+            if (loopThreadState_->eof) {
+                loopThreadState_->error = Error::Eof;
+            } else {
+                loopThreadState_->clientReadPaused = true;
+            }
         }
     }
 
@@ -150,11 +155,11 @@ int Connection::WriteNonBlocking(const void *data, int dataSize) {
 }
 
 bool Connection::ErrorState() const {
-    return loopThreadState_->error;
+    return (loopThreadState_->error != Error::None);
 }
 
-bool Connection::Eof() const {
-    return (loopThreadState_->eof && loopThreadState_->readBuffer.Empty() && !loopThreadState_->error);
+StreamInterface::Error Connection::StreamError() const {
+    return loopThreadState_->error;
 }
 
 int Connection::ValidateBufferSizeConstraint(int bufferSizeConstraint) {

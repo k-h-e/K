@@ -44,18 +44,18 @@ string TimeOfDay::ToString() const {
     return string(line);
 }
 
-void TimeOfDay::Serialize(BinaryWriterInterface *writer) const {
-    (*writer) << hours_;
-    (*writer) << minutes_;
-    (*writer) << seconds_;
-    (*writer) << milliSeconds_;
+void TimeOfDay::Serialize(BlockingOutStreamInterface *stream) const {
+    (*stream) << hours_;
+    (*stream) << minutes_;
+    (*stream) << seconds_;
+    (*stream) << milliSeconds_;
 }
 
-void TimeOfDay::Deserialize(BinaryReaderInterface *reader) {
-    (*reader) >> hours_;
-    (*reader) >> minutes_;
-    (*reader) >> seconds_;
-    (*reader) >> milliSeconds_;
+void TimeOfDay::Deserialize(BlockingInStreamInterface *stream) {
+    (*stream) >> hours_;
+    (*stream) >> minutes_;
+    (*stream) >> seconds_;
+    (*stream) >> milliSeconds_;
 }
 
 TimeOfDay TimeOfDay::NowUtc() {

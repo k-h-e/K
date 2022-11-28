@@ -57,7 +57,7 @@ void NmeaDevice::Unregister(const std::shared_ptr<NmeaMessageHandlerInterface> &
 bool NmeaDevice::Write(const NmeaMessage &message) {
     if (!error_) {
         message.WriteTo(connection_.get());
-        if (!connection_->WriteFailed()) {
+        if (!connection_->ErrorState()) {
             return true;
         }
     }
@@ -68,7 +68,7 @@ bool NmeaDevice::Write(const NmeaMessage &message) {
 
 bool NmeaDevice::ErrorState() const {
     if (!error_) {
-        if (connection_->ErrorState() || connection_->Eof()) {
+        if (connection_->ErrorState()) {
             error_ = true;
         }
     }

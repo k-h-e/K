@@ -1,15 +1,15 @@
 #ifndef K_CORE_SEEKABLEBLOCKINGIOSTREAMINTERFACE_H_
 #define K_CORE_SEEKABLEBLOCKINGIOSTREAMINTERFACE_H_
 
-#include <K/Core/BlockingIOStreamInterface.h>
 #include <K/Core/SeekableBlockingInStreamInterface.h>
+#include <K/Core/SeekableBlockingOutStreamInterface.h>
 
 namespace K {
 namespace Core {
 
 //! Interface to seekable blocking input/output streams.
-class SeekableBlockingIOStreamInterface : public virtual BlockingIOStreamInterface,
-                                          public virtual SeekableBlockingInStreamInterface {
+class SeekableBlockingIOStreamInterface : public virtual SeekableBlockingInStreamInterface,
+                                          public virtual SeekableBlockingOutStreamInterface {
 };
 
 }    // Namespace Core.

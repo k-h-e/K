@@ -6,12 +6,6 @@
 #include <K/Core/SerializableInterface.h>
 
 namespace K {
-    namespace Core {
-        class ItemWriteInterface;
-    }
-}
-
-namespace K {
 namespace GeoPositioning {
 
 //! RTCM message.
@@ -41,10 +35,10 @@ class RtcmMessage : public virtual K::Core::SerializableInterface {
     //! Tells the payload size.
     int PayloadSize() const;
     //! Writes the RTCM message to the specified stream.
-    void WriteTo(Core::ItemWriteInterface *stream) const;
+    void WriteTo(Core::BlockingOutStreamInterface *stream) const;
 
-    void Serialize(K::Core::BinaryWriterInterface *writer) const override;
-    void Deserialize(K::Core::BinaryReaderInterface *reader) override;
+    void Serialize(Core::BlockingOutStreamInterface *stream) const override;
+    void Deserialize(Core::BlockingInStreamInterface *stream) override;
 
   private:
     std::vector<uint8_t> image_;

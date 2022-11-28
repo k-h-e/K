@@ -22,9 +22,8 @@ class NmeaParser : public virtual Core::StreamHandlerInterface {
     NmeaParser &operator=(NmeaParser &&other)      = delete;
     ~NmeaParser()                                  = default;
 
-    void HandleStreamData(int id, const void *data, int dataSize) override;
-    void HandleEof(int id) override;
-    void HandleError(int id) override;
+    void OnStreamData(int id, const void *data, int dataSize) override;
+    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
 
   private:
     enum class State { BetweenMessages,

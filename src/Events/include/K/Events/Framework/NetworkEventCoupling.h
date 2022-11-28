@@ -88,9 +88,8 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
                        AcceptingChunkData
     };
 
-    void HandleStreamData(int id, const void *data, int dataSize) override;
-    void HandleError(int id) override;
-    void HandleEof(int id) override;
+    void OnStreamData(int id, const void *data, int dataSize) override;
+    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
     void OnTimer(int id) override;
     void OnEventsAvailable(int id) override;
     void Activate(bool deepActivation) override;

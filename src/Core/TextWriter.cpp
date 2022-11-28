@@ -24,38 +24,34 @@ namespace Core {
 
 TextWriter::TextWriter(const shared_ptr<BlockingOutStreamInterface> &stream)
         : stream_(stream),
-          writeFailed_(false),
-          error_(false) {
+          error_(Error::None) {
     // Nop.
 }
 
 TextWriter::~TextWriter() {
-    if (finalResultAcceptor_) {
-        if (error_ || writeFailed_) {
-            finalResultAcceptor_->OnFailure();
+    if (closeResultAcceptor_) {
+        if (error_ != Error::None) {
+            closeResultAcceptor_->OnFailure();
         } else {
-            finalResultAcceptor_->OnSuccess();
+            closeResultAcceptor_->OnSuccess();
         }
-    }
-
-    if (error_ || writeFailed_) {
-        Log::Print(Log::Level::Error, this, []{ return "error while closing"; });
-    } else {
-        Log::Print(Log::Level::Debug, this, []{ return "closed"; });
     }
 }
 
+TextWriter &TextWriter::operator<<(const std::string &text) {
+    Write(text);
+    return *this;
+}
+
 void TextWriter::Write(const string &text) {
-    if (!writeFailed_) {
-        if (error_) {
-            writeFailed_ = true;
-        } else {
-            int size = static_cast<int>(text.size() * sizeof(string::value_type));
-            if (size > 0) {
-                if (!Core::WriteItem(stream_.get(), &text[0], size)) {
-                    writeFailed_ = true;
-                    error_       = true;
-                }
+    if (!ErrorState()) {
+        int size = static_cast<int>(text.size() * sizeof(string::value_type));
+        if (size > 0) {
+            Core::WriteItem(stream_.get(), &text[0], size);
+            if (stream_->ErrorState()) {
+                Error error = stream_->StreamError();
+                assert (error != Error::None);
+                error_ = error;
             }
         }
     }
@@ -66,21 +62,17 @@ void TextWriter::WriteLine(const string &line) {
     Write("\r\n");
 }
 
-bool TextWriter::WriteFailed() const {
-    return writeFailed_;
-}
-
-void TextWriter::ClearWriteFailed() {
-    writeFailed_ = false;
-}
-
 bool TextWriter::ErrorState() const {
+    return (error_ != Error::None);
+}
+
+StreamInterface::Error TextWriter::StreamError() const {
     return error_;
 }
 
-void TextWriter::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
-    finalResultAcceptor_ = resultAcceptor;
-    stream_->SetFinalResultAcceptor(resultAcceptor);
+void TextWriter::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+    closeResultAcceptor_ = resultAcceptor;
+    stream_->SetCloseResultAcceptor(resultAcceptor);
 }
 
 }    // Namespace Core.

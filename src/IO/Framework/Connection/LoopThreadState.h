@@ -33,7 +33,7 @@ struct Connection::LoopThreadState : public virtual Core::Framework::RunLoop::Cl
     int                                             handlerAssociatedId;
     Core::RingBuffer                                readBuffer;
     Core::RingBuffer                                writeBuffer;
-    bool                                            error;
+    Error                                           error;
     bool                                            eof;
     bool                                            clientReadPaused;
     bool                                            clientWritePaused;

@@ -14,7 +14,7 @@ namespace Core {
 namespace GeoPositioning {
 
 //! NMEA message (also called "sentence").
-class NmeaMessage : public virtual K::Core::SerializableInterface {
+class NmeaMessage : public virtual Core::SerializableInterface {
   public:
     NmeaMessage(const std::string &type);
     NmeaMessage(const NmeaMessage &other)            = default;
@@ -47,10 +47,10 @@ class NmeaMessage : public virtual K::Core::SerializableInterface {
     //! Returns a string representation of the message.
     std::string ToString() const;
     //! Writes the NMEA message to the specified stream.
-    void WriteTo(Core::ItemWriteInterface *stream) const;
+    void WriteTo(Core::BlockingOutStreamInterface *stream) const;
 
-    void Serialize(K::Core::BinaryWriterInterface *writer) const override;
-    void Deserialize(K::Core::BinaryReaderInterface *reader) override;
+    void Serialize(Core::BlockingOutStreamInterface *stream) const override;
+    void Deserialize(Core::BlockingInStreamInterface *stream) override;
 
   private:
     std::string              type_;

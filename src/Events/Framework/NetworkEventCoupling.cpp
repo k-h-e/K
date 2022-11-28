@@ -1,6 +1,7 @@
 #include <K/Events/Framework/NetworkEventCoupling.h>
 
 #include <cstring>
+#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Framework/Timer.h>
@@ -19,6 +20,7 @@ using std::unique_ptr;
 using std::vector;
 using K::Core::Buffer;
 using K::Core::Log;
+using K::Core::StreamInterface;
 using K::Core::StringTools;
 using K::Core::Timers;
 using K::Core::Framework::Timer;
@@ -99,7 +101,7 @@ bool NetworkEventCoupling::ErrorState() const {
     return error_;
 }
 
-void NetworkEventCoupling::HandleStreamData(int id, const void *data, int dataSize) {
+void NetworkEventCoupling::OnStreamData(int id, const void *data, int dataSize) {
     (void)id;
     readBuffer_.Append(data, dataSize);
     uint8_t *buffer = static_cast<uint8_t *>(readBuffer_.Data());
@@ -202,13 +204,9 @@ void NetworkEventCoupling::HandleStreamData(int id, const void *data, int dataSi
     }
 }
 
-void NetworkEventCoupling::HandleError(int id) {
+void NetworkEventCoupling::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
     (void)id;
-    EnterErrorState();
-}
-
-void NetworkEventCoupling::HandleEof(int id) {
-    (void)id;
+    (void)error;
     EnterErrorState();
 }
 
@@ -273,24 +271,24 @@ void NetworkEventCoupling::SendVersionChunk() {
 
     ChunkType chunkType = ChunkType::Version;
     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType) + versionBinary.size());
-    tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
-    tcpConnection_->WriteItem(&chunkType, sizeof(chunkType));
-    tcpConnection_->WriteItem(&versionBinary[0], static_cast<int>(versionBinary.size()));
+    (*tcpConnection_) << chunkSize;
+    (*tcpConnection_) << chunkType;
+    WriteItem(tcpConnection_.get(), &versionBinary[0], static_cast<int>(versionBinary.size()));
 }
 
 void NetworkEventCoupling::SendEventsChunk(const void *data, int dataSize) {
     ChunkType chunkType = ChunkType::Events;
     uint32_t  chunkSize = static_cast<uint32_t>(dataSize) + static_cast<uint32_t>(sizeof(chunkType));
-    tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
-    tcpConnection_->WriteItem(&chunkType, sizeof(chunkType));
-    tcpConnection_->WriteItem(data, dataSize);
+    (*tcpConnection_) << chunkSize;
+    (*tcpConnection_) << chunkType;
+    WriteItem(tcpConnection_.get(), data, dataSize);
 }
 
 void NetworkEventCoupling::SendKeepAliveChunk() {
     ChunkType chunkType = ChunkType::KeepAlive;
     uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType));
-    tcpConnection_->WriteItem(&chunkSize, sizeof(chunkSize));
-    tcpConnection_->WriteItem(&chunkType, sizeof(chunkType));
+    (*tcpConnection_) << chunkSize;
+    (*tcpConnection_) << chunkType;
 }
 
 void NetworkEventCoupling::EnterErrorState() {

@@ -9,6 +9,7 @@ using std::string;
 using std::to_string;
 using std::vector;
 using K::Core::Log;
+using K::Core::StreamInterface;
 using K::Core::StringTools;
 
 namespace K {
@@ -25,7 +26,7 @@ NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler, i
     // Nop.
 }
 
-void NmeaParser::HandleStreamData(int id, const void *data, int dataSize) {
+void NmeaParser::OnStreamData(int id, const void *data, int dataSize) {
     (void)id;
     if (!eof_ && !error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
@@ -75,7 +76,7 @@ void NmeaParser::HandleStreamData(int id, const void *data, int dataSize) {
             case State::AcceptingCheckSum:
                 if (character == '\n') {
                     if (message_.CheckSum() == StringTools::ToLower(token_)) {
-                        handler_->Handle(handlerActivationId_, message_);
+                        handler_->OnNmeaMessage(handlerActivationId_, message_);
                     } else {
                         Log::Print(Log::Level::Warning, this, [&]{
                             return "checksum mismatch: \"" + message_.ToString() + "\", expected_checksum=\"" + token_
@@ -103,21 +104,22 @@ void NmeaParser::HandleStreamData(int id, const void *data, int dataSize) {
     }
 }
 
-void NmeaParser::HandleEof(int id) {
+void NmeaParser::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
     (void)id;
-    if (!eof_) {
-        handler_->HandleEof(handlerActivationId_);
-        eof_ = true;
+    assert(error != StreamInterface::Error::None);
+    if (error == StreamInterface::Error::Eof) {
+        if (!eof_) {
+            handler_->OnEof(handlerActivationId_);
+            eof_ = true;
+        }
+    } else {
+        if (!error_) {
+            handler_->OnError(handlerActivationId_);
+            error_ = true;
+        }
     }
 }
 
-void NmeaParser::HandleError(int id) {
-    (void)id;
-    if (!error_) {
-        handler_->HandleError(handlerActivationId_);
-        error_ = true;
-    }
-}
 }    // Namespace GeoPositioning.
 }    // Namespace K.
 

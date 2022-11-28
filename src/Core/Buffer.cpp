@@ -12,6 +12,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <K/Core/NonBlockingInStreamInterface.h>
 #include <K/Core/NumberTools.h>
 #include <K/Core/ResultAcceptor.h>
 
@@ -30,8 +31,8 @@ Buffer::Buffer(int initialSize)
 		  bufferFill_((int)buffer_.size()) {}
 
 Buffer::~Buffer() {
-    if (finalResultAcceptor_) {
-        finalResultAcceptor_->OnSuccess();
+    if (closeResultAcceptor_) {
+        closeResultAcceptor_->OnSuccess();
     }
 }
 
@@ -69,14 +70,14 @@ void Buffer::Append(const void *data, int dataSize) {
     }
 }
 
-int Buffer::AppendFromReader(NonBlockingReadInterface *reader, int maxNumBytes) {
+int Buffer::Append(NonBlockingInStreamInterface *stream, int maxNumBytes) {
     assert(maxNumBytes > 0);
     int numFree = static_cast<int>(buffer_.size()) - bufferFill_;
     if (!numFree) {
         Grow();
         numFree = static_cast<int>(buffer_.size()) - bufferFill_;
     }
-    int numRead = reader->ReadNonBlocking(&buffer_[bufferFill_], min(numFree, maxNumBytes));
+    int numRead = stream->ReadNonBlocking(&buffer_[bufferFill_], min(numFree, maxNumBytes));
     bufferFill_ += numRead;
     return numRead;
 }
@@ -93,8 +94,12 @@ bool Buffer::ErrorState() const {
     return false;
 }
 
-void Buffer::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
-    finalResultAcceptor_ = resultAcceptor;
+StreamInterface::Error Buffer::StreamError() const {
+    return Error::None;
+}
+
+void Buffer::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
+    closeResultAcceptor_ = resultAcceptor;
 }
 
 int Buffer::WriteBlocking(const void *data, int dataSize) {
@@ -109,40 +114,38 @@ Buffer::Reader Buffer::GetReader() const {
 
 Buffer::Reader::Reader(const Buffer *buffer)
 	: buffer_(buffer),
-      cursor_(0) {
+      cursor_(0),
+      error_(Error::None) {
 }
 
 bool Buffer::Reader::ErrorState() const {
-    return false;
+    return (error_ != Error::None);
 }
 
-bool Buffer::Reader::Eof() const {
-    return (cursor_ >= buffer_->bufferFill_);
+StreamInterface::Error Buffer::Reader::StreamError() const {
+    return error_;
 }
 
 int Buffer::Reader::ReadBlocking(void *buffer, int bufferSize) {
     int numRead = 0;
 
-    int numToDeliver = buffer_->bufferFill_ - cursor_;
-    if (numToDeliver >= 1) {
-        if (numToDeliver > bufferSize) {
-            numToDeliver = bufferSize;
+    if (!ErrorState()) {
+        int numToDeliver = buffer_->bufferFill_ - cursor_;
+        if (numToDeliver >= 1) {
+            if (numToDeliver > bufferSize) {
+                numToDeliver = bufferSize;
+            }
+            memcpy(buffer, &buffer_->buffer_[cursor_], numToDeliver);
+            cursor_ += numToDeliver;
+            numRead = numToDeliver;
         }
-        memcpy(buffer, &buffer_->buffer_[cursor_], numToDeliver);
-        cursor_ += numToDeliver;
-        numRead = numToDeliver;
+
+        if (!numRead) {
+            error_ = Error::Eof;
+        }
     }
 
     return numRead;
-}
-
-void Buffer::Reader::SetFinalResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
-    (void)resultAcceptor;
-    // Nop.
-}
-
-int Buffer::Reader::ReadNonBlocking(void *buffer, int bufferSize) {
-    return ReadBlocking(buffer, bufferSize);
 }
 
 }    // Namespace Core.

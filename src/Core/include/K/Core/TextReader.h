@@ -12,7 +12,7 @@
 #define K_CORE_TEXTREADER_H_
 
 #include <memory>
-#include <K/Core/TextReaderInterface.h>
+#include <K/Core/InStreamInterface.h>
 
 namespace K {
 namespace Core {
@@ -20,7 +20,7 @@ namespace Core {
 class SeekableBlockingInStreamInterface;
 
 //! Text reader.
-class TextReader : public virtual TextReaderInterface {
+class TextReader : public virtual InStreamInterface {
   public:
     TextReader(const std::shared_ptr<SeekableBlockingInStreamInterface> &stream);
     TextReader()                                   = delete;
@@ -30,19 +30,37 @@ class TextReader : public virtual TextReaderInterface {
     TextReader &operator=(TextReader &&other)      = delete;
     ~TextReader()                                  = default;
 
-    void Read(char delimiter, std::string *outString) override;
-    void Read(const std::string &validCharacters, bool readOther, std::string *outString) override;
-    void Skip(const std::string &charactersToSkip, bool skipOther) override;
-    bool ReadFailed() const override;
-    void ClearReadFailed() override;
-    bool Eof() const override;
+    //! Reads a string.
+    /*!
+     *  Encountering the specified delimiter or EOF will properly terminate reading. The next read will happen after the
+     *  delimiter, or at EOF respectively.
+     */
+    void Read(char delimiter, std::string *outString);
+    //! Reads a string.
+    /*!
+     *  Encountering a character not in the specified valid set or EOF will properly terminate reading. The next read
+     *  will happen at the offending position.
+     *
+     *  \param readOther
+     *  If set, the complement of the specified set will be treated as the valid characters.
+     */
+    void Read(const std::string &validCharacters, bool readOther, std::string *outString);
+    //! Skips the specified characters.
+    /*!
+     *  Encountering a character not in the specified skip set or EOF will properly terminate skipping. The next read
+     *  will happen at the offending position.
+     *
+     *  \param skipOther
+     *  If set, the complement of the specified set will be treated as the characters to skip.
+     */
+    void Skip(const std::string &charactersToSkip, bool skipOther);
+
     bool ErrorState() const override;
+    Error StreamError() const override;
 
   private:
     const std::shared_ptr<SeekableBlockingInStreamInterface> stream_;
-    bool                                                     readFailed_;
-    bool                                                     eof_;
-    bool                                                     error_;
+    Error                                                    error_;
 };
 
 }    // Namespace Core.
