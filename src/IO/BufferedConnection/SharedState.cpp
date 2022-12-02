@@ -38,7 +38,7 @@ void BufferedConnection::SharedState::SetError() {
 bool BufferedConnection::SharedState::Register(const shared_ptr<StreamHandlerInterface> &handler, int activationId) {
     assert(handler);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (error_ != Error::None) {
+    if (error_ == Error::None) {
         handler_                = handler;
         handlerActivationId_    = activationId;
         handlerCalledInitially_ = false;
