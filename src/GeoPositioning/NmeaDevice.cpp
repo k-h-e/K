@@ -5,16 +5,19 @@
 #include <cassert>
 #include <iomanip>
 #include <K/Core/ConnectionStreamInterface.h>
+#include <K/Core/Log.h>
 
-using namespace std;
+using std::shared_ptr;
+using std::to_string;
 using K::Core::ConnectionStreamInterface;
+using K::Core::Log;
 
 namespace K {
 namespace GeoPositioning {
 
 NmeaDevice::NmeaDevice(const shared_ptr<ConnectionStreamInterface> &connection)
-        : connection_(connection),
-          error_(false) {
+        : connection_{connection},
+          error_{false} {
     // Nop.
 }
 
@@ -24,7 +27,7 @@ NmeaDevice::~NmeaDevice() {
     }
 }
 
-bool NmeaDevice::Register(const std::shared_ptr<NmeaMessageHandlerInterface> &handler) {
+bool NmeaDevice::Register(const shared_ptr<NmeaMessageHandlerInterface> &handler) {
     assert(handler);
 
     if (handler_) {
@@ -32,12 +35,11 @@ bool NmeaDevice::Register(const std::shared_ptr<NmeaMessageHandlerInterface> &ha
     }
 
     if (!error_) {
-        auto parser = make_shared<NmeaParser>(handler, 0);
+        auto parser{make_shared<NmeaParser>(handler, 0)};
         if (connection_->Register(parser, 0)) {
             parser_  = parser;
             handler_ = handler;
-        }
-        else {
+        } else {
             error_ = true;
         }
     }
@@ -69,6 +71,9 @@ bool NmeaDevice::Write(const NmeaMessage &message) {
 bool NmeaDevice::ErrorState() const {
     if (!error_) {
         if (connection_->ErrorState()) {
+            Log::Print(Log::Level::Warning, this, [&]{
+                return "connection in error state, error=" + to_string(static_cast<int>(connection_->StreamError()));
+            });
             error_ = true;
         }
     }

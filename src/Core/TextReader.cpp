@@ -10,8 +10,8 @@
 
 #include <K/Core/TextReader.h>
 
+#include <cassert>
 #include <K/Core/SeekableBlockingInStreamInterface.h>
-#include <K/Core/IOOperations.h>
 
 using std::shared_ptr;
 using std::string;

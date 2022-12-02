@@ -1,7 +1,6 @@
 #include <K/Events/Framework/NetworkEventCoupling.h>
 
 #include <cstring>
-#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Framework/Timer.h>
@@ -103,7 +102,7 @@ bool NetworkEventCoupling::ErrorState() const {
 
 void NetworkEventCoupling::OnStreamData(int id, const void *data, int dataSize) {
     (void)id;
-    readBuffer_.Append(data, dataSize);
+    readBuffer_.AppendFromMemory(data, dataSize);
     uint8_t *buffer = static_cast<uint8_t *>(readBuffer_.Data());
 
     uint32_t  chunkSizeU32;

@@ -16,7 +16,6 @@
 #include <typeinfo>
 #include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
-#include <K/Core/IOOperations.h>
 #include <K/Core/NumberTools.h>
 
 using std::string;

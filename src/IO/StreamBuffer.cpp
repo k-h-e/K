@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <cstring>
-#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
 #include <K/Core/ResultAcceptor.h>
 #include <K/IO/IOTools.h>

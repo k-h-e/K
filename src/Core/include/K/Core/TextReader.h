@@ -12,6 +12,7 @@
 #define K_CORE_TEXTREADER_H_
 
 #include <memory>
+#include <string>
 #include <K/Core/InStreamInterface.h>
 
 namespace K {

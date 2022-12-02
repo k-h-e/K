@@ -1,5 +1,6 @@
 #include <K/GeoPositioning/NmeaParser.h>
 
+#include <cassert>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/GeoPositioning/NmeaMessageHandlerInterface.h>

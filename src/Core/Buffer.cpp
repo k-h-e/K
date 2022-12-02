@@ -57,7 +57,7 @@ void Buffer::Shrink(int size) {
     bufferFill_ = size;
 }
 
-void Buffer::Append(const void *data, int dataSize) {
+void Buffer::AppendFromMemory(const void *data, int dataSize) {
     if (dataSize > 0) {
         int newFill = bufferFill_ + dataSize;
         while (newFill > static_cast<int>(buffer_.size())) {
@@ -70,7 +70,7 @@ void Buffer::Append(const void *data, int dataSize) {
     }
 }
 
-int Buffer::Append(NonBlockingInStreamInterface *stream, int maxNumBytes) {
+int Buffer::AppendFromStream(NonBlockingInStreamInterface *stream, int maxNumBytes) {
     assert(maxNumBytes > 0);
     int numFree = static_cast<int>(buffer_.size()) - bufferFill_;
     if (!numFree) {
@@ -104,7 +104,7 @@ void Buffer::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcce
 
 int Buffer::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
-    Append(data, dataSize);
+    AppendFromMemory(data, dataSize);
     return dataSize;
 }
 

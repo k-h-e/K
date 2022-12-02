@@ -2,6 +2,7 @@
 
 using std::shared_ptr;
 using K::Core::StreamHandlerInterface;
+using K::Core::StreamInterface;
 
 namespace K {
 namespace IO {
@@ -15,22 +16,16 @@ StreamHandlerTee::StreamHandlerTee(const shared_ptr<StreamHandlerInterface> &str
     // Nop.
 }
 
-void StreamHandlerTee::HandleStreamData(int id, const void *data, int dataSize) {
+void StreamHandlerTee::OnStreamData(int id, const void *data, int dataSize) {
     (void)id;
-    streamHandler1_->HandleStreamData(activationId1_, data, dataSize);
-    streamHandler2_->HandleStreamData(activationId2_, data, dataSize);
+    streamHandler1_->OnStreamData(activationId1_, data, dataSize);
+    streamHandler2_->OnStreamData(activationId2_, data, dataSize);
 }
 
-void StreamHandlerTee::HandleEof(int id) {
+void StreamHandlerTee::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
     (void)id;
-    streamHandler1_->HandleEof(activationId1_);
-    streamHandler2_->HandleEof(activationId2_);
-}
-
-void StreamHandlerTee::HandleError(int id) {
-    (void)id;
-    streamHandler1_->HandleError(activationId1_);
-    streamHandler2_->HandleError(activationId2_);
+    streamHandler1_->OnStreamEnteredErrorState(activationId1_, error);
+    streamHandler2_->OnStreamEnteredErrorState(activationId2_, error);
 }
 
 }    // Namespace IO.

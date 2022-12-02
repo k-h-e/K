@@ -1,11 +1,13 @@
 #include <K/GeoPositioning/RtcmParser.h>
 
+#include <cassert>
 #include <K/Core/Log.h>
 #include <K/GeoPositioning/RtcmMessageHandlerInterface.h>
 
 using std::shared_ptr;
 using std::to_string;
 using K::Core::Log;
+using K::Core::StreamInterface;
 
 namespace K {
 namespace GeoPositioning {
@@ -21,7 +23,7 @@ RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler, i
    // Nop.
 }
 
-void RtcmParser::HandleStreamData(int id, const void *data, int dataSize) {
+void RtcmParser::OnStreamData(int id, const void *data, int dataSize) {
     (void)id;
     if (!eof_ && !error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
@@ -45,7 +47,7 @@ void RtcmParser::HandleStreamData(int id, const void *data, int dataSize) {
                 case State::AcceptingCrc:
                     message_.AppendToImage(&byte, 1);
                     if (message_.ImageSize() == payloadSize_ + 6) {
-                        handler_->Handle(handlerActivationId_, message_);
+                        handler_->OnRtcmMessage(handlerActivationId_, message_);
                         message_.Reset();
                         payloadSize_ = 0;
                         state_ = State::BetweenMessages;
@@ -71,19 +73,19 @@ void RtcmParser::HandleStreamData(int id, const void *data, int dataSize) {
     }
 }
 
-void RtcmParser::HandleEof(int id) {
+void RtcmParser::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
     (void)id;
-    if (!eof_) {
-        handler_->HandleEof(handlerActivationId_);
-        eof_ = true;
-    }
-}
-
-void RtcmParser::HandleError(int id) {
-    (void)id;
-    if (!error_) {
-        handler_->HandleError(handlerActivationId_);
-        error_ = true;
+    assert (error != StreamInterface::Error::None);
+    if (error == StreamInterface::Error::Eof) {
+        if (!eof_) {
+            handler_->OnEof(handlerActivationId_);
+            eof_ = true;
+        }
+    } else {
+        if (!error_) {
+            handler_->OnError(handlerActivationId_);
+            error_ = true;
+        }
     }
 }
 

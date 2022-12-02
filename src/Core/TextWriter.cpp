@@ -10,8 +10,8 @@
 
 #include <K/Core/TextWriter.h>
 
+#include <cassert>
 #include <K/Core/BlockingOutStreamInterface.h>
-#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
 #include <K/Core/ResultAcceptor.h>
 

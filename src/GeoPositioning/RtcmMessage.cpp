@@ -2,7 +2,6 @@
 
 #include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
-#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
 
 using std::to_string;

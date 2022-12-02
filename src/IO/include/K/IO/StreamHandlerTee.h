@@ -17,9 +17,8 @@ class StreamHandlerTee : public virtual Core::StreamHandlerInterface {
     StreamHandlerTee(StreamHandlerTee &&other)                 = delete;
     StreamHandlerTee &operator=(StreamHandlerTee &&other)      = delete;
 
-    void HandleStreamData(int id, const void *data, int dataSize) override;
-    void HandleEof(int id) override;
-    void HandleError(int id) override;
+    void OnStreamData(int id, const void *data, int dataSize) override;
+    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
 
   private:
     std::shared_ptr<Core::StreamHandlerInterface> streamHandler1_;

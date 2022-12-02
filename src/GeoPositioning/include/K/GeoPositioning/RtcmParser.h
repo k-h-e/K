@@ -20,9 +20,8 @@ class RtcmParser : public virtual Core::StreamHandlerInterface {
     RtcmParser(RtcmParser &&other)                 = delete;
     RtcmParser &operator=(RtcmParser &&other)      = delete;
 
-    void HandleStreamData(int id, const void *data, int dataSize) override;
-    void HandleEof(int id) override;
-    void HandleError(int id) override;
+    void OnStreamData(int id, const void *data, int dataSize) override;
+    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
 
   private:
     enum class State { BetweenMessages,

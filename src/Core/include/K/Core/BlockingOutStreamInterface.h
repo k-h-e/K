@@ -28,6 +28,17 @@ class BlockingOutStreamInterface : public virtual OutStreamInterface {
     virtual int WriteBlocking(const void *data, int dataSize) = 0;
 };
 
+//! Writes a binary item of specified size (in bytes).
+void WriteItem(BlockingOutStreamInterface *stream, const void *item, int itemSize);
+
+template<typename T>
+BlockingOutStreamInterface &operator<<(BlockingOutStreamInterface &stream, const T &value) {
+    WriteItem(&stream, &value, sizeof(T));
+    return stream;
+}
+
+BlockingOutStreamInterface &operator<<(BlockingOutStreamInterface &stream, const std::string &value);
+
 }    // Namespace Core.
 }    // Namespace K.
 

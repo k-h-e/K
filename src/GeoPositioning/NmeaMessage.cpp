@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <K/Core/BlockingInStreamInterface.h>
-#include <K/Core/IOOperations.h>
+#include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/StringTools.h>
 
 using std::string;

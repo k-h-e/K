@@ -93,7 +93,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
      *
      *  If <c>dataSize</c> is <c>0</c>, nothing will happen.
      */
-	void Append(const void *data, int dataSize);
+    void AppendFromMemory(const void *data, int dataSize);
     //! Appends data to the buffer by reading from the specified stream, potentially invalidating the memory location
     //! handed out earlier via \ref Data().
     /*!
@@ -103,7 +103,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
      *  \return
      *  The number of bytes actually read and appended.
      */
-    int Append(NonBlockingInStreamInterface *stream, int maxNumBytes);
+    int AppendFromStream(NonBlockingInStreamInterface *stream, int maxNumBytes);
     //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
 	/*!
 	 *  The bytes potentially "appended" are undefined.

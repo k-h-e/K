@@ -3,9 +3,9 @@
 
 #include <memory>
 #include <string>
-#include <K/Core/BinaryWriter.h>
+#include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/StreamHandlerInterface.h>
-
+#include <K/Core/StreamInterface.h>
 
 namespace K {
 namespace IO {
@@ -19,12 +19,11 @@ class StreamSaver : public virtual Core::StreamHandlerInterface {
     StreamSaver(StreamSaver &&other)                 = delete;
     StreamSaver &operator=(StreamSaver &&other)      = delete;
 
-    void HandleStreamData(int id, const void *data, int dataSize) override;
-    void HandleEof(int id) override;
-    void HandleError(int id) override;
+    void OnStreamData(int id, const void *data, int dataSize) override;
+    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
 
   private:
-    std::unique_ptr<Core::BinaryWriter> writer_;
+    std::unique_ptr<Core::BlockingOutStreamInterface> fileStream_;
 };
 
 }    // Namespace IO.

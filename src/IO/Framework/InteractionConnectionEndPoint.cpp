@@ -10,6 +10,7 @@
 
 #include <K/IO/Framework/InteractionConnectionEndPoint.h>
 
+#include <cassert>
 #include <K/Core/ResultAcceptor.h>
 #include <K/Core/StreamHandlerInterface.h>
 
@@ -123,7 +124,7 @@ void InteractionConnectionEndPoint::OnStreamReadyWrite(int id) {
 void InteractionConnectionEndPoint::DispatchIncoming() {
     if ((error_ == Error::None) && readyRead_) {
         readBuffer_.Clear();
-        if (readBuffer_.Append(connection_.get(), 2048)) {
+        if (readBuffer_.AppendFromStream(connection_.get(), 2048)) {
             runLoop_->RequestActivation(runLoopClientId_, false);
             if (handler_) {
                 handler_->OnStreamData(handlerActivationId_, readBuffer_.Data(), readBuffer_.DataSize());

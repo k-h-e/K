@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstdio>
 #include <K/Core/Buffer.h>
-#include <K/Core/IOOperations.h>
 #include <K/Core/Log.h>
 #include <K/Events/Event.h>
 
@@ -182,7 +181,7 @@ void EventHub::DoSubmit(unique_lock<mutex> &critical, int clientLoopId, const vo
         if (loopInfo.inUse) {
             bool wasEmpty{(loopInfo.buffer->DataSize() == 0)};
             if (!(onlyDeliverToOthers && (i == clientLoopId))) {
-                loopInfo.buffer->Append(data, dataSize);
+                loopInfo.buffer->AppendFromMemory(data, dataSize);
                 if (loopInfo.waiting) {
                     loopInfo.stateChanged->notify_all();
                 }

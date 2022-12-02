@@ -11,7 +11,7 @@ class RtcmMessage;
 //! Interface to entities receiving and processing RTCM messages.
 class RtcmMessageHandlerInterface : public virtual Core::DataHandlerInterface {
   public:
-    virtual void Handle(int id, const RtcmMessage &message) = 0;
+    virtual void OnRtcmMessage(int id, const RtcmMessage &message) = 0;
 };
 
 }    // Namespace GeoPositioning.
