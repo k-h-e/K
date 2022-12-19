@@ -38,8 +38,8 @@ class TcpConnection : public Connection {
     TcpConnection()                                       = delete;
     TcpConnection(const TcpConnection &other)             = delete;
     TcpConnection &operator=(const TcpConnection &other)  = delete;
-    TcpConnection(const TcpConnection &&other)            = delete;
-    TcpConnection &operator=(const TcpConnection &&other) = delete;
+    TcpConnection(TcpConnection &&other)                  = delete;
+    TcpConnection &operator=(TcpConnection &&other)       = delete;
 
   private:
     static const int bufferSizeConstraint = 4096;

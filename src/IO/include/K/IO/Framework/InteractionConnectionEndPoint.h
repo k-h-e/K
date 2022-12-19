@@ -15,6 +15,7 @@
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/Buffer.h>
 #include <K/Core/RingBuffer.h>
+#include <K/Core/Framework/AsyncInStreamInterface.h>
 #include <K/Core/Framework/RunLoop.h>
 #include <K/Core/Framework/NonBlockingIOStreamInterface.h>
 
@@ -33,7 +34,8 @@ namespace IO {
 namespace Framework {
 
 //! Convenience endpoint for nonblocking connection streams that are operated in an interaction-like fashion.
-class InteractionConnectionEndPoint : public virtual Core::BlockingOutStreamInterface,
+class InteractionConnectionEndPoint : public virtual Core::Framework::AsyncInStreamInterface,
+                                      public virtual Core::BlockingOutStreamInterface,
                                       private virtual Core::Framework::RunLoop::ClientInterface,
                                       private virtual Core::Framework::NonBlockingIOStreamInterface::HandlerInterface {
   public:
@@ -46,19 +48,7 @@ class InteractionConnectionEndPoint : public virtual Core::BlockingOutStreamInte
     InteractionConnectionEndPoint &operator=(InteractionConnectionEndPoint &&other)      = delete;
     ~InteractionConnectionEndPoint();
 
-    //! Registers the specified handler.
-    /*!
-     *  Pass <c>nullptr</c> to unregister a previously registered handler.
-     *
-     *  The handler's methods get activated on the associated run loop's thread. They may call back into the end point.
-     *
-     *  The handler is expected to outlive the end point. It will not get called upon end point destruction.
-     *
-     *  \param activationId
-     *  ID to be passed along with handler activations for the end point. Useful in case one wants to use one handler
-     *  with multiple end points.
-     */
-    void Register(Core::StreamHandlerInterface *handler, int activationId);
+    void Register(Core::StreamHandlerInterface *handler, int activationId) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
     Error StreamError() const override;

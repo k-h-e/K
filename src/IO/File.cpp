@@ -81,7 +81,7 @@ File::~File() {
         }
     }
 
-    if (error_ != Error::None) {
+    if ((error_ != Error::None) && (error_ != Error::Eof)) {
         Log::Print(Log::Level::Error, this, [&]{
             return "failed to properly close file \"" + fileName_ + "\", fd=" + to_string(fd_);
         });

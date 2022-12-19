@@ -13,9 +13,12 @@
 #include <K/Core/Log.h>
 
 using std::mutex;
+using std::shared_ptr;
 using std::to_string;
 using std::unique_lock;
+using std::vector;
 using K::Core::Log;
+using K::Core::Interface;
 
 namespace K {
 namespace Core {
@@ -29,6 +32,7 @@ RunLoop::RunLoop()
 void RunLoop::Run() {
     Log::Print(Log::Level::Debug, this, [&]{ return "entering run loop"; });
 
+    vector<shared_ptr<Interface>> deletionDeferredObjects;
     bool done = false;
     while (!done) {
         ClientInterface *clientToActivate  = nullptr;
@@ -36,6 +40,18 @@ void RunLoop::Run() {
         bool            deepActivation     = false;
         {
             unique_lock<mutex> critical(lock_);    // Critical section..................................................
+            
+            if (!deletionDeferredObjects_.empty()) {
+                deletionDeferredObjects.swap(deletionDeferredObjects_);
+                deletionDeferredObjects_.clear();
+                critical.unlock();    // ....................
+                Log::Print(Log::Level::Debug, this, [&]{
+                    return "releasing " + to_string(deletionDeferredObjects.size()) + " deletion-deferred objects";
+                });
+                deletionDeferredObjects.clear();
+                critical.lock();      // ....................
+            }
+            
             while (!clientToActivate && !done) {
                 if (terminationRequested_) {
                     done = true;
@@ -103,6 +119,12 @@ void RunLoop::RemoveClient(int client) {
         return "removed client " + to_string(client) + ", num_clients=" + to_string(NumClients(critical));
     });
 }    // ......................................................................................... critical section, end.
+
+void RunLoop::DeferDeletion(const shared_ptr<Interface> &object) {
+    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    deletionDeferredObjects_.push_back(object);
+}    // ......................................................................................... critical section, end.
+
 
 void RunLoop::RequestActivation(int client, bool deepActivation) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................

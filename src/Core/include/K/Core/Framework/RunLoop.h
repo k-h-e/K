@@ -49,10 +49,12 @@ class RunLoop : public virtual Core::Interface {
 
     //! Called by the associated thread to, well, run the run loop.
     void Run();
-    //! Asks the run loop to terminate.
+    //! <b>[Thread safe]</b> Asks the run loop to terminate.
     /*!
      *  If the loop is currently running (i.e. executing <c>Run()</c>), it will terminate (return from <c>Run()</c>) at
      *  the next possible time.
+     *
+     *  This method is thread safe.
      */
     void RequestTermination();
     //! Adds the specified client, returning the assigned client id.
@@ -66,6 +68,8 @@ class RunLoop : public virtual Core::Interface {
      *  When the method returns, it is guaranteed that the client will not be called again.
      */
     void RemoveClient(int client);
+    //! Holds on to the specified object until the ongoing client activation finishes.
+    void DeferDeletion(const std::shared_ptr<K::Core::Interface> &object);
     //! <b>[Thread safe]</b> Requests the specified client to be activated on the run loop thread.
     /*!
      *  This method is thread safe.
@@ -97,13 +101,14 @@ class RunLoop : public virtual Core::Interface {
     // Expects lock to be held.
     int NumClients(std::unique_lock<std::mutex> &critical);
 
-    std::mutex              lock_;                     // Protects everything below...
-    std::condition_variable stateChanged_;
-    std::vector<ClientInfo> clients_;
-    std::deque<int>         freeClientSlots_;
-    std::unordered_set<int> clientsToActivate_;
-    std::deque<int>         clientActivationOrder_;
-    bool                    terminationRequested_;
+    std::mutex                                       lock_;                        // Protects everything below...
+    std::condition_variable                          stateChanged_;
+    std::vector<ClientInfo>                          clients_;
+    std::deque<int>                                  freeClientSlots_;
+    std::unordered_set<int>                          clientsToActivate_;
+    std::deque<int>                                  clientActivationOrder_;
+    std::vector<std::shared_ptr<K::Core::Interface>> deletionDeferredObjects_;
+    bool                                             terminationRequested_;
 };
 
 }    // Namespace Framework.
