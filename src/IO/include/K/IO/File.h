@@ -36,6 +36,8 @@ class File : public virtual Core::SeekableBlockingIOStreamInterface {
      *  Can also be used on directories.
      */
     static bool Rename(const std::string &oldFileName, const std::string &newFileName);
+    //! Deletes the specified file.
+    static bool Delete(const std::string &fileName);
 
   private:
     std::string                           fileName_;

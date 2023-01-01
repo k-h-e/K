@@ -1,3 +1,4 @@
+- IO::StreamBuffer: in ReadWrite mode, fill-truncation of last Flush() appears to not be working (tested with EchoApp lake download).
 - InteractionConnectionEndPoint
     - limit buffer size for outgoing data
     - configure size constraint for dispatched data?

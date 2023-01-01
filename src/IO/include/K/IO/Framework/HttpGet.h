@@ -41,8 +41,8 @@ class HttpGet : public virtual Core::Framework::AsyncInStreamInterface,
                 private virtual Core::Framework::RunLoop::ClientInterface,
                 private virtual Core::StreamHandlerInterface {
   public:
-    HttpGet(const std::string &host, const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
-            const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    HttpGet(const std::string &host, const std::string &resource,
+            const std::shared_ptr<Core::Framework::RunLoop> &runLoop, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     HttpGet()                                = delete;
     HttpGet(const HttpGet &other)            = delete;
     HttpGet &operator=(const HttpGet &other) = delete;

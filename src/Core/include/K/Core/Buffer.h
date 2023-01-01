@@ -13,8 +13,8 @@
 
 #include <stdint.h>
 #include <vector>
-#include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
+#include <K/Core/SeekableBlockingInStreamInterface.h>
 
 namespace K {
 namespace Core {
@@ -30,7 +30,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
      *  interleaved with adding data via \ref Append().
 	 */
 
-    class Reader : public virtual BlockingInStreamInterface {
+    class Reader : public virtual SeekableBlockingInStreamInterface {
 	  public:
         Reader()                               = default;
         Reader(const Reader &other)            = default;
@@ -42,6 +42,9 @@ class Buffer : public virtual BlockingOutStreamInterface {
         bool ErrorState() const override;
         Error StreamError() const override;
         int ReadBlocking(void *buffer, int bufferSize) override;
+        void Seek(int64_t position) override;
+        void RecoverAndSeek(int64_t position) override;
+        int64_t StreamPosition() const override;
 
 	  private:
 		friend class Buffer;

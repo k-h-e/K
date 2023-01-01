@@ -209,7 +209,27 @@ void File::AccessModeToFlags(AccessMode accessMode, bool *outReadable, bool *out
 }
 
 bool File::Rename(const std::string &oldFileName, const std::string &newFileName) {
-    return (std::rename(oldFileName.c_str(), newFileName.c_str()) == 0);
+    bool success = (std::rename(oldFileName.c_str(), newFileName.c_str()) == 0);
+    if (success) {
+        Log::Print(Log::Level::Debug, nullptr, [&]{
+            return "renamed file \"" + oldFileName + "\" as \"" + newFileName + "\"";
+        });
+    } else {
+        Log::Print(Log::Level::Error, nullptr, [&]{
+            return "failed to rename file \"" + oldFileName + "\" as \"" + newFileName + "\"!";
+        });
+    }
+    return success;
+}
+
+bool File::Delete(const std::string &fileName) {
+    bool success = (std::remove(fileName.c_str()) == 0);
+    if (success) {
+        Log::Print(Log::Level::Debug, nullptr, [&]{ return "deleted file \"" + fileName + "\""; });
+    } else {
+        Log::Print(Log::Level::Error, nullptr, [&]{ return "failed to delete \"" + fileName + "\"!"; });
+    }
+    return success;
 }
 
 }    // Namesapce IO.

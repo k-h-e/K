@@ -148,5 +148,26 @@ int Buffer::Reader::ReadBlocking(void *buffer, int bufferSize) {
     return numRead;
 }
 
+void Buffer::Reader::Seek(int64_t position) {
+    if (!ErrorState()) {
+        if ((position >= 0) && (position < buffer_->bufferFill_)) {
+            cursor_ = static_cast<int>(position);
+        } else {
+            error_ = Error::IO;
+        }
+    }
+}
+
+void Buffer::Reader::RecoverAndSeek(int64_t position) {
+    if (error_ == Error::Eof) {
+        error_ = Error::None;
+        Seek(position);
+    }
+}
+
+int64_t Buffer::Reader::StreamPosition() const {
+    return static_cast<int64_t>(cursor_);
+}
+
 }    // Namespace Core.
 }    // Namespace K.

@@ -32,7 +32,8 @@ namespace K {
 namespace IO {
 namespace Framework {
 
-HttpGet::HttpGet(const string &host, const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO)
+HttpGet::HttpGet(const string &host, const string &resource, const shared_ptr<RunLoop> &runLoop,
+                 const shared_ptr<ConnectionIO> &connectionIO)
         : runLoop_{runLoop},
           handler_{nullptr},
           handlerActivationId_{0},
@@ -47,7 +48,9 @@ HttpGet::HttpGet(const string &host, const shared_ptr<RunLoop> &runLoop, const s
     endPoint_ = make_shared<InteractionConnectionEndPoint>(connection, runLoop);
     endPoint_->Register(this, 0);
     TextWriter writer{endPoint_};
-    writer.Write("GET /echobot/repository/public/Herborn.ebx HTTP/1.1\r\n");
+    writer.Write("GET ");
+    writer.Write(resource);
+    writer.Write(" HTTP/1.1\r\n");
     writer.Write("Host: ");
     writer.Write(host);
     writer.Write("\r\n");
