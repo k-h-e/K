@@ -41,9 +41,6 @@ class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface 
      *  \param fd
      *  The connection takes ownership over the UNIX file descriptor. Bad file descriptors (<c>nullopt</c> or negative
      *  ones) are accepted, with the connection entering error state right away.
-     *
-     *  \param resultAcceptor
-     *  The result acceptor is optional.
      */
     Connection(
         std::optional<int> fd, int bufferSizeConstraint, const std::shared_ptr<Core::Framework::RunLoop> &runLoop,
