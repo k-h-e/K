@@ -29,7 +29,7 @@ BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shar
 
 void BufferedConnection::SharedState::SetError() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    if (error_ != Error::None) {
+    if (error_ == Error::None) {
         error_ = Error::Unspecific;
         Log::Print(Log::Level::Warning, this, []{ return "error state was set"; });
     }
@@ -45,8 +45,7 @@ bool BufferedConnection::SharedState::Register(const shared_ptr<StreamHandlerInt
         connectionIO_->RequestCustomCall(this);
         connectionIO_->SetClientCanRead(this);
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }    // ......................................................................................... critical section, end.
@@ -65,12 +64,11 @@ void BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) 
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     const uint8_t *data   = static_cast<const uint8_t *>(item);
     int           numLeft = itemSize;
-    while ((error_ != Error::None) && numLeft) {
+    while ((error_ == Error::None) && numLeft) {
         int bufferFill = writeBuffer_.Size();
         if (bufferFill >= bufferSizeThreshold_) {
             writeCanContinue_.wait(critical);
-        }
-        else {
+        } else {
             int numToCopy = std::min(numLeft, bufferSizeThreshold_ - bufferFill);    // Will be > 0.
             writeBuffer_.Put(data, numToCopy);
             data    += numToCopy;
@@ -99,7 +97,7 @@ StreamInterface::Error BufferedConnection::SharedState::StreamError() {
 bool BufferedConnection::SharedState::OnDataRead(const void *data, int dataSize) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
-    if (error_ != Error::None) {
+    if (error_ == Error::None) {
         if (handler_) {
             handler_->OnStreamData(handlerActivationId_, data, dataSize);
             return true;
@@ -116,8 +114,7 @@ int BufferedConnection::SharedState::OnReadyWrite(void *buffer, int bufferSize) 
     int numWritten = writeBuffer_.Get(buffer, bufferSize);
     if (!numWritten) {
         canNotWrite_ = true;
-    }
-    else {
+    } else {
         writeCanContinue_.notify_all();
     }
     return numWritten;
