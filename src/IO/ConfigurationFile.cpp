@@ -19,6 +19,7 @@ using K::Core::StreamInterface;
 using K::Core::TextReader;
 using K::Core::TextWriter;
 using K::IO::File;
+using K::IO::Path;
 using K::IO::StreamBuffer;
 
 namespace K {
@@ -133,7 +134,7 @@ void ConfigurationFile::GetValue(const string &section, const string &key, bool 
     errorState_ = true;
 }
 
-void ConfigurationFile::Save(const string &fileName) {
+void ConfigurationFile::Save(const Path &fileName) {
     if (!errorState_) {
         auto result = make_shared<ResultAcceptor>();
         {
@@ -159,7 +160,7 @@ void ConfigurationFile::Save(const string &fileName) {
     }
 }
 
-void ConfigurationFile::Load(const string &fileName) {
+void ConfigurationFile::Load(const Path &fileName) {
     sections_.clear();
     errorState_ = false;
 

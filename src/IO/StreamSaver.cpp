@@ -7,11 +7,12 @@ using std::make_shared;
 using std::make_unique;
 using std::string;
 using K::Core::StreamInterface;
+using K::IO::Path;
 
 namespace K {
 namespace IO {
 
-StreamSaver::StreamSaver(const string &fileName)
+StreamSaver::StreamSaver(const Path &fileName)
         : fileStream_(make_unique<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
                                                 File::AccessMode::WriteOnly, 4 * 1024)) {
     // Nop.

@@ -2,20 +2,27 @@
 
 #include <sys/stat.h>
 #include <cerrno>
+#include <K/Core/Log.h>
 
 using std::string;
 using std::shared_ptr;
 using std::make_shared;
 using std::unordered_map;
+using K::IO::Path;
+using K::Core::Log;
 
 namespace K {
 namespace IO {
 
-Directory::Directory(const string &path) {
-    path_      = path;
-    directory_ = opendir(path.c_str());
-    error_     = (directory_ == nullptr);
-    atEnd_     = error_;
+Directory::Directory(const Path &path)
+        : path_ { path },
+          directory_ { nullptr} {
+    if (!path.ErrorState()) {
+        directory_ = opendir(path.ToOsPath().c_str());
+    }
+
+    error_ = (directory_ == nullptr);
+    atEnd_ = error_;
 }
 
 Directory::~Directory() {
@@ -27,19 +34,18 @@ Directory::~Directory() {
 bool Directory::GetNextEntry(std::string *outName, bool *outIsDirectory, off_t *outSize) {
     if (!error_ && !atEnd_) {
         errno = 0;
-        struct dirent *entry = readdir(directory_);
+        struct dirent *entry { readdir(directory_) };
         if (entry) {
             *outName        = entry->d_name;
             *outIsDirectory = (entry->d_type == DT_DIR);
 
             if (!*outIsDirectory) {
                 struct stat fileStats;
-                if (!stat((path_ + "/" + *outName).c_str(), &fileStats)) {
+                if (!stat((path_ + *outName).ToOsPath().c_str(), &fileStats)) {
                     *outSize = fileStats.st_size;
                     return true;
                 }
-            }
-            else {
+            } else {
                 *outSize = 0u;
                 return true;
             }
@@ -58,28 +64,37 @@ bool Directory::ErrorState() const {
     return error_;
 }
 
-bool Directory::Create(const std::string &directory) {
-    return (mkdir(directory.c_str(), 0700) == 0);
+bool Directory::Create(const Path &directory) {
+    if (!directory.ErrorState()) {
+        return (mkdir(directory.ToOsPath().c_str(), 0700) == 0);
+    } else {
+        return false;
+    }
 }
 
-shared_ptr<unordered_map<std::string, off_t>> Directory::GetFiles(const std::string &directory) {
-    auto result = make_shared<unordered_map<std::string, off_t>>();
+shared_ptr<unordered_map<std::string, off_t>> Directory::GetFiles(const Path &directory) {
+    if (!directory.ErrorState()) {
+        auto result { make_shared<unordered_map<std::string, off_t>>() };
 
-    string name;
-    bool   isDirectory;
-    off_t  size;
-    Directory reader(directory);
-    while (reader.GetNextEntry(&name, &isDirectory, &size)) {
-        if (!isDirectory) {
-            (*result)[name] = size;
+        string name;
+        bool   isDirectory;
+        off_t  size;
+        Directory reader { directory };
+        while (reader.GetNextEntry(&name, &isDirectory, &size)) {
+            if (!isDirectory) {
+                (*result)[name] = size;
+            }
+        }
+
+        if (!reader.ErrorState()) {
+            return result;
         }
     }
 
-    if (reader.ErrorState()) {
-        result.reset();
-    }
-
-    return result;
+    Log::Print(Log::Level::Error, nullptr, [&]{
+        return "failed to read directory \"" + directory.ToString() + "\" !";
+    });
+    return nullptr;
 }
 
 }    // Namesapce IO.

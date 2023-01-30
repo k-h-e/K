@@ -1,8 +1,8 @@
 #ifndef K_IO_FILE_H_
 #define K_IO_FILE_H_
 
-#include <string>
 #include <K/Core/SeekableBlockingIOStreamInterface.h>
+#include <K/IO/Path.h>
 
 namespace K {
 namespace IO {
@@ -14,11 +14,11 @@ class File : public virtual Core::SeekableBlockingIOStreamInterface {
                             WriteOnly,
                             ReadWrite };
 
-    File(const std::string &fileName, AccessMode accessMode, bool truncate);
+    File(const K::IO::Path &fileName, AccessMode accessMode, bool truncate);
     File(const File &other)             = delete;
     File &operator=(const File &other)  = delete;
-    File(const File &&other)            = delete;
-    File &operator=(const File &&other) = delete;
+    File(File &&other)                  = delete;
+    File &operator=(File &&other)       = delete;
     ~File();
 
     int ReadBlocking(void *buffer, int bufferSize) override;
@@ -35,12 +35,12 @@ class File : public virtual Core::SeekableBlockingIOStreamInterface {
     /*!
      *  Can also be used on directories.
      */
-    static bool Rename(const std::string &oldFileName, const std::string &newFileName);
+    static bool Rename(const K::IO::Path &oldFileName, const K::IO::Path &newFileName);
     //! Deletes the specified file.
-    static bool Delete(const std::string &fileName);
+    static bool Delete(const K::IO::Path &fileName);
 
   private:
-    std::string                           fileName_;
+    K::IO::Path                           fileName_;
     int                                   fd_;
     bool                                  readable_;
     bool                                  writable_;

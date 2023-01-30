@@ -10,6 +10,8 @@
 namespace K {
 namespace IO {
 
+class Path;
+
 //! In-RAM representation of a configuration file.
 class ConfigurationFile : public virtual Core::ErrorStateInterface {
   public:
@@ -40,12 +42,12 @@ class ConfigurationFile : public virtual Core::ErrorStateInterface {
     //! Gets the value of the specified key.
     void GetValue(const std::string &section, const std::string &key, bool *outValue);
     //! Saves the configuration file to the file system.
-    void Save(const std::string &fileName);
+    void Save(const Path &fileName);
     //! Loads the configuration file from the file system.
     /*!
      *  Can recall the object from error state.
      */
-    void Load(const std::string &fileName);
+    void Load(const Path &fileName);
 
   private:
     bool IsSectionName(const std::string &text);
