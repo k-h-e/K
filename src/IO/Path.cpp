@@ -36,7 +36,7 @@ Path::Path()
 Path Path::operator+(const std::string &component) const {
     Path result { *this };
     if (!error_) {
-        if (IsComponent(component)) {
+        if (IsComponentText(component)) {
             result.components_.push_back(component);
         } else {
             result.error_ = true;
@@ -68,12 +68,22 @@ optional<string> Path::LastComponent() const {
 
 void Path::SetLastComponent(const string &component) {
     if (!error_) {
-        if (IsComponent(component)) {
+        if (IsComponentText(component)) {
             if (components_.empty()) {
                 components_.push_back(component);
             } else {
                 components_.back() = component;
             }
+        } else {
+            error_ = true;
+        }
+    }
+}
+
+void Path::AppendToLastComponent(const std::string &text) {
+    if (!error_) {
+        if (IsComponentText(text) && !components_.empty()) {
+            components_.back() += text;
         } else {
             error_ = true;
         }
@@ -105,6 +115,20 @@ string Path::ToString() const {
     }
 }
 
+string Path::ToShortString() const {
+    string result = ToString();
+    
+    const unsigned int maxLength = 40u;
+    if (result.length() > maxLength) {
+        result = result.substr(result.length() - maxLength, maxLength);
+        result[0] = '.';
+        result[1] = '.';
+        result[2] = '.';
+    }
+    
+    return result;
+}
+
 void Path::Clear() {
     components_.clear();
     root_.reset();
@@ -115,7 +139,7 @@ bool Path::ErrorState() const {
     return error_;
 }
 
-bool Path::IsComponent(const string &component) const {
+bool Path::IsComponentText(const string &component) const {
     return (find(component.begin(), component.end(), '/') == component.end());
 }
 

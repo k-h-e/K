@@ -31,10 +31,14 @@ class Path : public virtual Core::ErrorStateInterface {
     std::optional<std::string> LastComponent() const;
     //! Sets the last path component as specified.
     void SetLastComponent(const std::string &component);
+    //! Appends the specified text to the last path component.
+    void AppendToLastComponent(const std::string &text);
     //! Returns the path as operating-system-specific path string.
     std::string ToOsPath() const;
     //! Returns a string representation for the path.
     std::string ToString() const;
+    //! Returns a short string representation for the path, possibly ommitting information.
+    std::string ToShortString() const;
     //! Makes the path an empty relative path.
     /*!
      *  Recovers the path from error state if necessary.
@@ -44,7 +48,7 @@ class Path : public virtual Core::ErrorStateInterface {
     bool ErrorState() const override;
 
   private:
-    bool IsComponent(const std::string &component) const;
+    bool IsComponentText(const std::string &component) const;
 
     std::vector<std::string>   components_;
     std::optional<std::string> root_;          // Present <=> path is absolute.

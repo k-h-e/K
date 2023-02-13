@@ -92,7 +92,7 @@ shared_ptr<unordered_map<std::string, off_t>> Directory::GetFiles(const Path &di
     }
 
     Log::Print(Log::Level::Error, nullptr, [&]{
-        return "failed to read directory \"" + directory.ToString() + "\" !";
+        return "failed to read directory \"" + directory.ToShortString() + "\" !";
     });
     return nullptr;
 }

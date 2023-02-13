@@ -51,13 +51,13 @@ File::File(const Path &fileName, AccessMode accessMode, bool truncate)
                 error_ = Error::None;
                 done   = true;
                 Log::Print(Log::Level::Debug, this, [&]{
-                    return string("opened file \"") + fileName.ToString() + "\", fd=" + to_string(fd_); });
+                    return string("opened file \"") + fileName.ToShortString() + "\", fd=" + to_string(fd_); });
             } else {
                 if (errno != EINTR) {
                     error_ = Error::IO;
                     done   = true;
                     Log::Print(Log::Level::Warning, this, [&]{
-                        return string("failed to open file \"") + fileName.ToString() + "\""; });
+                        return string("failed to open file \"") + fileName.ToShortString() + "\""; });
                 }
             }
         }
@@ -83,11 +83,11 @@ File::~File() {
 
     if ((error_ != Error::None) && (error_ != Error::Eof)) {
         Log::Print(Log::Level::Error, this, [&]{
-            return "failed to properly close file \"" + fileName_.ToString() + "\", fd=" + to_string(fd_);
+            return "failed to properly close file \"" + fileName_.ToShortString() + "\", fd=" + to_string(fd_);
         });
     } else {
         Log::Print(Log::Level::Debug, this, [&]{
-            return "closed file \"" + fileName_.ToString() + "\", fd=" + to_string(fd_);
+            return "closed file \"" + fileName_.ToShortString() + "\", fd=" + to_string(fd_);
         });
     }
 }
@@ -106,14 +106,14 @@ int File::ReadBlocking(void *buffer, int bufferSize) {
                 } else if (numRead == 0) {
                     error_ = Error::Eof;
                     Log::Print(Log::Level::Debug, this, [&]{
-                        return "EOF encountered, file=\"" + fileName_.ToString() + "\", fd=" + to_string(fd_);
+                        return "EOF encountered, file=\"" + fileName_.ToShortString() + "\", fd=" + to_string(fd_);
                     });
                     return 0;
                 } else {
                     if (errno != EINTR) {
                         error_ = Error::IO;
                         Log::Print(Log::Level::Error, this, [&]{
-                            return "read error, file=\"" + fileName_.ToString() + "\", fd=" + to_string(fd_);
+                            return "read error, file=\"" + fileName_.ToShortString() + "\", fd=" + to_string(fd_);
                         });
                         return 0;
                     }
@@ -142,7 +142,7 @@ int File::WriteBlocking(const void *data, int dataSize) {
                     if (errno != EINTR) {
                         error_ = Error::IO;
                         Log::Print(Log::Level::Error, this, [&]{
-                            return "write error, file=\"" + fileName_.ToString() + "\", fd=" + to_string(fd_);
+                            return "write error, file=\"" + fileName_.ToShortString() + "\", fd=" + to_string(fd_);
                         });
                         return 0;
                     }
@@ -160,7 +160,7 @@ void File::Seek(int64_t position) {
               && (lseek(fd_, static_cast<off_t>(position), SEEK_SET) == static_cast<off_t>(position)))) {
             error_ = Error::IO;
             Log::Print(Log::Level::Error, this, [&]{
-                return "seek failed, file=\"" + fileName_.ToString() + "\", fd=" + to_string(fd_) + ", position="
+                return "seek failed, file=\"" + fileName_.ToShortString() + "\", fd=" + to_string(fd_) + ", position="
                     + to_string(position);
             });
         }
@@ -218,11 +218,12 @@ bool File::Rename(const Path &oldFileName, const Path &newFileName) {
 
     if (success) {
         Log::Print(Log::Level::Debug, nullptr, [&]{
-            return "renamed file \"" + oldFileName.ToString() + "\" as \"" + newFileName.ToString() + "\"";
+            return "renamed file \"" + oldFileName.ToShortString() + "\" as \"" + newFileName.ToShortString() + "\"";
         });
     } else {
         Log::Print(Log::Level::Error, nullptr, [&]{
-            return "failed to rename file \"" + oldFileName.ToString() + "\" as \"" + newFileName.ToString() + "\"!";
+            return "failed to rename file \"" + oldFileName.ToShortString() + "\" as \"" + newFileName.ToShortString()
+                 + "\"!";
         });
     }
     return success;
@@ -235,9 +236,9 @@ bool File::Delete(const Path &fileName) {
     }
 
     if (success) {
-        Log::Print(Log::Level::Debug, nullptr, [&]{ return "deleted file \"" + fileName.ToString() + "\""; });
+        Log::Print(Log::Level::Debug, nullptr, [&]{ return "deleted file \"" + fileName.ToShortString() + "\""; });
     } else {
-        Log::Print(Log::Level::Error, nullptr, [&]{ return "failed to delete \"" + fileName.ToString() + "\"!"; });
+        Log::Print(Log::Level::Error, nullptr, [&]{ return "failed to delete \"" + fileName.ToShortString() + "\"!"; });
     }
     return success;
 }
