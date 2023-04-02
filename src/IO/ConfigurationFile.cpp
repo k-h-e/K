@@ -35,6 +35,20 @@ bool ConfigurationFile::ErrorState() const {
     return errorState_;
 }
 
+bool ConfigurationFile::KeyPresent(const std::string &section, const std::string &key) const {
+    if (!errorState_) {
+        auto sectionIter = sections_.find(section);
+        if (sectionIter != sections_.end()) {
+            auto keyIter = sectionIter->second.find(key);
+            if (keyIter != sectionIter->second.end()) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void ConfigurationFile::SetValue(const string &section, const string &key, const string &value) {
     if (!errorState_ && IsSectionName(section) && IsKey(key) && IsValue(value)) {
         sections_[section][key] = value;

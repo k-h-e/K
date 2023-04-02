@@ -36,10 +36,11 @@ class ReusableItems {
     
     ReusableItems(int numGroups);
     ReusableItems()                                      = delete;
-    ReusableItems(const ReusableItems &other)            = delete;
-    ReusableItems &operator=(const ReusableItems &other) = delete;
-    ReusableItems(ReusableItems &&other)                 = delete;
-    ReusableItems &operator=(ReusableItems &&other)      = delete;
+    ReusableItems(const ReusableItems &other)            = default;
+    ReusableItems &operator=(const ReusableItems &other) = default;
+    ReusableItems(ReusableItems &&other)                 = default;
+    ReusableItems &operator=(ReusableItems &&other)      = default;
+    ~ReusableItems()                                     = default;
 
     //! Provides another item for the client to use, assigning it to the specified group. The item is either taken from
     //! the set of idle items, or newly created if no idle item is currently present.
