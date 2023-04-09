@@ -5,7 +5,6 @@
 #include <K/Events/Framework/NetworkEventCoupling.h>
 
 using std::make_unique;
-using std::move;
 using std::shared_ptr;
 using std::string;
 using std::chrono::milliseconds;
@@ -100,7 +99,7 @@ void NetworkEventCouplingClient::InstallConnector() {
 
 void NetworkEventCouplingClient::InstallCoupling(int fd) {
     auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_);
-    coupling_ = make_unique<NetworkEventCoupling>(move(connection), protocolVersion_, keepAliveParameters_, hub_,
+    coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
                                                   runLoop_, timers_);
     coupling_->Register(this, 0);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, host=" + hostAndPort_; });

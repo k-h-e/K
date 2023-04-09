@@ -10,12 +10,14 @@ namespace K {
 namespace Core {
 
 StopWatch::StopWatch()
-        : startTime_{steady_clock::now()} {
+        : startTime_{steady_clock::now()},
+          deltaLastElapsedMs_{0} {
     // Nop.
 };
 
 void StopWatch::Restart() {
-    startTime_ = steady_clock::now();
+    startTime_          = steady_clock::now();
+    deltaLastElapsedMs_ = 0;
 }
 
 int StopWatch::ElapsedMs() {
@@ -33,6 +35,17 @@ int StopWatch::ElapsedMs() {
     Log::Print(Log::Level::Warning, this, [&]{ return "overflow detected, stop watch restarted!"; });
     Restart();
     return 0;
+}
+
+int StopWatch::DeltaMs() {
+    int elapsedMs = ElapsedMs();
+    if (elapsedMs > deltaLastElapsedMs_) {
+        int deltaMs = elapsedMs - deltaLastElapsedMs_;
+        deltaLastElapsedMs_ = elapsedMs;
+        return deltaMs;
+    } else {
+        return 0;
+    }
 }
 
 }    // Namespace Core.

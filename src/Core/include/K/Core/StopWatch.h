@@ -21,9 +21,12 @@ class StopWatch : public virtual Interface {
     void Restart();
     //! Tells the elapsed time in milliseconds.
     int ElapsedMs();
+    //! Tells the elapsed time in milliseconds since the last call to <c>DeltaMs()</c>.
+    int DeltaMs();
 
   private:
     std::chrono::steady_clock::time_point startTime_;
+    int                                   deltaLastElapsedMs_;
 };
 
 }    // Namespace Core.
