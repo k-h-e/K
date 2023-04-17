@@ -25,6 +25,8 @@ class ConfigurationFile : public virtual Core::ErrorStateInterface {
 
     //! Tells whether the specified key is present.
     bool KeyPresent(const std::string &section, const std::string &key) const;
+    //! Removes the specified key if it is present.
+    void RemoveKey(const std::string &section, const std::string &key);
     //! Sets the value for the specified key.
     void SetValue(const std::string &section, const std::string &key, const std::string &value);
     //! Sets the value for the specified key.
@@ -50,6 +52,11 @@ class ConfigurationFile : public virtual Core::ErrorStateInterface {
      *  Can recall the object from error state.
      */
     void Load(const Path &fileName);
+    //! Clears the in-RAM configuration file representation.
+    /*!
+     *  Recalls the object from error state.
+     */
+    void Clear();
 
   private:
     bool IsSectionName(const std::string &text);

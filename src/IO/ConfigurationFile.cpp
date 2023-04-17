@@ -49,6 +49,15 @@ bool ConfigurationFile::KeyPresent(const std::string &section, const std::string
     return false;
 }
 
+void ConfigurationFile::RemoveKey(const string &section, const string &key) {
+    if (!errorState_) {
+        auto sectionIter = sections_.find(section);
+        if (sectionIter != sections_.end()) {
+            sectionIter->second.erase(key);
+        }
+    }
+}
+
 void ConfigurationFile::SetValue(const string &section, const string &key, const string &value) {
     if (!errorState_ && IsSectionName(section) && IsKey(key) && IsValue(value)) {
         sections_[section][key] = value;
@@ -219,6 +228,11 @@ void ConfigurationFile::Load(const Path &fileName) {
         sections_.clear();
         errorState_ = true;
     }
+}
+
+void ConfigurationFile::Clear() {
+    sections_.clear();
+    errorState_ = false;
 }
 
 bool ConfigurationFile::IsSectionName(const string &text) {
