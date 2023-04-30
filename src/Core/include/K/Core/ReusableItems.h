@@ -42,6 +42,8 @@ class ReusableItems {
     ReusableItems &operator=(ReusableItems &&other)      = default;
     ~ReusableItems()                                     = default;
 
+    //! Resets the container for the specified number of groups.
+    void Reset(int numGroups);
     //! Provides another item for the client to use, assigning it to the specified group. The item is either taken from
     //! the set of idle items, or newly created if no idle item is currently present.
     /*!
@@ -147,10 +149,21 @@ class ReusableItems<T>::IteratorProvider {
 };
 
 template<class T>
-ReusableItems<T>::ReusableItems(int numGroups)
-        : idleCount_(0) {
-    if (numGroups < 1)
+ReusableItems<T>::ReusableItems(int numGroups) {
+    Reset(numGroups);
+}
+
+template<class T>
+void ReusableItems<T>::Reset(int numGroups) {
+    if (numGroups < 1) {
         numGroups = 1;
+    }
+
+    items_.clear();
+    groupAnchors_.clear();
+    idleCount_ = 0;
+    // idleAnchor_ gets set below.
+
     ItemInfo info;
     for (int i = 0; i < numGroups; ++i) {
         int anchor = (int)items_.size();
@@ -159,6 +172,7 @@ ReusableItems<T>::ReusableItems(int numGroups)
         info.next = anchor;
         items_.push_back(info);
     }
+
     idleAnchor_ = (int)items_.size();
     info.prev = idleAnchor_;
     info.next = idleAnchor_;
