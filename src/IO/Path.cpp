@@ -21,10 +21,16 @@ Path::Path(const string &path)
     if ((components.size() >= 2u) && components[0].empty()) {
         root_ = "";
         for (unsigned int i = 1; i < components.size(); ++i) {
-            components_.push_back(components[i]);
+            if (!components[i].empty()) {
+                components_.push_back(components[i]);
+            }
         }
     } else {
-        components_ = components;
+        for (string &component : components) {
+            if (!component.empty()) {
+                components_.push_back(component);
+            }
+        }
     }
 }
 
