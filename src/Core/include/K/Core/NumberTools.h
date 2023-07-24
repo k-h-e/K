@@ -58,6 +58,9 @@ class NumberTools {
         ptr[0] = ptr[1];
         ptr[1] = temp;
     }
+
+    static double DegToRad(double angleDeg);
+    static double RadToDeg(double angleRad);
 };
 
 }    // Namespace Core.
