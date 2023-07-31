@@ -79,7 +79,7 @@ void NetworkEventCouplingServer::Activate(bool deepActivation) {
 
 void NetworkEventCouplingServer::OnListenSocketAcceptedConnection(int id, unique_ptr<TcpConnection> connection) {
     (void)id;
-    InstallCoupling(move(connection));
+    InstallCoupling(std::move(connection));
 
     if (handler_) {
         handler_->OnNetworkEventCouplingInstalled(handlerActivationId_);
@@ -124,7 +124,7 @@ void NetworkEventCouplingServer::UninstallListenSocket() {
 
 void NetworkEventCouplingServer::InstallCoupling(unique_ptr<TcpConnection> connection) {
     UninstallCoupling();
-    coupling_ = make_unique<NetworkEventCoupling>(move(connection), protocolVersion_, keepAliveParameters_, hub_,
+    coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
                                                   runLoop_, timers_);
     coupling_->Register(this, 0);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, port=" + to_string(port_); });

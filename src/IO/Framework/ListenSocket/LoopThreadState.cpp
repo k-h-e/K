@@ -14,7 +14,6 @@
 #include <K/IO/Framework/TcpConnection.h>
 #include "SynchronizedState.h"
 
-using std::move;
 using std::shared_ptr;
 using std::unique_ptr;
 using K::Core::Log;
@@ -85,7 +84,7 @@ void ListenSocket::LoopThreadState::Activate(bool deepActivation) {
         }
 
         if (handler) {
-            handler->OnListenSocketAcceptedConnection(handlerAssociatedId, move(connection));
+            handler->OnListenSocketAcceptedConnection(handlerAssociatedId, std::move(connection));
         } else {
             Log::Print(Log::Level::Warning, this, [&]{ return "no handler registered, closing accepted connection"; });
         }

@@ -15,7 +15,6 @@
 #include "LoopThreadState.h"
 
 using std::make_shared;
-using std::move;
 using std::mutex;
 using std::shared_ptr;
 using std::unique_lock;
@@ -56,7 +55,7 @@ void ListenSocket::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
             auto connection = make_unique<TcpConnection>(acceptedConnections_.front(), runLoop_,
                                                          loopThreadState->connectionIO);
             acceptedConnections_.pop_front();
-            loopThreadState->acceptedConnections.push_back(move(connection));
+            loopThreadState->acceptedConnections.push_back(std::move(connection));
         }
     }
 }    // ......................................................................................... critical section, end.
