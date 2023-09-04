@@ -45,7 +45,8 @@ NetworkEventCoupling::NetworkEventCoupling(
           state_(State::AcceptingChunkSize),
           readCursor_(0),
           readChunkSize_(0),
-          protocolVersionMatch_(false),
+	  protocolVersionMatch_(false),
+	  protocolVersionCheckEnabled_(false),
           keepAliveReceived_(false),
           error_(false),
           signalErrorState_(false) {
@@ -79,7 +80,7 @@ NetworkEventCoupling::~NetworkEventCoupling() {
     tcpConnection_.reset();
     hub_->UnregisterEventLoop(hubClientId_);
 
-    // TODO: Check desconstruction.
+    // TODO: Check deconstruction.
 }
 
 void NetworkEventCoupling::Register(NetworkEventCoupling::HandlerInterface *handler, int id) {
@@ -162,7 +163,8 @@ void NetworkEventCoupling::OnStreamData(int id, const void *data, int dataSize) 
                                     string remoteProtocolVersion;
                                     if (StringTools::Deserialize(&remoteProtocolVersion, &buffer[readCursor_ + offset],
                                                                  length)) {
-                                        if (protocolVersion_ == remoteProtocolVersion) {
+                                        if (!protocolVersionCheckEnabled_
+					        || (protocolVersion_ == remoteProtocolVersion)) {
                                             protocolVersionMatch_ = true;
                                             Log::Print(Log::Level::Debug, this, [&]{
                                                 return "protocol version check ok (\"" + remoteProtocolVersion

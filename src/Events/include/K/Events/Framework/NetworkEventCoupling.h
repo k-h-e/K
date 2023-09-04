@@ -118,6 +118,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     int                                                           readChunkSize_;
     std::unique_ptr<K::Core::Buffer>                              eventBuffer_;
     bool                                                          protocolVersionMatch_;
+    bool                                                          protocolVersionCheckEnabled_;
     int                                                           numKeepAliveSendsUntilCheck_;
     bool                                                          keepAliveReceived_;
     bool                                                          error_;
