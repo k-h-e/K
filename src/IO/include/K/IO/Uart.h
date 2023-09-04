@@ -12,7 +12,8 @@ class Uart {
   public:
     enum class BaudRate { Baud4800,
                           Baud9600,
-                          Baud38400 };
+                          Baud38400,
+                          Baud921600 };
 
     //! Opens the specified UART interface with the specified baud rate.
     /*!

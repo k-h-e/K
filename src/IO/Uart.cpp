@@ -25,6 +25,9 @@ optional<int> Uart::Open(const string &deviceFileName, BaudRate baudRate) {
             case BaudRate::Baud38400:
                 baudRateFlag = B38400;
                 break;
+            case BaudRate::Baud921600:
+		baudRateFlag = B921600;
+		break;
             default:
                 baudRateFlag = B9600;
                 break;
