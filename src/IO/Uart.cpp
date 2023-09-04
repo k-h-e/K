@@ -26,7 +26,11 @@ optional<int> Uart::Open(const string &deviceFileName, BaudRate baudRate) {
                 baudRateFlag = B38400;
                 break;
             case BaudRate::Baud921600:
-		baudRateFlag = B921600;
+#if defined(K_PLATFORM_MAC) || defined(K_PLATFORM_IOS)
+                baudRateFlag = 921600;
+#else
+                baudRateFlag = B921600;
+#endif
 		break;
             default:
                 baudRateFlag = B9600;
