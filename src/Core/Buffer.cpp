@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include <K/Core/Buffer.h>
 
@@ -17,6 +15,8 @@
 #include <K/Core/ResultAcceptor.h>
 
 using std::min;
+using std::nullopt;
+using std::optional;
 using std::shared_ptr;
 
 namespace K {
@@ -94,8 +94,8 @@ bool Buffer::ErrorState() const {
     return false;
 }
 
-StreamInterface::Error Buffer::StreamError() const {
-    return Error::None;
+optional<StreamInterface::Error> Buffer::StreamError() const {
+    return nullopt;
 }
 
 void Buffer::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
@@ -114,15 +114,14 @@ Buffer::Reader Buffer::GetReader() const {
 
 Buffer::Reader::Reader(const Buffer *buffer)
 	: buffer_(buffer),
-      cursor_(0),
-      error_(Error::None) {
+      cursor_(0) {
 }
 
 bool Buffer::Reader::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error Buffer::Reader::StreamError() const {
+optional<StreamInterface::Error> Buffer::Reader::StreamError() const {
     return error_;
 }
 
@@ -160,7 +159,7 @@ void Buffer::Reader::Seek(int64_t position) {
 
 void Buffer::Reader::RecoverAndSeek(int64_t position) {
     if (error_ == Error::Eof) {
-        error_ = Error::None;
+        error_.reset();
         Seek(position);
     }
 }

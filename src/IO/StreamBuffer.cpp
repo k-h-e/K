@@ -1,15 +1,26 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/IO/StreamBuffer.h>
 
 #include <cassert>
 #include <cstring>
+
 #include <K/Core/Log.h>
 #include <K/Core/ResultAcceptor.h>
 #include <K/IO/IOTools.h>
 
-using std::shared_ptr;
 using std::make_shared;
-using std::vector;
+using std::optional;
+using std::shared_ptr;
 using std::to_string;
+using std::vector;
+
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::StreamInterface;
@@ -23,8 +34,7 @@ StreamBuffer::StreamBuffer(const shared_ptr<SeekableBlockingIOStreamInterface> &
           bufferPosition_(0),
           cursor_(0),
           fill_(0),
-          dirty_(false),
-          error_(Error::None) {
+          dirty_(false) {
     if (bufferSize < 1) {
         bufferSize = 4096;
     }
@@ -41,7 +51,7 @@ StreamBuffer::StreamBuffer(const shared_ptr<SeekableBlockingIOStreamInterface> &
 }
 
 StreamBuffer::~StreamBuffer() {
-    if (error_ == Error::None) {
+    if (!error_) {
         if (!Flush()) {
             error_ = Error::IO;
         }
@@ -50,14 +60,14 @@ StreamBuffer::~StreamBuffer() {
     delete[] buffer_;
 
     if (closeResultAcceptor_) {
-        if (error_ != Error::None) {
+        if (error_) {
             closeResultAcceptor_->OnFailure();
         } else {
             closeResultAcceptor_->OnSuccess();
         }
     }
 
-    if ((error_ != Error::None) && (error_ != Error::Eof)) {
+    if (error_ && (error_ != Error::Eof)) {
         Log::Print(Log::Level::Error, this, [&]{ return "failed to properly close!"; });
     }
 }
@@ -161,7 +171,7 @@ void StreamBuffer::Seek(int64_t position) {
 
 void StreamBuffer::RecoverAndSeek(int64_t position) {
     if (error_ == Error::Eof) {
-        error_ = Error::None;    // EOF error state was set in ReadBlocking() from valid error-free state.
+        error_.reset();    // EOF error state was set in ReadBlocking() from valid error-free state.
     }
     Seek(position);
 }
@@ -171,10 +181,10 @@ int64_t StreamBuffer::StreamPosition() const {
 }
 
 bool StreamBuffer::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error StreamBuffer::StreamError() const {
+optional<StreamInterface::Error> StreamBuffer::StreamError() const {
     return error_;
 }
 

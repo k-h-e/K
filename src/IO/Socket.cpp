@@ -1,8 +1,18 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/IO/Socket.h>
 
 #include <unistd.h>
 #include <sys/socket.h>
+
 #include <vector>
+
 #include <K/Core/StringTools.h>
 #include <K/Core/ResultAcceptor.h>
 #include <K/Core/Log.h>
@@ -17,6 +27,7 @@ using std::string;
 using std::to_string;
 using std::unique_lock;
 using std::vector;
+
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::StreamInterface;
@@ -28,8 +39,7 @@ namespace K {
 namespace IO {
 
 Socket::Socket(int fd)
-        : socketDown_(false),
-          error_(Error::None) {
+        : socketDown_(false) {
     Log::Print(Log::Level::Debug, this, [=]{ return "fd=" + to_string(fd); });
     if (fd < 0) {
         fd          = -1;
@@ -50,14 +60,14 @@ Socket::~Socket() {
     }
 
     if (closeResultAcceptor_) {
-        if (error_ != Error::None) {
+        if (error_) {
             closeResultAcceptor_->OnFailure();
         } else {
             closeResultAcceptor_->OnSuccess();
         }
     }
 
-    if (error_ != Error::None) {
+    if (error_) {
         Log::Print(Log::Level::Error, this, [&]{ return "error state after closing, fd=" + to_string(fd_); });
     } else {
         Log::Print(Log::Level::Debug, this, [&]{ return "closed, fd=" + to_string(fd_); });
@@ -73,7 +83,7 @@ int Socket::ReadBlocking(void *buffer, int bufferSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
-        if (error_ != Error::None) {
+        if (error_) {
             return 0;
         }
 
@@ -81,7 +91,7 @@ int Socket::ReadBlocking(void *buffer, int bufferSize) {
             error_ = Error::Eof;
         }
 
-        if (error_ != Error::None) {
+        if (error_) {
             return 0;
         }
 
@@ -93,7 +103,7 @@ int Socket::ReadBlocking(void *buffer, int bufferSize) {
         if (num == 0) {
             unique_lock<mutex> critical(lock_);    // Critical section..................................................
             ShutDownSocket();
-            if (error_ == Error::None) {
+            if (!error_) {
                 error_ = Error::Eof;
             }
             return 0;
@@ -102,7 +112,7 @@ int Socket::ReadBlocking(void *buffer, int bufferSize) {
             if (errno != EINTR) {
                 unique_lock<mutex> critical(lock_);    // Critical section..............................................
                 ShutDownSocket();
-                if (error_ == Error::None) {
+                if (!error_) {
                     error_ = Error::IO;
                 }
                 return 0;
@@ -118,7 +128,7 @@ int Socket::WriteBlocking(const void *data, int dataSize) {
     int fd;
     {
         unique_lock<mutex> critical(lock_);    // Critical section......................................................
-        if (error_ != Error::None) {
+        if (error_) {
             return 0;
         }
 
@@ -136,7 +146,7 @@ int Socket::WriteBlocking(const void *data, int dataSize) {
             if (errno != EINTR) {
                 unique_lock<mutex> critical(lock_);    // Critical section..............................................
                 ShutDownSocket();
-                if (error_ == Error::None) {
+                if (!error_) {
                     error_ = Error::IO;
                 }
                 return 0;
@@ -151,10 +161,10 @@ int Socket::WriteBlocking(const void *data, int dataSize) {
 
 bool Socket::ErrorState() const {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    return (error_ != Error::None);
+    return (error_.has_value());
 }    // ......................................................................................... critical section, end.
 
-StreamInterface::Error Socket::StreamError() const {
+optional<StreamInterface::Error> Socket::StreamError() const {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     return error_;
 }    // ......................................................................................... critical section, end.
@@ -180,7 +190,7 @@ void Socket::ShutDownSocket() {
     if (fd_ != -1) {
         if (!socketDown_) {
             if (!shutdown(fd_, SHUT_RDWR)) {
-                if (error_ == Error::None) {
+                if (!error_) {
                     error_ = Error::IO;
                 }
             }

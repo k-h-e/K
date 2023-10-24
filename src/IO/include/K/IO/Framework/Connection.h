@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - IO / Framework -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_IO_FRAMEWORK_CONNECTION_H_
 #define K_IO_FRAMEWORK_CONNECTION_H_
@@ -57,7 +55,7 @@ class Connection : public virtual Core::Framework::NonBlockingIOStreamInterface 
     int ReadNonBlocking(void *buffer, int bufferSize) override;
     int WriteNonBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
 
   private:
     struct LoopThreadState;

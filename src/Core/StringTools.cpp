@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include <K/Core/StringTools.h>
 
@@ -115,6 +113,92 @@ bool StringTools::Parse(const std::string &text, double *outValue) {
     }
     catch (const invalid_argument &) {}
     catch (const out_of_range &) {}
+
+    return false;
+}
+
+bool StringTools::Parse(const char *text, unsigned int *outValue) {
+    unsigned int value = 0u;
+    while (true) {
+        char character = *text;
+
+        unsigned int digitValue = 0u;
+        switch (character) {
+            case '\0':
+                *outValue = value;
+                return true;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                digitValue = static_cast<unsigned int>(character - '0');
+                break;
+            default:
+                return false;
+        }
+
+        value *= 10u;
+        value += digitValue;
+
+        ++text;
+    }
+
+    return false;
+}
+
+bool StringTools::ParseHex(const char *text, unsigned int *outValue) {
+    unsigned int value = 0u;
+    while (true) {
+        char character = *text;
+
+        unsigned int digitValue = 0u;
+        switch (character) {
+            case '\0':
+                *outValue = value;
+                return true;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                digitValue = static_cast<unsigned int>(character - '0');
+                break;
+            case 'a':
+            case 'b':
+            case 'c':
+            case 'd':
+            case 'e':
+            case 'f':
+                digitValue = static_cast<unsigned int>(character - 'a') + 10u;
+                break;
+            case 'A':
+            case 'B':
+            case 'C':
+            case 'D':
+            case 'E':
+            case 'F':
+                digitValue = static_cast<unsigned int>(character - 'A') + 10u;
+                break;
+            default:
+                return false;
+        }
+
+        value *= 16u;
+        value += digitValue;
+
+        ++text;
+    }
 
     return false;
 }

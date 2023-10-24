@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/GeoPositioning/RtcmParser.h>
 
 #include <cassert>
@@ -75,7 +83,6 @@ void RtcmParser::OnStreamData(int id, const void *data, int dataSize) {
 
 void RtcmParser::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
     (void)id;
-    assert (error != StreamInterface::Error::None);
     if (error == StreamInterface::Error::Eof) {
         if (!eof_) {
             handler_->OnEof(handlerActivationId_);

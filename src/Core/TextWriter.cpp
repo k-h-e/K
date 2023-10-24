@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include <K/Core/TextWriter.h>
 
@@ -15,22 +13,23 @@
 #include <K/Core/Log.h>
 #include <K/Core/ResultAcceptor.h>
 
+using std::optional;
 using std::shared_ptr;
 using std::string;
+
 using K::Core::Log;
 
 namespace K {
 namespace Core {
 
 TextWriter::TextWriter(const shared_ptr<BlockingOutStreamInterface> &stream)
-        : stream_(stream),
-          error_(Error::None) {
+        : stream_(stream) {
     // Nop.
 }
 
 TextWriter::~TextWriter() {
     if (closeResultAcceptor_) {
-        if (error_ != Error::None) {
+        if (error_) {
             closeResultAcceptor_->OnFailure();
         } else {
             closeResultAcceptor_->OnSuccess();
@@ -49,8 +48,8 @@ void TextWriter::Write(const string &text) {
         if (size > 0) {
             Core::WriteItem(stream_.get(), &text[0], size);
             if (stream_->ErrorState()) {
-                Error error = stream_->StreamError();
-                assert (error != Error::None);
+                optional<Error> error = stream_->StreamError();
+                assert (error);
                 error_ = error;
             }
         }
@@ -63,10 +62,10 @@ void TextWriter::WriteLine(const string &line) {
 }
 
 bool TextWriter::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error TextWriter::StreamError() const {
+optional<StreamInterface::Error> TextWriter::StreamError() const {
     return error_;
 }
 

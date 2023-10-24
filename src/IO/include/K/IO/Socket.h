@@ -1,8 +1,17 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_IO_SOCKET_H_
 #define K_IO_SOCKET_H_
 
 #include <memory>
 #include <mutex>
+
 #include <K/Core/BlockingIOStreamInterface.h>
 
 namespace K {
@@ -28,7 +37,7 @@ class Socket : public virtual Core::BlockingIOStreamInterface {
     int ReadBlocking(void *buffer, int bufferSize) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
     //! Establishes a TCP network stream connection to a host given by name and port, separated by a <c>':'</c>.
@@ -50,7 +59,7 @@ class Socket : public virtual Core::BlockingIOStreamInterface {
     mutable std::mutex                    lock_;                   // Protects everything below...
     int                                   fd_;
     bool                                  socketDown_;
-    Error                                 error_;
+    std::optional<Error>                  error_;
     std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;    // Thread safe.
 
 };

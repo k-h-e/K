@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_CORE_TEXTWRITER_H_
 #define K_CORE_TEXTWRITER_H_
@@ -46,13 +44,13 @@ class TextWriter : public virtual OutStreamInterface {
     void WriteLine(const std::string &line);
 
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<ResultAcceptor> &resultAcceptor) override;
 
   private:
     const std::shared_ptr<BlockingOutStreamInterface> stream_;
     std::shared_ptr<ResultAcceptor>                   closeResultAcceptor_;
-    Error                                             error_;
+    std::optional<Error>                              error_;
 };
 
 }    // Namespace Core.

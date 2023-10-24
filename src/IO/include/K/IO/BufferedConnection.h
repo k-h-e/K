@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_IO_BUFFEREDCONNECTION_H_
 #define K_IO_BUFFEREDCONNECTION_H_
 
@@ -49,7 +57,7 @@ class BufferedConnection : public virtual Core::ConnectionStreamInterface {
     void Unregister(const std::shared_ptr<Core::StreamHandlerInterface> &handler) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:

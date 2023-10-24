@@ -1,15 +1,15 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_CORE_STREAMINTERFACE_H_
 #define K_CORE_STREAMINTERFACE_H_
+
+#include <optional>
 
 #include <K/Core/ErrorStateInterface.h>
 
@@ -27,9 +27,7 @@ namespace Core {
  */
 class StreamInterface : public virtual ErrorStateInterface {
   public:
-    enum class Error { None,         //!< The stream is not in error state. All previous stream operations were
-                                     //!      successful.
-                       IO,           //!< A previous stream operation failed due to an I/O error.
+    enum class Error { IO,           //!< A previous stream operation failed due to an I/O error.
                        Eof,          //!< A previous stream operation failed because hitting end-of-file.
                        User,         //!< A previous stream operation failed because of a user error.
                        Unspecific    //!< A previous stream operation failed for unspecific reasons.
@@ -37,11 +35,11 @@ class StreamInterface : public virtual ErrorStateInterface {
 
     //! Gives details on the stream's error state (see <c>ErrorState()</c>).
     /*!
-     *  \return Error::None in case the stream is not in ErrorState(). Otherwise, an error other than Error::None is
-     *          returned that indicates the initial cause why the stream has entered error state. Note that a typical
-     *          such case would be that a previous stream operation failed because the stream hit end-of-file.
+     *  \return <c>std::nullopt</c> in case the stream is not in ErrorState(). Otherwise, an error is returned that
+     *          indicates the initial cause why the stream has entered error state. Note that a typical such case would
+     *          be that a previous stream operation failed because the stream hit end-of-file.
      */
-    virtual Error StreamError() const = 0;
+    virtual std::optional<Error> StreamError() const = 0;
 };
 
 }    // Namespace Core.

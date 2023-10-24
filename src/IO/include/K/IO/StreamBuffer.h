@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_IO_STREAMBUFFER_H_
 #define K_IO_STREAMBUFFER_H_
 
@@ -26,7 +34,7 @@ class StreamBuffer : public virtual Core::SeekableBlockingIOStreamInterface {
     void RecoverAndSeek(int64_t position) override;
     int64_t StreamPosition() const override;
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
@@ -45,7 +53,7 @@ class StreamBuffer : public virtual Core::SeekableBlockingIOStreamInterface {
     int                                                      fill_;
     std::vector<bool>                                        dirtyBytes_;             // Only used in write-only mode.
     bool                                                     dirty_;
-    Error                                                    error_;
+    std::optional<Error>                                     error_;
     std::shared_ptr<Core::ResultAcceptor>                    closeResultAcceptor_;
 };
 

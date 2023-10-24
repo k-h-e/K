@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_CORE_TEXTREADER_H_
 #define K_CORE_TEXTREADER_H_
@@ -57,11 +55,11 @@ class TextReader : public virtual InStreamInterface {
     void Skip(const std::string &charactersToSkip, bool skipOther);
 
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
 
   private:
     const std::shared_ptr<SeekableBlockingInStreamInterface> stream_;
-    Error                                                    error_;
+      std::optional<Error>                                   error_;
 };
 
 }    // Namespace Core.

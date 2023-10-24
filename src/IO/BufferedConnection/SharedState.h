@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_IO_BUFFEREDCONNECTION_SHAREDSTATE_H_
 #define K_IO_BUFFEREDCONNECTION_SHAREDSTATE_H_
 
@@ -33,7 +41,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     bool WriteFailed();
     void ClearWriteFailed();
     bool Error();
-    StreamInterface::Error StreamError();
+    std::optional<StreamInterface::Error> StreamError();
 
     // ConnectionIO::ClientInterface...
     bool OnDataRead(const void *data, int dataSize) override;
@@ -57,7 +65,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     Core::RingBuffer                              writeBuffer_;
     int                                           bufferSizeThreshold_;
     bool                                          canNotWrite_;
-    StreamInterface::Error                        error_;
+    std::optional<StreamInterface::Error>         error_;
 };
 
 }    // Namespace IO.

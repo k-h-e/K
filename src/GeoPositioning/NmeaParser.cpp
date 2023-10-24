@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/GeoPositioning/NmeaParser.h>
 
 #include <cassert>
@@ -106,8 +114,7 @@ void NmeaParser::OnStreamData(int id, const void *data, int dataSize) {
 }
 
 void NmeaParser::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
-    (void)id;
-    assert(error != StreamInterface::Error::None);
+    (void) id;
     if (error == StreamInterface::Error::Eof) {
         if (!eof_) {
             handler_->OnEof(handlerActivationId_);

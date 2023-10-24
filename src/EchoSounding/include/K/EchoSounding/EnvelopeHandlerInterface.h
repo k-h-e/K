@@ -6,33 +6,32 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_STREAMHANDLERINTERFACE_H_
-#define K_CORE_STREAMHANDLERINTERFACE_H_
+#ifndef K_ECHOSOUNDING_ENVELOPEHANDLERINTERFACE_H_
+#define K_ECHOSOUNDING_ENVELOPEHANDLERINTERFACE_H_
 
-#include <K/Core/StreamInterface.h>
+#include <K/Core/DataHandlerInterface.h>
 
 namespace K {
-namespace Core {
+    namespace EchoSounding {
+        struct Envelope;
+    }
+}
 
-//! Interface to entities accepting and processing stream data.
-class StreamHandlerInterface : public virtual Interface {
+namespace K {
+namespace EchoSounding {
+
+//! Interface to entities handling echo sounder envelope data.
+class EnvelopeHandlerInterface : public virtual Core::DataHandlerInterface {
   public:
-    //! Hands over another portion of stream data to the handler.
+    //! Asks the handler to process the specified envelope data set.
     /*!
      *  \param id
      *  Activation ID that was registered together with the handler.
      */
-    virtual void OnStreamData(int id, const void *data, int dataSize) = 0;
-    //! Informs the handler that the stream has entered error state, see <c>StreamInterface::ErrorState()</c>.
-    /*!
-     *  \param id
-     *  Activation ID that was registered together with the handler.
-     */
-    virtual void OnStreamEnteredErrorState(int id, StreamInterface::Error error) = 0;
+    virtual void OnEnvelope(int id, const Envelope &envelope) = 0;
 };
 
-}    // Namespace Core.
+}    // Namespace EchoSounding.
 }    // Namespace K.
 
-#endif    // K_CORE_STREAMHANDLERINTERFACE_H_
-
+#endif    // K_ECHOSOUNDING_ENVELOPEHANDLERINTERFACE_H_

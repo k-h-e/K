@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_CORE_STRINGTOOLS_H_
 #define K_CORE_STRINGTOOLS_H_
@@ -32,6 +30,8 @@ class StringTools {
     static bool Parse(const std::string &text, int *outValue);
     static bool Parse(const std::string &text, float *outValue);
     static bool Parse(const std::string &text, double *outValue);
+    static bool Parse(const char *text, unsigned int *outValue);
+    static bool ParseHex(const char *text, unsigned int *outValue);
     static std::string ToLower(const std::string &text);
     static std::string ToBase64(const std::string &text);
     static std::string ToHex(const void *data, int dataSize);

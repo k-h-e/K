@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_EVENTS_EVENTLOOP_H_
 #define K_EVENTS_EVENTLOOP_H_
 
@@ -63,6 +71,7 @@ class EventLoop : public virtual EventBusInterface<EventClass, EventHandlerClass
     struct EventInfo {
         std::unique_ptr<EventClass>      prototype;
         std::vector<EventHandlerClass *> handlers;
+
         EventInfo(std::unique_ptr<EventClass> proto) : prototype{std::move(proto)} {}
     };
     

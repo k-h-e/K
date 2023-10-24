@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/IO/File.h>
 
 #include <unistd.h>
@@ -9,6 +17,7 @@
 #include <K/Core/Log.h>
 #include <K/IO/IOTools.h>
 
+using std::optional;
 using std::shared_ptr;
 using std::string;
 using std::to_string;
@@ -48,7 +57,7 @@ File::File(const Path &fileName, AccessMode accessMode, bool truncate)
             int fd = open(fileName.ToOsPath().c_str(), flags, 0600);
             if (fd >= 0) {
                 fd_    = fd;
-                error_ = Error::None;
+                error_.reset();
                 done   = true;
                 Log::Print(Log::Level::Debug, this, [&]{
                     return string("opened file \"") + fileName.ToShortString() + "\", fd=" + to_string(fd_); });
@@ -67,21 +76,21 @@ File::File(const Path &fileName, AccessMode accessMode, bool truncate)
 File::~File() {
     if (fd_ != -1) {
         if (!IOTools::CloseFileDescriptor(fd_, this)) {
-            if (error_ == Error::None) {
+            if (!error_) {
                 error_ = Error::IO;
             }
         }
     }
 
     if (closeResultAcceptor_) {
-        if (error_ != Error::None) {
+        if (error_) {
             closeResultAcceptor_->OnFailure();
         } else {
             closeResultAcceptor_->OnSuccess();
         }
     }
 
-    if ((error_ != Error::None) && (error_ != Error::Eof)) {
+    if (error_ && (error_ != Error::Eof)) {
         Log::Print(Log::Level::Error, this, [&]{
             return "failed to properly close file \"" + fileName_.ToShortString() + "\", fd=" + to_string(fd_);
         });
@@ -169,7 +178,7 @@ void File::Seek(int64_t position) {
 
 void File::RecoverAndSeek(int64_t position) {
     if (error_ == Error::Eof) {
-        error_ = Error::None;
+        error_.reset();
     }
     Seek(position);
 }
@@ -179,10 +188,10 @@ int64_t File::StreamPosition() const {
 }
 
 bool File::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error File::StreamError() const {
+optional<StreamInterface::Error> File::StreamError() const {
     return error_;
 }
 

@@ -1,20 +1,21 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - IO / Framework -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include <K/IO/Framework/InteractionConnectionEndPoint.h>
 
 #include <cassert>
+
 #include <K/Core/ResultAcceptor.h>
 #include <K/Core/StreamHandlerInterface.h>
 
+using std::optional;
 using std::shared_ptr;
+
 using K::Core::ResultAcceptor;
 using K::Core::StreamHandlerInterface;
 using K::Core::StreamInterface;
@@ -33,7 +34,6 @@ InteractionConnectionEndPoint::InteractionConnectionEndPoint(const shared_ptr<No
           handlerActivationId_{0},
           readyRead_{false},
           readyWrite_{false},
-          error_{Error::None},
           signalError_{false} {
     runLoopClientId_ = runLoop_->AddClient(this);
     connection_->Register(this, 0);
@@ -44,7 +44,7 @@ InteractionConnectionEndPoint::~InteractionConnectionEndPoint() {
     runLoop_->RemoveClient(runLoopClientId_);
 
     if (closeResultAcceptor_) {
-        if (error_ == Error::None) {
+        if (!error_) {
             closeResultAcceptor_->OnSuccess();
         } else {
             closeResultAcceptor_->OnFailure();
@@ -57,7 +57,7 @@ void InteractionConnectionEndPoint::Register(StreamHandlerInterface *handler, in
     handlerActivationId_ = activationId;
 
     if (handler_) {
-        if (error_ != Error::None) {
+        if (error_) {
             signalError_ = true;
             runLoop_->RequestActivation(runLoopClientId_, false);
         }
@@ -66,10 +66,10 @@ void InteractionConnectionEndPoint::Register(StreamHandlerInterface *handler, in
 
 int InteractionConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
-    if (error_ == Error::None) {
+    if (!error_) {
         writeBuffer_.Put(data, dataSize);
         PushOutgoing();
-        if (error_ == Error::None) {
+        if (!error_) {
             return dataSize;
         }
     }
@@ -78,10 +78,10 @@ int InteractionConnectionEndPoint::WriteBlocking(const void *data, int dataSize)
 }
 
 bool InteractionConnectionEndPoint::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error InteractionConnectionEndPoint::StreamError() const {
+optional<StreamInterface::Error> InteractionConnectionEndPoint::StreamError() const {
     return error_;
 }
 
@@ -97,8 +97,8 @@ void InteractionConnectionEndPoint::Activate(bool deepActivation) {
         if (readyRead_) {
             runLoop_->RequestActivation(runLoopClientId_, false);
         }
-        if (handler_) {
-            handler_->OnStreamEnteredErrorState(handlerActivationId_, error_);
+        if (handler_ && error_) {
+            handler_->OnStreamEnteredErrorState(handlerActivationId_, *error_);
         }
     } else {
         DispatchIncoming();
@@ -107,7 +107,7 @@ void InteractionConnectionEndPoint::Activate(bool deepActivation) {
 
 void InteractionConnectionEndPoint::OnStreamReadyRead(int id) {
     (void)id;
-    if (error_ == Error::None) {
+    if (!error_) {
         readyRead_ = true;
         DispatchIncoming();
     }
@@ -115,14 +115,14 @@ void InteractionConnectionEndPoint::OnStreamReadyRead(int id) {
 
 void InteractionConnectionEndPoint::OnStreamReadyWrite(int id) {
     (void)id;
-    if (error_ == Error::None) {
+    if (!error_) {
         readyWrite_ = true;
         PushOutgoing();
     }
 }
 
 void InteractionConnectionEndPoint::DispatchIncoming() {
-    if ((error_ == Error::None) && readyRead_) {
+    if (!error_ && readyRead_) {
         readBuffer_.Clear();
         if (readBuffer_.AppendFromStream(connection_.get(), 2048)) {
             runLoop_->RequestActivation(runLoopClientId_, false);
@@ -133,7 +133,7 @@ void InteractionConnectionEndPoint::DispatchIncoming() {
             readyRead_ = false;
             if (connection_->ErrorState()) {
                 error_       = connection_->StreamError();
-                assert(error_ != Error::None);
+                assert (error_.has_value());
                 signalError_ = true;
                 runLoop_->RequestActivation(runLoopClientId_, false);
             }
@@ -142,13 +142,13 @@ void InteractionConnectionEndPoint::DispatchIncoming() {
 }
 
 void InteractionConnectionEndPoint::PushOutgoing() {
-    if ((error_ == Error::None) && readyWrite_ && !writeBuffer_.Empty()) {
+    if (!error_ && readyWrite_ && !writeBuffer_.Empty()) {
         writeBuffer_.TransferTo(connection_.get());
         if (!writeBuffer_.Empty()) {
              readyWrite_ = false;
              if (connection_->ErrorState()) {
                  error_       = connection_->StreamError();
-                 assert(error_ != Error::None);
+                assert (error_.has_value());
                  signalError_ = true;
                  runLoop_->RequestActivation(runLoopClientId_, false);
              }

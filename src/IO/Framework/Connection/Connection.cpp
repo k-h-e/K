@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - IO / Framework -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include <K/IO/Framework/Connection.h>
 
@@ -15,6 +13,7 @@
 #include <K/Core/Framework/RunLoop.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/IOTools.h>
+
 #include "LoopThreadState.h"
 #include "SynchronizedState.h"
 
@@ -23,6 +22,7 @@ using std::make_unique;
 using std::optional;
 using std::shared_ptr;
 using std::to_string;
+
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::StreamInterface;
@@ -155,10 +155,10 @@ int Connection::WriteNonBlocking(const void *data, int dataSize) {
 }
 
 bool Connection::ErrorState() const {
-    return (loopThreadState_->error != Error::None);
+    return (loopThreadState_->error.has_value());
 }
 
-StreamInterface::Error Connection::StreamError() const {
+optional<StreamInterface::Error> Connection::StreamError() const {
     return loopThreadState_->error;
 }
 

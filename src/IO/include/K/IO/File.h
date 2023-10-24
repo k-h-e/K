@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_IO_FILE_H_
 #define K_IO_FILE_H_
 
@@ -27,7 +35,7 @@ class File : public virtual Core::SeekableBlockingIOStreamInterface {
     void RecoverAndSeek(int64_t position) override;
     int64_t StreamPosition() const override;
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
     static void AccessModeToFlags(AccessMode accessMode, bool *outReadable, bool *outWritable);
@@ -45,7 +53,7 @@ class File : public virtual Core::SeekableBlockingIOStreamInterface {
     bool                                  readable_;
     bool                                  writable_;
     int64_t                               position_;
-    Error                                 error_;
+    std::optional<Error>                  error_;
     std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
 };
 

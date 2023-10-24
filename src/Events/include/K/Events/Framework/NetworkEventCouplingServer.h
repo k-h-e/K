@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_EVENTS_FRAMEWORK_NETWORKEVENTCOUPLINGSERVER_H_
 #define K_EVENTS_FRAMEWORK_NETWORKEVENTCOUPLINGSERVER_H_
 

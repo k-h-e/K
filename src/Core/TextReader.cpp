@@ -1,18 +1,17 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include <K/Core/TextReader.h>
 
 #include <cassert>
 #include <K/Core/SeekableBlockingInStreamInterface.h>
 
+using std::optional;
 using std::shared_ptr;
 using std::string;
 
@@ -20,8 +19,7 @@ namespace K {
 namespace Core {
 
 TextReader::TextReader(const shared_ptr<SeekableBlockingInStreamInterface> &stream)
-        : stream_(stream),
-          error_(Error::None) {
+        : stream_(stream) {
     // Nop.
 }
 
@@ -42,9 +40,9 @@ void TextReader::Read(char delimiter, string *outString) {
                         outString->push_back(character);
                     }
                 } else {
-                    Error error = stream_->StreamError();
-                    assert(error != Error::None);
-                    if (error == Error::Eof) {
+                    optional<Error> error = stream_->StreamError();
+                    assert(error.has_value());
+                    if (*error == Error::Eof) {
                         success = true;
                     } else {
                         error_ = error;
@@ -79,9 +77,9 @@ void TextReader::Read(const string &validCharacters, bool readOther, string *out
                         success = true;
                     }
                 } else {
-                    Error error = stream_->StreamError();
-                    assert(error != Error::None);
-                    if (error == Error::Eof) {
+                    optional<Error> error = stream_->StreamError();
+                    assert(error.has_value());
+                    if (*error == Error::Eof) {
                         success = true;
                     } else {
                         error_ = error;
@@ -113,9 +111,9 @@ void TextReader::Skip(const string &charactersToSkip, bool skipOther) {
                         success = true;
                     }
                 } else {
-                    Error error = stream_->StreamError();
-                    assert(error != Error::None);
-                    if (error == Error::Eof) {
+                    optional<Error> error = stream_->StreamError();
+                    assert(error.has_value());
+                    if (*error == Error::Eof) {
                         success = true;
                     } else {
                         error_ = error;
@@ -127,10 +125,10 @@ void TextReader::Skip(const string &charactersToSkip, bool skipOther) {
 }
 
 bool TextReader::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error TextReader::StreamError() const {
+optional<StreamInterface::Error> TextReader::StreamError() const {
     return error_;
 }
 

@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - IO / Framework -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_IO_FRAMEWORK_CONNECTION_LOOPTHREADSTATE_H_
 #define K_IO_FRAMEWORK_CONNECTION_LOOPTHREADSTATE_H_
@@ -33,7 +31,7 @@ struct Connection::LoopThreadState : public virtual Core::Framework::RunLoop::Cl
     int                                             handlerAssociatedId;
     Core::RingBuffer                                readBuffer;
     Core::RingBuffer                                writeBuffer;
-    Error                                           error;
+    std::optional<Error>                            error;
     bool                                            eof;
     bool                                            clientReadPaused;
     bool                                            clientWritePaused;

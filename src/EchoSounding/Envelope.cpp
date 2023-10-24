@@ -6,27 +6,42 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_NONBLOCKINGOUTSTREAMINTERFACE_H_
-#define K_CORE_NONBLOCKINGOUTSTREAMINTERFACE_H_
+#include <K/EchoSounding/Envelope.h>
 
-#include <K/Core/OutStreamInterface.h>
+using K::Core::BlockingInStreamInterface;
+using K::Core::BlockingOutStreamInterface;
 
 namespace K {
-namespace Core {
+namespace EchoSounding {
 
-//! Interface to nonblocking output streams.
-class NonBlockingOutStreamInterface : public virtual OutStreamInterface {
-  public:
-    //! Writes the specified data to the stream with nonblocking semantics.
-    /*!
-     *  \return
-     *  Number of bytes actually written. Might be less than the data size (short write). <c>0</c> means that no data
-     *  could be accepted for writing.
-     */
-    virtual int WriteNonBlocking(const void *data, int dataSize) = 0;
-};
+Envelope::Envelope()
+        : depthPerSampleM{0.0f},
+          locked{false},
+          depthM{0.0f},
+          depthTargetIndex{0},
+          depthIntegrity{0.0f},
+          noiseFloor{0.0f} {
+    // Nop.
+}
 
-}    // Namespace Core.
+void Envelope::clear() {
+    samples.clear();
+    depthPerSampleM  = 0.0f;
+    targets.clear();
+    locked           = false;
+    depthM           = 0.0f;
+    depthTargetIndex = 0;
+    depthIntegrity   = 0.0f;
+    noiseFloor       = 0.0f;
+}
+
+void Envelope::Serialize(BlockingOutStreamInterface *stream) const {
+    (void) stream;
+}
+
+void Envelope::Deserialize(BlockingInStreamInterface *stream) {
+    (void) stream;
+}
+
+}    // Namespace EchoSounding.
 }    // Namespace K.
-
-#endif    // K_CORE_NONBLOCKINGOUTSTREAMINTERFACE_H_

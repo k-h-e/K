@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - Core -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_CORE_BUFFER_H_
 #define K_CORE_BUFFER_H_
@@ -40,7 +38,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
         ~Reader()                              = default;
 
         bool ErrorState() const override;
-        Error StreamError() const override;
+        std::optional<Error> StreamError() const override;
         int ReadBlocking(void *buffer, int bufferSize) override;
         void Seek(int64_t position) override;
         void RecoverAndSeek(int64_t position) override;
@@ -53,7 +51,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
 
         const Buffer                          *buffer_;
         int                                   cursor_;
-        Error                                 error_;
+        std::optional<Error>                  error_;
 	};
 
 	//! Creates a buffer of the given initial size, but does not initialize its contents.
@@ -121,7 +119,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
 	Reader GetReader() const;
 
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     int WriteBlocking(const void *data, int dataSize) override;
 

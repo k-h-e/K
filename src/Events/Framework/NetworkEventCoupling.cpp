@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/Events/Framework/NetworkEventCoupling.h>
 
 #include <cstring>
@@ -45,8 +53,7 @@ NetworkEventCoupling::NetworkEventCoupling(
           state_(State::AcceptingChunkSize),
           readCursor_(0),
           readChunkSize_(0),
-	  protocolVersionMatch_(false),
-	  protocolVersionCheckEnabled_(false),
+          protocolVersionMatch_(false),
           keepAliveReceived_(false),
           error_(false),
           signalErrorState_(false) {
@@ -163,8 +170,7 @@ void NetworkEventCoupling::OnStreamData(int id, const void *data, int dataSize) 
                                     string remoteProtocolVersion;
                                     if (StringTools::Deserialize(&remoteProtocolVersion, &buffer[readCursor_ + offset],
                                                                  length)) {
-                                        if (!protocolVersionCheckEnabled_
-					        || (protocolVersion_ == remoteProtocolVersion)) {
+                                        if (protocolVersion_ == remoteProtocolVersion) {
                                             protocolVersionMatch_ = true;
                                             Log::Print(Log::Level::Debug, this, [&]{
                                                 return "protocol version check ok (\"" + remoteProtocolVersion

@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - IO / Framework -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include "SynchronizedState.h"
 
@@ -44,7 +42,7 @@ void Connection::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
     Log::Print(Log::Level::DebugDebug, this, [&]{ return "Sync()"; });
     syncRequested_ = false;
     if (error_) {
-        if (loopThreadState->error == Error::None) {
+        if (!loopThreadState->error) {
             loopThreadState->handlerNeedsReadyRead  = true;
             loopThreadState->handlerNeedsReadyWrite = true;
             loopThreadState->error                  = Error::IO;

@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/IO/BufferedConnection.h>
 
 #include <unistd.h>
@@ -95,7 +103,7 @@ bool BufferedConnection::ErrorState() const {
     return sharedState_->Error();
 }
 
-StreamInterface::Error BufferedConnection::StreamError() const {
+optional<StreamInterface::Error> BufferedConnection::StreamError() const {
     return sharedState_->StreamError();
 }
 

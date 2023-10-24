@@ -1,16 +1,28 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/GeoPositioning/NmeaDevice.h>
 
-#include <sstream>
 #include <cstring>
 #include <cassert>
 #include <iomanip>
+#include <sstream>
+
 #include <K/Core/ConnectionStreamInterface.h>
 #include <K/Core/Log.h>
 
+using std::optional;
 using std::shared_ptr;
 using std::to_string;
+
 using K::Core::ConnectionStreamInterface;
 using K::Core::Log;
+using K::Core::StreamInterface;
 
 namespace K {
 namespace GeoPositioning {
@@ -71,8 +83,10 @@ bool NmeaDevice::Write(const NmeaMessage &message) {
 bool NmeaDevice::ErrorState() const {
     if (!error_) {
         if (connection_->ErrorState()) {
+            optional<StreamInterface::Error> error = connection_->StreamError();
+            assert (error.has_value());
             Log::Print(Log::Level::Warning, this, [&]{
-                return "connection in error state, error=" + to_string(static_cast<int>(connection_->StreamError()));
+                return "connection in error state, error=" + to_string(static_cast<int>(*error));
             });
             error_ = true;
         }

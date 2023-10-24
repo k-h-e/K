@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_EVENTS_EVENTBUSINTERFACE_H_
 #define K_EVENTS_EVENTBUSINTERFACE_H_
 
@@ -29,7 +37,7 @@ class EventBusInterface : public virtual EventReceiverInterface {
      */
     virtual void UnregisterHandler(EventHandlerClass *handler) = 0;
 
-    //! Posts the specified event to the receiver.
+    //! Posts the specified event to the bus.
     /*!
      *  May get called from event handlers invoked by the bus.
      */

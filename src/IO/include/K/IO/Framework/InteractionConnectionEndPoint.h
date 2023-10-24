@@ -1,12 +1,10 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - IO / Framework -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #ifndef K_IO_FRAMEWORK_INTERACTIONCONNECTIONENDPOINT_H_
 #define K_IO_FRAMEWORK_INTERACTIONCONNECTIONENDPOINT_H_
@@ -51,7 +49,7 @@ class InteractionConnectionEndPoint : public virtual Core::Framework::AsyncInStr
     void Register(Core::StreamHandlerInterface *handler, int activationId) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
@@ -71,7 +69,7 @@ class InteractionConnectionEndPoint : public virtual Core::Framework::AsyncInStr
     bool                                                                 readyRead_;
     Core::RingBuffer                                                     writeBuffer_;
     bool                                                                 readyWrite_;
-    Error                                                                error_;
+    std::optional<Error>                                                 error_;
     bool                                                                 signalError_;
     std::shared_ptr<Core::ResultAcceptor>                                closeResultAcceptor_;
 };
