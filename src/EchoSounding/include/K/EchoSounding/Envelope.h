@@ -19,13 +19,17 @@ namespace EchoSounding {
 
 //! Holds a set of echo sounder envelope data.
 struct Envelope : public virtual Core::SerializableInterface {
-    struct Target {
+    struct Target : public virtual Core::SerializableInterface {
         int     sampleIndex;
         uint8_t amplitude;
 
         Target() : sampleIndex{0}, amplitude{0u} {}
         Target(int sampleIndex, uint8_t amplitude) : sampleIndex{sampleIndex}, amplitude{amplitude} {}
         // Default copy, ok.
+
+        // SerializableInterface...
+        void Serialize(Core::BlockingOutStreamInterface *stream) const override;
+        void Deserialize(Core::BlockingInStreamInterface *stream) override;
     };
 
     std::vector<uint8_t> samples;
