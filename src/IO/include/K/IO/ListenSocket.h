@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_IO_LISTENSOCKET_H_
 #define K_IO_LISTENSOCKET_H_
 
@@ -5,52 +13,70 @@
 #include <K/Core/ErrorStateInterface.h>
 
 namespace K {
-
-namespace Core {
-    class ThreadPool;
+    namespace Core {
+        class ThreadPool;
+        class RunLoop;
+    }
+    namespace IO {
+        class ConnectionIO;
+        class TcpConnection;
+    }
 }
 
+namespace K {
 namespace IO {
 
-class Socket;
-class TcpConnection;
-class ConnectionIO;
-
-//! Listen socket.
-/*!
- * Thread-safe (i.e. all public methods).
- */
+//! Listen socket, for use with a <c>RunLoop</c>.
 class ListenSocket : public virtual Core::ErrorStateInterface {
   public:
+    //! Interface to handlers that clients can register with a listen socket.
     class HandlerInterface : public virtual Core::Interface {
       public:
-        virtual void OnListenSocketAcceptedConnection(const std::shared_ptr<TcpConnection> &connection) = 0;
-        virtual void OnListenSocketAcceptedConnection(int fd) = 0;
-        virtual void OnListenSocketErrorState() = 0;
+        //! Hands over a newly accepted connection to the handler.
+        /*!
+         *  \param id
+         *  Activation ID that was registered together with the handler.
+         */
+        virtual void OnListenSocketAcceptedConnection(int id, std::unique_ptr<TcpConnection> connection) = 0;
+        //! Informs the handler that the listen socket has entered error state.
+        /*!
+         *  \param id
+         *  ID that was given when the handler was registered.
+         */
+        virtual void OnListenSocketErrorState(int id) = 0;
     };
 
-    ListenSocket(int port, const std::shared_ptr<ConnectionIO> &connectionIO,
-                 const std::shared_ptr<Core::ThreadPool> &threadPool);
-    ListenSocket(const ListenSocket &other)             = delete;
-    ListenSocket &operator=(const ListenSocket &other)  = delete;
-    ListenSocket(ListenSocket &&other)                  = delete;
-    ListenSocket &operator=(ListenSocket &&other)       = delete;
+    ListenSocket(
+        int port, const std::shared_ptr<Core::RunLoop> &runLoop, const std::shared_ptr<IO::ConnectionIO> &connectionIO,
+        const std::shared_ptr<Core::ThreadPool> &threadPool);
+    ListenSocket()                                     = delete;
+    ListenSocket(const ListenSocket &other)            = delete;
+    ListenSocket &operator=(const ListenSocket &other) = delete;
+    ListenSocket(ListenSocket &&other)                 = delete;
+    ListenSocket &operator=(ListenSocket &&other)      = delete;
+    ~ListenSocket();
 
-    //! Registers the specified handler, unregistering any handler potentially registered earlier.
+    //! Registers the specified handler.
     /*!
-     *  The handler methods will get called on an arbitrary thread and must not call back into the <c>ListenSocket</c>.
+     *  Pass <c>nullptr</c> to unregister a previously registered handler.
      *
-     *  Pass <c>nullptr</c> to unregister a registered handler. When the method then returns, it is guaranteed that the
-     *  handler will not be called again.
+     *  The handler's methods get activated on the associated run loop's thread. They may call back into the listen
+     *  socket.
+     *
+     *  The handler is expected to outlive the listen socket.
+     *
+     *  \param id
+     *  ID to be passed along with handler activations for the listen socket. Useful in case one wants to use one
+     *  handler with multiple listen sockets.
      */
-    void Register(HandlerInterface *handler, bool fileDescriptorMode);
+    void Register(HandlerInterface *handler, int id);
     bool ErrorState() const override;
 
   private:
-    class Acceptor;
-    class SharedState;
+    struct LoopThreadState;
+    class SynchronizedState;
 
-    std::shared_ptr<SharedState> shared_;
+    std::unique_ptr<LoopThreadState> loopThreadState_;
 };
 
 }    // Namespace IO.

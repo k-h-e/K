@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_GEOPOSITIONING_FIXQUALITY_H_
 #define K_GEOPOSITIONING_FIXQUALITY_H_
 

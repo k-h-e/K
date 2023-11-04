@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #include <K/GeoPositioning/RtcmMessage.h>
 
 #include <K/Core/BlockingInStreamInterface.h>

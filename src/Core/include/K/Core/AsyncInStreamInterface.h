@@ -9,28 +9,33 @@
 #ifndef K_CORE_ASYNCREADINTERFACE_H_
 #define K_CORE_ASYNCREADINTERFACE_H_
 
-#include <memory>
 #include <K/Core/InStreamInterface.h>
-#include <K/Core/StreamHandlerInterface.h>
+
+namespace K {
+    namespace Core {
+        class StreamHandlerInterface;
+    }
+}
 
 namespace K {
 namespace Core {
 
-//! Interface to input streams providing asynchronous reading.
-class AsyncInStreamInterface : public virtual InStreamInterface {
+//! Interface to <c>RunLoop</c>-enabled input streams providing asynchronous reading.
+class AsyncInStreamInterface : public virtual Core::InStreamInterface {
   public:
-    //! Registers the specified read handler.
+    //! Registers the specified handler.
     /*!
-     *  The handler methods will get called on an arbitrary thread and must not call back into the stream.
+     *  Pass <c>nullptr</c> to unregister a previously registered handler.
+     *
+     *  The handler's methods get activated on the associated run loop's thread. They may call back into the stream.
+     *
+     *  The handler is expected to outlive the stream. It will not get called upon stream destruction.
+     *
+     *  \param activationId
+     *  ID to be passed along with handler activations for the stream. Useful in case one wants to use one handler
+     *  with multiple streams.
      */
-    virtual bool Register(const std::shared_ptr<StreamHandlerInterface> &handler, int activationId) = 0;
-    //! Unregisters the specified read handler if it was registered.
-    /*!
-     *  When the method returns, it is guaranteed that the handler will not be called again. If registering another read
-     *  handler later, read data might have been missed - with the exception of the initial time after stream
-     *  construction, there is no garantee that the stream buffers read data while no read handler is registered.
-     */
-    virtual void Unregister(const std::shared_ptr<StreamHandlerInterface> &handler) = 0;
+    virtual void Register(Core::StreamHandlerInterface *handler, int activationId) = 0;
 };
 
 }    // Namespace Core.

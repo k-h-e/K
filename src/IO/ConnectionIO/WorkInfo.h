@@ -1,3 +1,11 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_IO_CONNECTIONIO_WORKINFO_H_
 #define K_IO_CONNECTIONIO_WORKINFO_H_
 

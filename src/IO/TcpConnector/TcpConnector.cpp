@@ -1,41 +1,56 @@
-////    ////
-////   ////     K Crossplatform C++ Assets
-////  ////      (C) Copyright Kai Hergenröther
-//// ////
-////////        - IO -
-//// ////
-////  ////
-////   ////
-////    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
 #include <K/IO/TcpConnector.h>
 
-#include <K/Core/Log.h>
-#include <K/Core/ThreadPool.h>
-#include "Connector.h"
-#include "SharedState.h"
+#include "SynchronizedState.h"
 
-using std::make_shared;
 using std::make_unique;
+using std::optional;
 using std::shared_ptr;
 using std::string;
-using K::Core::Log;
+using K::Core::RunLoop;
 using K::Core::ThreadPool;
 
 namespace K {
 namespace IO {
 
-TcpConnector::TcpConnector(const string &hostAndPort, HandlerInterface *handler, int handlerActivationId,
+TcpConnector::TcpConnector(const string &hostAndPort, IO::Deprecated::TcpConnector::HandlerInterface *handler,
+                           int handlerActivationId, const shared_ptr<RunLoop> &runLoop,
                            const shared_ptr<ThreadPool> &threadPool)
-        : sharedState_{make_shared<SharedState>()},
-          connector_{make_unique<Connector>(hostAndPort, handler, handlerActivationId)} {
-    threadPool->Run(connector_.get(), sharedState_.get(), 0);
+        : runLoop_{runLoop},
+          handler_{handler},
+          handlerActivationId_{handlerActivationId},
+          finished_{false} {
+    runLoopClientId_   = runLoop_->AddClient(this);
+    synchronizedState_ = make_unique<SynchronizedState>(runLoop_, runLoopClientId_);
+    connector_         = make_unique<IO::Deprecated::TcpConnector>(hostAndPort, synchronizedState_.get(), 0,
+                                                                   threadPool);
 }
 
 TcpConnector::~TcpConnector() {
-    Log::Print(Log::Level::Debug, this, [&]{ return "waiting for connection attempt to finish..."; });
-    sharedState_->WaitForConnectorFinished();
-    Log::Print(Log::Level::Debug, this, [&]{ return "connection attempt finished"; });
+    connector_.reset();
+    runLoop_->RemoveClient(runLoopClientId_);
+}
+
+void TcpConnector::Activate(bool deepActivation) {
+    (void)deepActivation;
+    if (!finished_) {
+        optional<int> fd;
+        synchronizedState_->Sync(&fd, &finished_);
+        if (finished_) {
+            if (fd) {
+                handler_->OnTcpConnectionEstablished(handlerActivationId_, *fd);
+            } else {
+                handler_->OnFailedToEstablishTcpConnection(handlerActivationId_);
+            }
+        }
+    }
 }
 
 }    // Namespace IO.

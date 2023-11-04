@@ -1,8 +1,16 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////  //     //
+//                                                                                                            //   //
+//    K                                                                                                      // //
+//    Kai's C++ Crossplatform Assets                                                                        ///
+//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//                                                                                                        //     //
+///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
+
 #ifndef K_GEOPOSITIONING_NTRIPDGNSSCLIENT_H_
 #define K_GEOPOSITIONING_NTRIPDGNSSCLIENT_H_
 
 #include <string>
-#include <K/IO/TcpConnection.h>
+#include <K/IO/Deprecated/TcpConnection.h>
 
 namespace K {
     namespace Core {
@@ -35,7 +43,7 @@ class NtripDgnssClient : public Core::Interface {
   private:
     class ReadHandler;
 
-    K::IO::TcpConnection                          connection_;
+    K::IO::Deprecated::TcpConnection              connection_;
     std::shared_ptr<Core::StreamHandlerInterface> readHandler_;
 };
 
