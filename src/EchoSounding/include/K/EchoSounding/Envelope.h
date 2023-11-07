@@ -10,6 +10,7 @@
 #define K_ECHOSOUNDING_ENVELOPE_H_
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 #include <K/Core/SerializableInterface.h>
@@ -37,9 +38,9 @@ struct Envelope : public virtual Core::SerializableInterface {
     std::vector<Target>  targets;
     bool                 locked;
     float                depthM;
-    int                  depthTargetIndex;
-    float                depthIntegrity;    // In [0, 1].
-    float                noiseFloor;        // In [0, 1].
+    std::optional<int>   depthTargetIndex;
+    float                depthIntegrity;      // In [0, 1].
+    float                noiseFloor;          // In [0, 1].
 
     Envelope();
     // Default copy, ok.

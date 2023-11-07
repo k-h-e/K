@@ -21,7 +21,6 @@ Envelope::Envelope()
         : depthPerSampleM{0.0f},
           locked{false},
           depthM{0.0f},
-          depthTargetIndex{0},
           depthIntegrity{0.0f},
           noiseFloor{0.0f} {
     // Nop.
@@ -33,7 +32,7 @@ void Envelope::clear() {
     targets.clear();
     locked           = false;
     depthM           = 0.0f;
-    depthTargetIndex = 0;
+    depthTargetIndex.reset();
     depthIntegrity   = 0.0f;
     noiseFloor       = 0.0f;
 }
@@ -53,36 +52,58 @@ void Envelope::Serialize(BlockingOutStreamInterface *stream) const {
 
     (*stream) << locked;
     (*stream) << depthM;
-    (*stream) << depthTargetIndex;
+
+    bool haveDepthTargetIndex = depthTargetIndex.has_value();
+    (*stream) << haveDepthTargetIndex;
+    if (haveDepthTargetIndex) {
+        (*stream) << *depthTargetIndex;
+    }
+
     (*stream) << depthIntegrity;
     (*stream) << noiseFloor;
 }
 
 void Envelope::Deserialize(BlockingInStreamInterface *stream) {
+    samples.clear();
+    targets.clear();
+    depthTargetIndex.reset();
+
     uint32_t number;
     (*stream) >> number;
-    samples.clear();
-    for (uint32_t i = 0u; i < number; ++i) {
-        uint8_t sample;
-        (*stream) >> sample;
-        samples.push_back(sample);
+    if (!stream->ErrorState()) {
+        for (uint32_t i = 0u; i < number; ++i) {
+            uint8_t sample;
+            (*stream) >> sample;
+            samples.push_back(sample);
+        }
+
+        (*stream) >> depthPerSampleM;
+
+        (*stream) >> number;
+        if (!stream->ErrorState()) {
+            for (uint32_t i = 0u; i < number; ++i) {
+                Target target;
+                target.Deserialize(stream);
+                targets.push_back(target);
+            }
+
+            (*stream) >> locked;
+            (*stream) >> depthM;
+
+            bool haveDepthTargetIndex;
+            (*stream) >> haveDepthTargetIndex;
+            if (!stream->ErrorState()) {
+                if (haveDepthTargetIndex) {
+                    int index;
+                    (*stream) >> index;
+                    depthTargetIndex = index;
+                }
+
+                (*stream) >> depthIntegrity;
+                (*stream) >> noiseFloor;
+            }
+        }
     }
-
-    (*stream) >> depthPerSampleM;
-
-    (*stream) >> number;
-    targets.clear();
-    for (uint32_t i = 0u; i < number; ++i) {
-        Target target;
-        target.Deserialize(stream);
-        targets.push_back(target);
-    }
-
-    (*stream) >> locked;
-    (*stream) >> depthM;
-    (*stream) >> depthTargetIndex;
-    (*stream) >> depthIntegrity;
-    (*stream) >> noiseFloor;
 }
 
 // ---
