@@ -32,6 +32,14 @@ void ReadItem(BlockingInStreamInterface *stream, void *item, int itemSize) {
     }
 }
 
+void Skip(BlockingInStreamInterface *stream, int numBytes) {
+    uint8_t value;
+    while ((numBytes > 0) && !stream->ErrorState()) {
+        (*stream) >> value;
+        --numBytes;
+    }
+}
+
 BlockingInStreamInterface &operator>>(BlockingInStreamInterface &stream, string &outValue) {
     StringTools::Deserialize(&outValue, &stream);
     return stream;
