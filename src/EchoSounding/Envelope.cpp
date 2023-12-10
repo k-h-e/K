@@ -18,23 +18,15 @@ namespace K {
 namespace EchoSounding {
 
 Envelope::Envelope()
-        : depthPerSampleM{0.0f},
-          locked{false},
-          depthM{0.0f},
-          depthIntegrity{0.0f},
-          noiseFloor{0.0f} {
+        : depthPerSampleM{0.0f} {
     // Nop.
 }
 
 void Envelope::clear() {
     samples.clear();
-    depthPerSampleM  = 0.0f;
+    depthPerSampleM = 0.0f;
     targets.clear();
-    locked           = false;
-    depthM           = 0.0f;
-    depthTargetIndex.reset();
-    depthIntegrity   = 0.0f;
-    noiseFloor       = 0.0f;
+    depthM.reset();
 }
 
 void Envelope::Serialize(BlockingOutStreamInterface *stream) const {
@@ -50,23 +42,17 @@ void Envelope::Serialize(BlockingOutStreamInterface *stream) const {
         target.Serialize(stream);
     }
 
-    (*stream) << locked;
-    (*stream) << depthM;
-
-    bool haveDepthTargetIndex = depthTargetIndex.has_value();
-    (*stream) << haveDepthTargetIndex;
-    if (haveDepthTargetIndex) {
-        (*stream) << *depthTargetIndex;
+    bool haveDepth = depthM.has_value();
+    (*stream) << haveDepth;
+    if (haveDepth) {
+        (*stream) << *depthM;
     }
-
-    (*stream) << depthIntegrity;
-    (*stream) << noiseFloor;
 }
 
 void Envelope::Deserialize(BlockingInStreamInterface *stream) {
     samples.clear();
     targets.clear();
-    depthTargetIndex.reset();
+    depthM.reset();
 
     uint32_t number;
     (*stream) >> number;
@@ -87,20 +73,14 @@ void Envelope::Deserialize(BlockingInStreamInterface *stream) {
                 targets.push_back(target);
             }
 
-            (*stream) >> locked;
-            (*stream) >> depthM;
-
-            bool haveDepthTargetIndex;
-            (*stream) >> haveDepthTargetIndex;
+            bool haveDepth;
+            (*stream) >> haveDepth;
             if (!stream->ErrorState()) {
-                if (haveDepthTargetIndex) {
-                    int index;
-                    (*stream) >> index;
-                    depthTargetIndex = index;
+                if (haveDepth) {
+                    float aDepthM;
+                    (*stream) >> aDepthM;
+                    depthM = aDepthM;
                 }
-
-                (*stream) >> depthIntegrity;
-                (*stream) >> noiseFloor;
             }
         }
     }
@@ -110,12 +90,14 @@ void Envelope::Deserialize(BlockingInStreamInterface *stream) {
 
 void Envelope::Target::Serialize(BlockingOutStreamInterface *stream) const {
     (*stream) << sampleIndex;
-    (*stream) << amplitude;
+    (*stream) << grade;
+    (*stream) << marked;
 }
 
 void Envelope::Target::Deserialize(BlockingInStreamInterface *stream) {
     (*stream) >> sampleIndex;
-    (*stream) >> amplitude;
+    (*stream) >> grade;
+    (*stream) >> marked;
 }
 
 }    // Namespace EchoSounding.

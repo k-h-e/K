@@ -21,11 +21,12 @@ namespace EchoSounding {
 //! Holds a set of echo sounder envelope data.
 struct Envelope : public virtual Core::SerializableInterface {
     struct Target : public virtual Core::SerializableInterface {
-        int     sampleIndex;
-        uint8_t amplitude;
+        int    sampleIndex;
+        float  grade;
+        bool   marked;
 
-        Target() : sampleIndex{0}, amplitude{0u} {}
-        Target(int sampleIndex, uint8_t amplitude) : sampleIndex{sampleIndex}, amplitude{amplitude} {}
+        Target() : sampleIndex{0}, grade{0.0f}, marked{false} {}
+        Target(int sampleIndex, float grade, bool marked) : sampleIndex{sampleIndex}, grade{grade}, marked{marked} {}
         // Default copy, ok.
 
         // SerializableInterface...
@@ -36,11 +37,7 @@ struct Envelope : public virtual Core::SerializableInterface {
     std::vector<uint8_t> samples;
     float                depthPerSampleM;
     std::vector<Target>  targets;
-    bool                 locked;
-    float                depthM;
-    std::optional<int>   depthTargetIndex;
-    float                depthIntegrity;      // In [0, 1].
-    float                noiseFloor;          // In [0, 1].
+    std::optional<float> depthM;
 
     Envelope();
     // Default copy, ok.
