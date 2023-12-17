@@ -9,7 +9,7 @@
 #ifndef K_ECHOSOUNDING_ENVELOPEHANDLERINTERFACE_H_
 #define K_ECHOSOUNDING_ENVELOPEHANDLERINTERFACE_H_
 
-#include <K/Core/DataHandlerInterface.h>
+#include <K/Core/StreamHandlerInterface.h>
 
 namespace K {
     namespace EchoSounding {
@@ -21,7 +21,7 @@ namespace K {
 namespace EchoSounding {
 
 //! Interface to entities handling echo sounder envelope data.
-class EnvelopeHandlerInterface : public virtual Core::DataHandlerInterface {
+class EnvelopeHandlerInterface : public virtual Core::StreamHandlerInterface {
   public:
     //! Asks the handler to process the specified envelope data set.
     /*!

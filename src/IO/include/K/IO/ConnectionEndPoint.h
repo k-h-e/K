@@ -19,7 +19,7 @@
 
 namespace K {
     namespace Core {
-        class StreamHandlerInterface;
+        class RawStreamHandlerInterface;
     }
 }
 
@@ -40,7 +40,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     ConnectionEndPoint &operator=(ConnectionEndPoint &&other)      = delete;
     ~ConnectionEndPoint();
 
-    void Register(Core::StreamHandlerInterface *handler, int activationId) override;
+    void Register(Core::RawStreamHandlerInterface *handler, int activationId) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;
@@ -57,7 +57,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     const std::shared_ptr<Connection>     connection_;
     const std::shared_ptr<Core::RunLoop>  runLoop_;
     int                                   runLoopClientId_;
-    Core::StreamHandlerInterface          *handler_;
+    Core::RawStreamHandlerInterface       *handler_;
     int                                   handlerActivationId_;
     Core::Buffer                          readBuffer_;
     bool                                  readyRead_;

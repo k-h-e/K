@@ -22,7 +22,7 @@ using std::optional;
 using std::to_string;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
-using K::Core::StreamHandlerInterface;
+using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
 
 namespace K {
@@ -86,11 +86,11 @@ void BufferedConnection::TriggerErrorState() {
     connectionIO_->RequestErrorState(sharedState_.get());
 }
 
-bool BufferedConnection::Register(const shared_ptr<StreamHandlerInterface> &handler, int activationId) {
+bool BufferedConnection::Register(const shared_ptr<RawStreamHandlerInterface> &handler, int activationId) {
     return sharedState_->Register(handler, activationId);
 }
 
-void BufferedConnection::Unregister(const shared_ptr<StreamHandlerInterface> &handler) {
+void BufferedConnection::Unregister(const shared_ptr<RawStreamHandlerInterface> &handler) {
     sharedState_->Unregister(handler);
 }
 

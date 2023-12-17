@@ -21,7 +21,7 @@ using std::to_string;
 using std::unique_lock;
 
 using K::Core::Log;
-using K::Core::StreamHandlerInterface;
+using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
 
 namespace K {
@@ -45,7 +45,7 @@ void BufferedConnection::SharedState::SetError() {
     }
 }    // ......................................................................................... critical section, end.
 
-bool BufferedConnection::SharedState::Register(const shared_ptr<StreamHandlerInterface> &handler, int activationId) {
+bool BufferedConnection::SharedState::Register(const shared_ptr<RawStreamHandlerInterface> &handler, int activationId) {
     assert(handler);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_) {
@@ -60,7 +60,7 @@ bool BufferedConnection::SharedState::Register(const shared_ptr<StreamHandlerInt
     }
 }    // ......................................................................................... critical section, end.
 
-void BufferedConnection::SharedState::Unregister(const shared_ptr<StreamHandlerInterface> &handler) {
+void BufferedConnection::SharedState::Unregister(const shared_ptr<RawStreamHandlerInterface> &handler) {
     assert(handler);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (handler == handler_) {
@@ -109,7 +109,7 @@ bool BufferedConnection::SharedState::OnDataRead(const void *data, int dataSize)
     EnsureHandlerCalledInitially();
     if (!error_) {
         if (handler_) {
-            handler_->OnStreamData(handlerActivationId_, data, dataSize);
+            handler_->OnRawStreamData(handlerActivationId_, data, dataSize);
             return true;
         }
     }
@@ -150,7 +150,7 @@ void BufferedConnection::SharedState::OnEof() {
         Log::Print(Log::Level::Debug, this, []{ return "reached EOF"; });
         error_ = Error::Eof;
         if (handler_) {
-            handler_->OnStreamEnteredErrorState(handlerActivationId_, *error_);
+            handler_->OnStreamError(handlerActivationId_, *error_);
         }
     }
 }    // ......................................................................................... critical section, end.
@@ -162,7 +162,7 @@ void BufferedConnection::SharedState::OnError() {
         Log::Print(Log::Level::Warning, this, []{ return "entered error state"; });
         error_ = Error::IO;
         if (handler_) {
-            handler_->OnStreamEnteredErrorState(handlerActivationId_, *error_);
+            handler_->OnStreamError(handlerActivationId_, *error_);
         }
         writeCanContinue_.notify_all();
     }
@@ -173,7 +173,7 @@ void BufferedConnection::SharedState::EnsureHandlerCalledInitially() {
     if (handler_) {
         if (!handlerCalledInitially_) {
             if (error_) {
-                handler_->OnStreamEnteredErrorState(handlerActivationId_, *error_);
+                handler_->OnStreamError(handlerActivationId_, *error_);
             }
 
             handlerCalledInitially_ = true;

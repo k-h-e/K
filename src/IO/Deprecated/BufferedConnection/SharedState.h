@@ -18,7 +18,7 @@
 
 namespace K {
     namespace Core {
-        class StreamHandlerInterface;
+        class RawStreamHandlerInterface;
     }
 }
 
@@ -36,8 +36,8 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     SharedState &operator=(const SharedState &&other) = delete;
 
     void SetError();
-    bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler, int activationId);
-    void Unregister(const std::shared_ptr<Core::StreamHandlerInterface> &handler);
+    bool Register(const std::shared_ptr<Core::RawStreamHandlerInterface> &handler, int activationId);
+    void Unregister(const std::shared_ptr<Core::RawStreamHandlerInterface> &handler);
     void WriteItem(const void *item, int itemSize);
     bool WriteFailed();
     void ClearWriteFailed();
@@ -56,17 +56,17 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     // Expects lock to be held.
     void EnsureHandlerCalledInitially();
 
-    std::mutex                                    lock_;    // Protects everything below...
+    std::mutex                                       lock_;    // Protects everything below...
 
-    std::condition_variable                       writeCanContinue_;
-    std::shared_ptr<ConnectionIO>                 connectionIO_;
-    std::shared_ptr<Core::StreamHandlerInterface> handler_;
-    int                                           handlerActivationId_;
-    bool                                          handlerCalledInitially_;
-    Core::RingBuffer                              writeBuffer_;
-    int                                           bufferSizeThreshold_;
-    bool                                          canNotWrite_;
-    std::optional<StreamInterface::Error>         error_;
+    std::condition_variable                          writeCanContinue_;
+    std::shared_ptr<ConnectionIO>                    connectionIO_;
+    std::shared_ptr<Core::RawStreamHandlerInterface> handler_;
+    int                                              handlerActivationId_;
+    bool                                             handlerCalledInitially_;
+    Core::RingBuffer                                 writeBuffer_;
+    int                                              bufferSizeThreshold_;
+    bool                                             canNotWrite_;
+    std::optional<StreamInterface::Error>            error_;
 };
 
 }    // Namespace Deprecated.

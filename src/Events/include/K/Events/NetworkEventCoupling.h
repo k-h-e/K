@@ -12,9 +12,9 @@
 #include <memory>
 #include <K/Core/Buffer.h>
 #include <K/Core/ErrorStateInterface.h>
+#include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/RingBuffer.h>
 #include <K/Core/RunLoop.h>
-#include <K/Core/StreamHandlerInterface.h>
 #include <K/Core/Timer.h>
 #include <K/Events/EventNotifier.h>
 
@@ -37,7 +37,7 @@ namespace Events {
 
 //! Extends the event mechanism to other nodes across the network.
 class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
-                             private virtual Core::StreamHandlerInterface,
+                             private virtual Core::RawStreamHandlerInterface,
                              private virtual K::Core::Timer::HandlerInterface,
                              private virtual EventNotifier::HandlerInterface,
                              private virtual K::Core::RunLoop::ClientInterface {
@@ -90,8 +90,8 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
                        AcceptingChunkData
     };
 
-    void OnStreamData(int id, const void *data, int dataSize) override;
-    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
+    void OnRawStreamData(int id, const void *data, int dataSize) override;
+    void OnStreamError(int id, Core::StreamInterface::Error error) override;
     void OnTimer(int id) override;
     void OnEventsAvailable(int id) override;
     void Activate(bool deepActivation) override;

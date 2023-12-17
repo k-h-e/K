@@ -30,14 +30,13 @@ NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler, i
           state_(State::BetweenMessages),
           message_(""),
           numSkipped_(0),
-          eof_(false),
           error_(false) {
     // Nop.
 }
 
-void NmeaParser::OnStreamData(int id, const void *data, int dataSize) {
+void NmeaParser::OnRawStreamData(int id, const void *data, int dataSize) {
     (void)id;
-    if (!eof_ && !error_) {
+    if (!error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
         for (int i = 0; i < dataSize; ++i) {
             char character = static_cast<char>(*dataPtr++);
@@ -113,18 +112,11 @@ void NmeaParser::OnStreamData(int id, const void *data, int dataSize) {
     }
 }
 
-void NmeaParser::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
+void NmeaParser::OnStreamError(int id, StreamInterface::Error error) {
     (void) id;
-    if (error == StreamInterface::Error::Eof) {
-        if (!eof_) {
-            handler_->OnEof(handlerActivationId_);
-            eof_ = true;
-        }
-    } else {
-        if (!error_) {
-            handler_->OnError(handlerActivationId_);
-            error_ = true;
-        }
+    if (!error_) {
+        handler_->OnStreamError(handlerActivationId_, error);
+        error_ = true;
     }
 }
 

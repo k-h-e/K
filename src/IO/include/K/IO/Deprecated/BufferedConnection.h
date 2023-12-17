@@ -15,7 +15,7 @@
 
 namespace K {
     namespace Core {
-        class StreamHandlerInterface;
+        class RawStreamHandlerInterface;
     }
     namespace IO {
         class ConnectionIO;
@@ -54,8 +54,8 @@ class BufferedConnection : public virtual Core::Deprecated::ConnectionStreamInte
      *  method returns.
      */
     void TriggerErrorState();
-    bool Register(const std::shared_ptr<Core::StreamHandlerInterface> &handler, int activationId) override;
-    void Unregister(const std::shared_ptr<Core::StreamHandlerInterface> &handler) override;
+    bool Register(const std::shared_ptr<Core::RawStreamHandlerInterface> &handler, int activationId) override;
+    void Unregister(const std::shared_ptr<Core::RawStreamHandlerInterface> &handler) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;

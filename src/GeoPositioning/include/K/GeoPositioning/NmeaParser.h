@@ -11,7 +11,7 @@
 
 #include <memory>
 #include <string>
-#include <K/Core/StreamHandlerInterface.h>
+#include <K/Core/RawStreamHandlerInterface.h>
 #include <K/GeoPositioning/NmeaMessage.h>
 
 namespace K {
@@ -20,7 +20,7 @@ namespace GeoPositioning {
 class NmeaMessageHandlerInterface;
 
 //! Parses a binary stream into NMEA messages (sentences).
-class NmeaParser : public virtual Core::StreamHandlerInterface {
+class NmeaParser : public virtual Core::RawStreamHandlerInterface {
   public:    
     NmeaParser(const std::shared_ptr<NmeaMessageHandlerInterface> &handler, int activationId);
     NmeaParser()                                   = delete;
@@ -30,8 +30,8 @@ class NmeaParser : public virtual Core::StreamHandlerInterface {
     NmeaParser &operator=(NmeaParser &&other)      = delete;
     ~NmeaParser()                                  = default;
 
-    void OnStreamData(int id, const void *data, int dataSize) override;
-    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
+    void OnRawStreamData(int id, const void *data, int dataSize) override;
+    void OnStreamError(int id, Core::StreamInterface::Error error) override;
 
   private:
     enum class State { BetweenMessages,
@@ -46,7 +46,6 @@ class NmeaParser : public virtual Core::StreamHandlerInterface {
     NmeaMessage                                  message_;
     int                                          numSkipped_;
     std::string                                  skippedText_;
-    bool                                         eof_;
     bool                                         error_;
 };
 

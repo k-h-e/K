@@ -107,7 +107,7 @@ bool NetworkEventCoupling::ErrorState() const {
     return error_;
 }
 
-void NetworkEventCoupling::OnStreamData(int id, const void *data, int dataSize) {
+void NetworkEventCoupling::OnRawStreamData(int id, const void *data, int dataSize) {
     (void)id;
     readBuffer_.AppendFromMemory(data, dataSize);
     uint8_t *buffer = static_cast<uint8_t *>(readBuffer_.Data());
@@ -210,7 +210,7 @@ void NetworkEventCoupling::OnStreamData(int id, const void *data, int dataSize) 
     }
 }
 
-void NetworkEventCoupling::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
+void NetworkEventCoupling::OnStreamError(int id, StreamInterface::Error error) {
     (void)id;
     (void)error;
     EnterErrorState();

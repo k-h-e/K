@@ -9,7 +9,7 @@
 #ifndef K_GEOPOSITIONING_NMEAMESSAGEHANDLERINTERFACE_H_
 #define K_GEOPOSITIONING_NMEAMESSAGEHANDLERINTERFACE_H_
 
-#include <K/Core/DataHandlerInterface.h>
+#include <K/Core/StreamHandlerInterface.h>
 
 namespace K {
 namespace GeoPositioning {
@@ -17,7 +17,7 @@ namespace GeoPositioning {
 class NmeaMessage;
 
 //! Interface to entities receiving and processing NMEA messages.
-class NmeaMessageHandlerInterface : public virtual Core::DataHandlerInterface {
+class NmeaMessageHandlerInterface : public virtual Core::StreamHandlerInterface {
   public:
     //! Asks the handler to process the specified NMEA message.
     /*!

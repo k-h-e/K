@@ -10,15 +10,15 @@
 
 #include <cassert>
 
+#include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/ResultAcceptor.h>
-#include <K/Core/StreamHandlerInterface.h>
 
 using std::optional;
 using std::shared_ptr;
 
+using K::Core::RawStreamHandlerInterface;
 using K::Core::ResultAcceptor;
 using K::Core::RunLoop;
-using K::Core::StreamHandlerInterface;
 using K::Core::StreamInterface;
 
 namespace K {
@@ -49,7 +49,7 @@ ConnectionEndPoint::~ConnectionEndPoint() {
     }
 }
 
-void ConnectionEndPoint::Register(StreamHandlerInterface *handler, int activationId) {
+void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler, int activationId) {
     handler_             = handler;
     handlerActivationId_ = activationId;
 
@@ -95,7 +95,7 @@ void ConnectionEndPoint::Activate(bool deepActivation) {
             runLoop_->RequestActivation(runLoopClientId_, false);
         }
         if (handler_ && error_) {
-            handler_->OnStreamEnteredErrorState(handlerActivationId_, *error_);
+            handler_->OnStreamError(handlerActivationId_, *error_);
         }
     } else {
         DispatchIncoming();
@@ -124,7 +124,7 @@ void ConnectionEndPoint::DispatchIncoming() {
         if (readBuffer_.AppendFromStream(connection_.get(), 2048)) {
             runLoop_->RequestActivation(runLoopClientId_, false);
             if (handler_) {
-                handler_->OnStreamData(handlerActivationId_, readBuffer_.Data(), readBuffer_.DataSize());
+                handler_->OnRawStreamData(handlerActivationId_, readBuffer_.Data(), readBuffer_.DataSize());
             }
         } else {
             readyRead_ = false;

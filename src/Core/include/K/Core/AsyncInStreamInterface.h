@@ -13,7 +13,7 @@
 
 namespace K {
     namespace Core {
-        class StreamHandlerInterface;
+        class RawStreamHandlerInterface;
     }
 }
 
@@ -35,7 +35,7 @@ class AsyncInStreamInterface : public virtual Core::InStreamInterface {
      *  ID to be passed along with handler activations for the stream. Useful in case one wants to use one handler
      *  with multiple streams.
      */
-    virtual void Register(Core::StreamHandlerInterface *handler, int activationId) = 0;
+    virtual void Register(Core::RawStreamHandlerInterface *handler, int activationId) = 0;
 };
 
 }    // Namespace Core.
