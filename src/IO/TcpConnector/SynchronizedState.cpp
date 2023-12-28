@@ -39,16 +39,14 @@ void TcpConnector::SynchronizedState::Sync(optional<int> *fd, bool *finished) {
     *finished = finished_;
 }    // ......................................................................................... critical section, end.
 
-void TcpConnector::SynchronizedState::OnTcpConnectionEstablished(int id, int fd) {
-    (void)id;
+void TcpConnector::SynchronizedState::OnTcpConnectionEstablished(int fd) {
     unique_lock<mutex> critical{lock_};    // Critical section .........................................................
     fd_       = fd;
     finished_ = true;
     runLoop_->RequestActivation(runLoopClientId_, true);
 }    // ......................................................................................... critical section, end.
 
-void TcpConnector::SynchronizedState::OnFailedToEstablishTcpConnection(int id) {
-    (void)id;
+void TcpConnector::SynchronizedState::OnFailedToEstablishTcpConnection() {
     unique_lock<mutex> critical{lock_};    // Critical section .........................................................
     finished_ = true;
     runLoop_->RequestActivation(runLoopClientId_, true);

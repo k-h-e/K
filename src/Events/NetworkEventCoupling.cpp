@@ -48,7 +48,6 @@ NetworkEventCoupling::NetworkEventCoupling(
           runLoop_(runLoop),
           protocolVersion_(protocolVersion),
           handler_(nullptr),
-          handlerAssociatedId_(0),
           state_(State::AcceptingChunkSize),
           readCursor_(0),
           readChunkSize_(0),
@@ -57,7 +56,7 @@ NetworkEventCoupling::NetworkEventCoupling(
           error_(false),
           signalErrorState_(false) {
     hubClientId_ = hub_->RegisterEventLoop();
-    tcpConnection_->Register(this, 0);
+    tcpConnection_->Register(this);
 
     numSendsBetweenKeepAliveChecks_ = static_cast<int>(keepAliveParameters.CheckInterval().count())
                                           / static_cast<int>(keepAliveParameters.SendInterval().count());
@@ -68,11 +67,11 @@ NetworkEventCoupling::NetworkEventCoupling(
     numKeepAliveSendsUntilCheck_ = numSendsBetweenKeepAliveChecks_;
 
     timer_ = make_unique<Timer>(keepAliveParameters.SendInterval(), runLoop_, timers);
-    timer_->Register(this, 0);
+    timer_->Register(this);
 
     eventBuffer_   = make_unique<Buffer>();
     eventNotifier_ = make_unique<EventNotifier>(hub_, hubClientId_, runLoop_);
-    eventNotifier_->Register(this, 0);
+    eventNotifier_->Register(this);
 
     runLoopClientId_ = runLoop_->AddClient(this);
 
@@ -89,17 +88,15 @@ NetworkEventCoupling::~NetworkEventCoupling() {
     // TODO: Check deconstruction.
 }
 
-void NetworkEventCoupling::Register(NetworkEventCoupling::HandlerInterface *handler, int id) {
+void NetworkEventCoupling::Register(NetworkEventCoupling::HandlerInterface *handler) {
     if (handler) {
-        handler_             = handler;
-        handlerAssociatedId_ = id;
+        handler_ = handler;
         if (error_) {
             signalErrorState_ = true;
             runLoop_->RequestActivation(runLoopClientId_, false);
         }
     } else {
-        handler_             = nullptr;;
-        handlerAssociatedId_ = 0;
+        handler_ = nullptr;;
     }
 }
 
@@ -107,8 +104,7 @@ bool NetworkEventCoupling::ErrorState() const {
     return error_;
 }
 
-void NetworkEventCoupling::OnRawStreamData(int id, const void *data, int dataSize) {
-    (void)id;
+void NetworkEventCoupling::OnRawStreamData(const void *data, int dataSize) {
     readBuffer_.AppendFromMemory(data, dataSize);
     uint8_t *buffer = static_cast<uint8_t *>(readBuffer_.Data());
 
@@ -210,14 +206,12 @@ void NetworkEventCoupling::OnRawStreamData(int id, const void *data, int dataSiz
     }
 }
 
-void NetworkEventCoupling::OnStreamError(int id, StreamInterface::Error error) {
-    (void)id;
-    (void)error;
+void NetworkEventCoupling::OnStreamError(StreamInterface::Error error) {
+    (void) error;
     EnterErrorState();
 }
 
-void NetworkEventCoupling::OnTimer(int id) {
-    (void)id;
+void NetworkEventCoupling::OnTimer() {
     if (!error_) {    // Defensive.
         SendKeepAliveChunk();
         if (!error_) {
@@ -236,8 +230,7 @@ void NetworkEventCoupling::OnTimer(int id) {
     }
 }
 
-void NetworkEventCoupling::OnEventsAvailable(int id) {
-    (void)id;
+void NetworkEventCoupling::OnEventsAvailable() {
     if (!error_) {    // Defensive.
         eventBuffer_->Clear();
         if (hub_->Sync(hubClientId_, &eventBuffer_)) {
@@ -255,7 +248,7 @@ void NetworkEventCoupling::Activate(bool deepActivation) {
     if (signalErrorState_) {
         signalErrorState_ = false;
         if (handler_) {
-            handler_->OnNetworkEventCouplingErrorState(handlerAssociatedId_);
+            handler_->OnNetworkEventCouplingErrorState();
         }
     }
 }

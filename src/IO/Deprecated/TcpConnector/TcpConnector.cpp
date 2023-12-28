@@ -24,10 +24,10 @@ namespace K {
 namespace IO {
 namespace Deprecated {
 
-TcpConnector::TcpConnector(const string &hostAndPort, HandlerInterface *handler, int handlerActivationId,
+TcpConnector::TcpConnector(const string &hostAndPort, HandlerInterface *handler,
                            const shared_ptr<ThreadPool> &threadPool)
         : sharedState_{make_shared<SharedState>()},
-          connector_{make_unique<Connector>(hostAndPort, handler, handlerActivationId)} {
+          connector_{make_unique<Connector>(hostAndPort, handler)} {
     threadPool->Run(connector_.get(), sharedState_.get(), 0);
 }
 

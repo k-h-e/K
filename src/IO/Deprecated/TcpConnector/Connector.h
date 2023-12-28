@@ -19,7 +19,7 @@ namespace Deprecated {
 //! Connector (thread) for the TcpConnector.
 class TcpConnector::Connector : public virtual Core::ActionInterface {
   public:
-    Connector(const std::string &hostAndPort, HandlerInterface *handler, int handlerActivationId);
+    Connector(const std::string &hostAndPort, HandlerInterface *handler);
     Connector()                                   = delete;
     Connector(const Connector &other)             = delete;
     Connector &operator=(const Connector &other)  = delete;
@@ -31,7 +31,6 @@ class TcpConnector::Connector : public virtual Core::ActionInterface {
   private:
     std::string      hostAndPort_;
     HandlerInterface *handler_;
-    int              handlerActivationId_;
 };
 
 }    // Namespace Deprecated.

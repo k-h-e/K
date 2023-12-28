@@ -6,7 +6,7 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include <K/IO/StreamSaver.h>
+#include <K/IO/RawStreamSaver.h>
 
 #include <K/IO/File.h>
 #include <K/IO/StreamBuffer.h>
@@ -20,21 +20,19 @@ using K::IO::Path;
 namespace K {
 namespace IO {
 
-StreamSaver::StreamSaver(const Path &fileName)
+RawStreamSaver::RawStreamSaver(const Path &fileName)
         : fileStream_(make_unique<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
                                                 File::AccessMode::WriteOnly, 4 * 1024)) {
     // Nop.
 }
 
-void StreamSaver::OnStreamData(int id, const void *data, int dataSize) {
-    (void)id;
+void RawStreamSaver::OnRawStreamData(const void *data, int dataSize) {
     if (fileStream_) {
         WriteItem(fileStream_.get(), data, dataSize);
     }
 }
 
-void StreamSaver::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
-    (void)id;
+void RawStreamSaver::OnStreamError(StreamInterface::Error error) {
     (void)error;
     fileStream_.reset();
 }

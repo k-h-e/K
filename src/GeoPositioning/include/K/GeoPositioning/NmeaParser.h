@@ -22,7 +22,7 @@ class NmeaMessageHandlerInterface;
 //! Parses a binary stream into NMEA messages (sentences).
 class NmeaParser : public virtual Core::RawStreamHandlerInterface {
   public:    
-    NmeaParser(const std::shared_ptr<NmeaMessageHandlerInterface> &handler, int activationId);
+    NmeaParser(const std::shared_ptr<NmeaMessageHandlerInterface> &handler);
     NmeaParser()                                   = delete;
     NmeaParser(const NmeaParser &other)            = delete;
     NmeaParser &operator=(const NmeaParser &other) = delete;
@@ -30,8 +30,8 @@ class NmeaParser : public virtual Core::RawStreamHandlerInterface {
     NmeaParser &operator=(NmeaParser &&other)      = delete;
     ~NmeaParser()                                  = default;
 
-    void OnRawStreamData(int id, const void *data, int dataSize) override;
-    void OnStreamError(int id, Core::StreamInterface::Error error) override;
+    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnStreamError(Core::StreamInterface::Error error) override;
 
   private:
     enum class State { BetweenMessages,
@@ -40,7 +40,6 @@ class NmeaParser : public virtual Core::RawStreamHandlerInterface {
                        AcceptingCheckSum };
 
     std::shared_ptr<NmeaMessageHandlerInterface> handler_;
-    int                                          handlerActivationId_;
     State                                        state_;
     std::string                                  token_;
     NmeaMessage                                  message_;

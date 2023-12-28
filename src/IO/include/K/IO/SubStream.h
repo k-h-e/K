@@ -31,14 +31,14 @@ class SubStream : public virtual Core::SeekableBlockingInStreamInterface {
     void RecoverAndSeek(int64_t position) override;
     int64_t StreamPosition() const override;
     bool ErrorState() const override;
-    Error StreamError() const override;
+    std::optional<Error> StreamError() const override;
 
   private:
     std::shared_ptr<Core::SeekableBlockingInStreamInterface> stream_;
     int64_t                                                  offset_;
     int64_t                                                  size_;
     int64_t                                                  position_;
-    Core::StreamInterface::Error                             error_;
+    std::optional<Core::StreamInterface::Error>              error_;
 };
 
 }    // Namespace IO.

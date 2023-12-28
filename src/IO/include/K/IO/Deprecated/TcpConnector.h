@@ -37,9 +37,9 @@ class TcpConnector : public virtual Core::Interface {
         /*!
          *  The handler is responsible for eventually closing the connection, otherwise it will leak.
          */
-        virtual void OnTcpConnectionEstablished(int id, int fd) = 0;
+        virtual void OnTcpConnectionEstablished(int fd) = 0;
         //! Used by the TcpConnector to indicate failure.
-        virtual void OnFailedToEstablishTcpConnection(int id) = 0;
+        virtual void OnFailedToEstablishTcpConnection() = 0;
     };
 
     //! Establishes a TCP network connection to the specified host, given by name and port, separated by a <c>':'</c>.
@@ -47,12 +47,8 @@ class TcpConnector : public virtual Core::Interface {
      *  The handler methods will get called on an arbitrary thread and must not call back into the \p TcpConnector.
      *
      *  The handler is expected to outlive the TcpConnector.
-     *
-     *  \param handlerActivationId
-     *  ID to be passed along with handler activations from this TcpConnector. Useful in case one wants to use one
-     *  handler with multiple TcpConnector s.
      */
-    TcpConnector(const std::string &hostAndPort, HandlerInterface *handler, int handlerActivationId,
+    TcpConnector(const std::string &hostAndPort, HandlerInterface *handler,
                  const std::shared_ptr<Core::ThreadPool> &threadPool);
     TcpConnector()                                      = delete;
     TcpConnector(const TcpConnector &other)             = delete;

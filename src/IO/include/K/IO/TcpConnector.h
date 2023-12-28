@@ -33,14 +33,9 @@ class TcpConnector : public virtual Core::Interface,
      *  TcpConnector.
      *
      *  The handler is expected to outlive the TcpConnector. It will not get called upon TcpConnector destruction.
-     *
-     *  \param handlerActivationId
-     *  ID to be passed along with handler activations from this TcpConnector. Useful in case one wants to use one
-     *  handler with multiple TcpConnector s.
      */
     TcpConnector(const std::string &hostAndPort, IO::Deprecated::TcpConnector::HandlerInterface *handler,
-                 int handlerActivationId, const std::shared_ptr<Core::RunLoop> &runLoop,
-                 const std::shared_ptr<Core::ThreadPool> &threadPool);
+                 const std::shared_ptr<Core::RunLoop> &runLoop, const std::shared_ptr<Core::ThreadPool> &threadPool);
     TcpConnector()                                      = delete;
     TcpConnector(const TcpConnector &other)             = delete;
     TcpConnector &operator=(const TcpConnector &other)  = delete;
@@ -56,7 +51,6 @@ class TcpConnector : public virtual Core::Interface,
     const std::shared_ptr<Core::RunLoop>           runLoop_;
     int                                            runLoopClientId_;
     IO::Deprecated::TcpConnector::HandlerInterface *handler_;
-    int                                            handlerActivationId_;
     std::unique_ptr<SynchronizedState>             synchronizedState_;
     std::unique_ptr<IO::Deprecated::TcpConnector>  connector_;
     bool                                           finished_;

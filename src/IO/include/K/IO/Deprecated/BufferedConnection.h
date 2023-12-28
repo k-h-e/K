@@ -54,7 +54,7 @@ class BufferedConnection : public virtual Core::Deprecated::ConnectionStreamInte
      *  method returns.
      */
     void TriggerErrorState();
-    bool Register(const std::shared_ptr<Core::RawStreamHandlerInterface> &handler, int activationId) override;
+    bool Register(const std::shared_ptr<Core::RawStreamHandlerInterface> &handler) override;
     void Unregister(const std::shared_ptr<Core::RawStreamHandlerInterface> &handler) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;

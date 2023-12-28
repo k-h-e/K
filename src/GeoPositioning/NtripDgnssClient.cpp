@@ -19,7 +19,7 @@ using std::string;
 using std::to_string;
 using std::stringstream;
 using K::Core::Log;
-using K::Core::StreamHandlerInterface;
+using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
 using K::GeoPositioning::RtcmParser;
@@ -28,11 +28,11 @@ using K::IO::ConnectionIO;
 namespace K {
 namespace GeoPositioning {
 
-class NtripDgnssClient::ReadHandler : public virtual StreamHandlerInterface {
+class NtripDgnssClient::ReadHandler : public virtual RawStreamHandlerInterface {
   public:
     ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler);
-    void OnStreamData(int id, const void *data, int dataSize) override;
-    void OnStreamEnteredErrorState(int id, StreamInterface::Error error) override;
+    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnStreamError(StreamInterface::Error error) override;
 
   private:
     RtcmParser parser_;
@@ -43,7 +43,7 @@ NtripDgnssClient::NtripDgnssClient(
     const shared_ptr<RtcmMessageHandlerInterface> &messageHandler, const shared_ptr<ConnectionIO> &connectionIO)
         : connection_{host, connectionIO},
           readHandler_{make_shared<ReadHandler>(messageHandler)} {
-    connection_.Register(readHandler_, 0);
+    connection_.Register(readHandler_);
 
     stringstream request;
     request << "GET /" << mountPoint << " HTTP/1.1\r\n";
@@ -70,18 +70,16 @@ void NtripDgnssClient::SendGga(const std::string &gga) {
 }
 
 NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler)
-        : parser_(messageHandler, 0) {
+        : parser_(messageHandler) {
     // Nop.
 }
 
-void NtripDgnssClient::ReadHandler::OnStreamData(int id, const void *data, int dataSize) {
-    (void)id;
-    parser_.OnStreamData(0, data, dataSize);
+void NtripDgnssClient::ReadHandler::OnRawStreamData(const void *data, int dataSize) {
+    parser_.OnRawStreamData(data, dataSize);
 }
 
-void NtripDgnssClient::ReadHandler::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
-    (void)id;
-    parser_.OnStreamEnteredErrorState(0, error);
+void NtripDgnssClient::ReadHandler::OnStreamError(StreamInterface::Error error) {
+    parser_.OnStreamError(error);
 }
 
 }    // Namespace GeoPositioning.

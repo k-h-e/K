@@ -24,11 +24,7 @@ namespace EchoSounding {
 class EnvelopeHandlerInterface : public virtual Core::StreamHandlerInterface {
   public:
     //! Asks the handler to process the specified envelope data set.
-    /*!
-     *  \param id
-     *  Activation ID that was registered together with the handler.
-     */
-    virtual void OnEnvelope(int id, const Envelope &envelope) = 0;
+    virtual void OnEnvelope(const Envelope &envelope) = 0;
 };
 
 }    // Namespace EchoSounding.

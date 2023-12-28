@@ -31,8 +31,8 @@ class TcpConnector::SynchronizedState : public virtual IO::Deprecated::TcpConnec
 
     void Sync(std::optional<int> *fd, bool *finished);
 
-    void OnTcpConnectionEstablished(int id, int fd) override;
-    void OnFailedToEstablishTcpConnection(int id) override;
+    void OnTcpConnectionEstablished(int fd) override;
+    void OnFailedToEstablishTcpConnection() override;
 
   private:
     std::mutex lock_;    // Protects everything below...

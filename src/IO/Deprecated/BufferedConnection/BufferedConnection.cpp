@@ -86,8 +86,8 @@ void BufferedConnection::TriggerErrorState() {
     connectionIO_->RequestErrorState(sharedState_.get());
 }
 
-bool BufferedConnection::Register(const shared_ptr<RawStreamHandlerInterface> &handler, int activationId) {
-    return sharedState_->Register(handler, activationId);
+bool BufferedConnection::Register(const shared_ptr<RawStreamHandlerInterface> &handler) {
+    return sharedState_->Register(handler);
 }
 
 void BufferedConnection::Unregister(const shared_ptr<RawStreamHandlerInterface> &handler) {

@@ -29,11 +29,7 @@ class Timer : public virtual Core::Interface {
     class HandlerInterface : public virtual Core::Interface {
       public:
         //! Called when(ever) the timer fires.
-        /*!
-         *  \param id
-         *  ID that was given when the handler was registered.
-         */
-        virtual void OnTimer(int id) = 0;
+        virtual void OnTimer() = 0;
     };
 
     Timer(std::chrono::milliseconds interval, const std::shared_ptr<RunLoop> &runLoop,
@@ -52,12 +48,8 @@ class Timer : public virtual Core::Interface {
      *  The handler's methods get activated on the associated run loop's thread. They may call back into the timer.
      *
      *  The handler is expected to outlive the timer.
-     *
-     *  \param id
-     *  ID to be passed along with handler activations for the timer. Useful in case one wants to use one handler
-     *  with multiple timers.
      */
-    void Register(HandlerInterface *handler, int id);
+    void Register(HandlerInterface *handler);
 
   private:
     class  Adapter;

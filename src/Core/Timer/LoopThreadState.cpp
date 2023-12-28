@@ -19,15 +19,14 @@ Timer::LoopThreadState::LoopThreadState(const shared_ptr<RunLoop> &runLoop, cons
           runLoop(runLoop),
           runLoopClientId(0),
           timer(0),
-          handler(nullptr),
-          handlerAssociatedId(0) {
+          handler(nullptr) {
     // Nop.
 }
 
 void Timer::LoopThreadState::Activate(bool deepActivation) {
     (void)deepActivation;
     if (handler) {
-        handler->OnTimer(handlerAssociatedId);
+        handler->OnTimer();
     }
 }
 

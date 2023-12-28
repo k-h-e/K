@@ -30,7 +30,6 @@ ListenSocket::LoopThreadState::LoopThreadState(
           runLoop(aRunLoop),
           runLoopClientId(0),
           handler(nullptr),
-          handlerAssociatedId(0),
           error(false),
           newHandlerRegistered(false),
           activationRequested(false),
@@ -70,7 +69,7 @@ void ListenSocket::LoopThreadState::Activate(bool deepActivation) {
 
     if (signalErrorState) {
         if (handler) {
-            handler->OnListenSocketErrorState(handlerAssociatedId);
+            handler->OnListenSocketErrorState();
         }
     } else if (!error && !acceptedConnections.empty()) {
         unique_ptr<TcpConnection> connection;
@@ -81,7 +80,7 @@ void ListenSocket::LoopThreadState::Activate(bool deepActivation) {
         }
 
         if (handler) {
-            handler->OnListenSocketAcceptedConnection(handlerAssociatedId, std::move(connection));
+            handler->OnListenSocketAcceptedConnection(std::move(connection));
         } else {
             Log::Print(Log::Level::Warning, this, [&]{ return "no handler registered, closing accepted connection"; });
         }

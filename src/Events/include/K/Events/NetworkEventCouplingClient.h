@@ -61,10 +61,10 @@ class NetworkEventCouplingClient : public virtual Core::Interface,
     void Disconnect();
 
   private:
-    void OnTcpConnectionEstablished(int id, int fd) override;
-    void OnFailedToEstablishTcpConnection(int id) override;
-    void OnNetworkEventCouplingErrorState(int id) override;
-    void OnTimer(int id) override;
+    void OnTcpConnectionEstablished(int fd) override;
+    void OnFailedToEstablishTcpConnection() override;
+    void OnNetworkEventCouplingErrorState() override;
+    void OnTimer() override;
 
     void ScheduleReconnect();
     void InstallConnector();

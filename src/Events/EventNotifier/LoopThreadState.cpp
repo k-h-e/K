@@ -20,15 +20,14 @@ EventNotifier::LoopThreadState::LoopThreadState(const shared_ptr<EventHub> &hub,
           clientLoopId(clientLoopId),
           runLoop(runLoop),
           runLoopClientId(0),
-          handler(nullptr),
-          handlerAssociatedId(0) {
+          handler(nullptr) {
     // Nop.
 }
 
 void EventNotifier::LoopThreadState::Activate(bool deepActivation) {
-    (void)deepActivation;
+    (void) deepActivation;
     if (handler) {
-        handler->OnEventsAvailable(handlerAssociatedId);
+        handler->OnEventsAvailable();
     }
 }
 

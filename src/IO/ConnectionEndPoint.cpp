@@ -28,16 +28,15 @@ ConnectionEndPoint::ConnectionEndPoint(const shared_ptr<Connection> &connection,
         : connection_{connection},
           runLoop_{runLoop},
           handler_{nullptr},
-          handlerActivationId_{0},
           readyRead_{false},
           readyWrite_{false},
           signalError_{false} {
     runLoopClientId_ = runLoop_->AddClient(this);
-    connection_->Register(this, 0);
+    connection_->Register(this);
 }
 
 ConnectionEndPoint::~ConnectionEndPoint() {
-    connection_->Register(nullptr, 0);
+    connection_->Register(nullptr);
     runLoop_->RemoveClient(runLoopClientId_);
 
     if (closeResultAcceptor_) {
@@ -49,9 +48,8 @@ ConnectionEndPoint::~ConnectionEndPoint() {
     }
 }
 
-void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler, int activationId) {
-    handler_             = handler;
-    handlerActivationId_ = activationId;
+void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler) {
+    handler_ = handler;
 
     if (handler_) {
         if (error_) {
@@ -95,23 +93,21 @@ void ConnectionEndPoint::Activate(bool deepActivation) {
             runLoop_->RequestActivation(runLoopClientId_, false);
         }
         if (handler_ && error_) {
-            handler_->OnStreamError(handlerActivationId_, *error_);
+            handler_->OnStreamError(*error_);
         }
     } else {
         DispatchIncoming();
     }
 }
 
-void ConnectionEndPoint::OnStreamReadyRead(int id) {
-    (void) id;
+void ConnectionEndPoint::OnStreamReadyRead() {
     if (!error_) {
         readyRead_ = true;
         DispatchIncoming();
     }
 }
 
-void ConnectionEndPoint::OnStreamReadyWrite(int id) {
-    (void) id;
+void ConnectionEndPoint::OnStreamReadyWrite() {
     if (!error_) {
         readyWrite_ = true;
         PushOutgoing();
@@ -124,7 +120,7 @@ void ConnectionEndPoint::DispatchIncoming() {
         if (readBuffer_.AppendFromStream(connection_.get(), 2048)) {
             runLoop_->RequestActivation(runLoopClientId_, false);
             if (handler_) {
-                handler_->OnRawStreamData(handlerActivationId_, readBuffer_.Data(), readBuffer_.DataSize());
+                handler_->OnRawStreamData(readBuffer_.Data(), readBuffer_.DataSize());
             }
         } else {
             readyRead_ = false;

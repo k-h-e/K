@@ -27,7 +27,6 @@ struct Connection::LoopThreadState : public virtual Core::RunLoop::ClientInterfa
     int                                      runLoopClientId;
 
     Connection::HandlerInterface             *handler;
-    int                                      handlerAssociatedId;
     Core::RingBuffer                         readBuffer;
     Core::RingBuffer                         writeBuffer;
     std::optional<Error>                     error;

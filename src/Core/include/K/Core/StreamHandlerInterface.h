@@ -18,11 +18,7 @@ namespace Core {
 class StreamHandlerInterface : public virtual Interface {
   public:
     //! Informs the handler that the stream has entered error state, see <c>StreamInterface::ErrorState()</c>.
-    /*!
-     *  \param id
-     *  Activation ID that was registered together with the handler.
-     */
-    virtual void OnStreamError(int id, StreamInterface::Error error) = 0;
+    virtual void OnStreamError(StreamInterface::Error error) = 0;
 };
 
 }    // Namespace Core.

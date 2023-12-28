@@ -30,7 +30,6 @@ namespace Deprecated {
 
 BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
         : connectionIO_(connectionIO),
-          handlerActivationId_(0),
           handlerCalledInitially_(true),
           bufferSizeThreshold_(bufferSizeThreshold),
           canNotWrite_(true) {
@@ -45,12 +44,11 @@ void BufferedConnection::SharedState::SetError() {
     }
 }    // ......................................................................................... critical section, end.
 
-bool BufferedConnection::SharedState::Register(const shared_ptr<RawStreamHandlerInterface> &handler, int activationId) {
+bool BufferedConnection::SharedState::Register(const shared_ptr<RawStreamHandlerInterface> &handler) {
     assert(handler);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (!error_) {
         handler_                = handler;
-        handlerActivationId_    = activationId;
         handlerCalledInitially_ = false;
         connectionIO_->RequestCustomCall(this);
         connectionIO_->SetClientCanRead(this);
@@ -65,7 +63,6 @@ void BufferedConnection::SharedState::Unregister(const shared_ptr<RawStreamHandl
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     if (handler == handler_) {
         handler_.reset();
-        handlerActivationId_ = 0;
     }
 }    // ......................................................................................... critical section, end.
 
@@ -109,7 +106,7 @@ bool BufferedConnection::SharedState::OnDataRead(const void *data, int dataSize)
     EnsureHandlerCalledInitially();
     if (!error_) {
         if (handler_) {
-            handler_->OnRawStreamData(handlerActivationId_, data, dataSize);
+            handler_->OnRawStreamData(data, dataSize);
             return true;
         }
     }
@@ -150,7 +147,7 @@ void BufferedConnection::SharedState::OnEof() {
         Log::Print(Log::Level::Debug, this, []{ return "reached EOF"; });
         error_ = Error::Eof;
         if (handler_) {
-            handler_->OnStreamError(handlerActivationId_, *error_);
+            handler_->OnStreamError(*error_);
         }
     }
 }    // ......................................................................................... critical section, end.
@@ -162,7 +159,7 @@ void BufferedConnection::SharedState::OnError() {
         Log::Print(Log::Level::Warning, this, []{ return "entered error state"; });
         error_ = Error::IO;
         if (handler_) {
-            handler_->OnStreamError(handlerActivationId_, *error_);
+            handler_->OnStreamError(*error_);
         }
         writeCanContinue_.notify_all();
     }
@@ -173,7 +170,7 @@ void BufferedConnection::SharedState::EnsureHandlerCalledInitially() {
     if (handler_) {
         if (!handlerCalledInitially_) {
             if (error_) {
-                handler_->OnStreamError(handlerActivationId_, *error_);
+                handler_->OnStreamError(*error_);
             }
 
             handlerCalledInitially_ = true;

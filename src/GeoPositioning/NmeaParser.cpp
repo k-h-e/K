@@ -24,9 +24,8 @@ using K::Core::StringTools;
 namespace K {
 namespace GeoPositioning {
 
-NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler, int activationId)
+NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler)
         : handler_(handler),
-          handlerActivationId_(activationId),
           state_(State::BetweenMessages),
           message_(""),
           numSkipped_(0),
@@ -34,8 +33,7 @@ NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler, i
     // Nop.
 }
 
-void NmeaParser::OnRawStreamData(int id, const void *data, int dataSize) {
-    (void)id;
+void NmeaParser::OnRawStreamData(const void *data, int dataSize) {
     if (!error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
         for (int i = 0; i < dataSize; ++i) {
@@ -84,7 +82,7 @@ void NmeaParser::OnRawStreamData(int id, const void *data, int dataSize) {
             case State::AcceptingCheckSum:
                 if (character == '\n') {
                     if (message_.CheckSum() == StringTools::ToLower(token_)) {
-                        handler_->OnNmeaMessage(handlerActivationId_, message_);
+                        handler_->OnNmeaMessage(message_);
                     } else {
                         Log::Print(Log::Level::Warning, this, [&]{
                             return "checksum mismatch: \"" + message_.ToString() + "\", expected_checksum=\"" + token_
@@ -112,10 +110,9 @@ void NmeaParser::OnRawStreamData(int id, const void *data, int dataSize) {
     }
 }
 
-void NmeaParser::OnStreamError(int id, StreamInterface::Error error) {
-    (void) id;
+void NmeaParser::OnStreamError(StreamInterface::Error error) {
     if (!error_) {
-        handler_->OnStreamError(handlerActivationId_, error);
+        handler_->OnStreamError(error);
         error_ = true;
     }
 }

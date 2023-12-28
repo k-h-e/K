@@ -20,20 +20,17 @@ using K::Core::StreamInterface;
 namespace K {
 namespace GeoPositioning {
 
-RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler, int handlerActivationId)
+RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler)
         : handler_{handler},
-          handlerActivationId_{handlerActivationId},
           state_{State::BetweenMessages},
           payloadSize_{0},
           numSkipped_{0},
-          eof_{false},
           error_{false} {
    // Nop.
 }
 
-void RtcmParser::OnStreamData(int id, const void *data, int dataSize) {
-    (void)id;
-    if (!eof_ && !error_) {
+void RtcmParser::OnRawStreamData(const void *data, int dataSize) {
+    if (!error_) {
         const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
         for (int i = 0; i < dataSize; ++i) {
             uint8_t byte = *dataPtr++;
@@ -55,7 +52,7 @@ void RtcmParser::OnStreamData(int id, const void *data, int dataSize) {
                 case State::AcceptingCrc:
                     message_.AppendToImage(&byte, 1);
                     if (message_.ImageSize() == payloadSize_ + 6) {
-                        handler_->OnRtcmMessage(handlerActivationId_, message_);
+                        handler_->OnRtcmMessage(message_);
                         message_.Reset();
                         payloadSize_ = 0;
                         state_ = State::BetweenMessages;
@@ -81,18 +78,10 @@ void RtcmParser::OnStreamData(int id, const void *data, int dataSize) {
     }
 }
 
-void RtcmParser::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
-    (void)id;
-    if (error == StreamInterface::Error::Eof) {
-        if (!eof_) {
-            handler_->OnEof(handlerActivationId_);
-            eof_ = true;
-        }
-    } else {
-        if (!error_) {
-            handler_->OnError(handlerActivationId_);
-            error_ = true;
-        }
+void RtcmParser::OnStreamError(StreamInterface::Error error) {
+    if (!error_) {
+        handler_->OnStreamError(error);
+        error_ = true;
     }
 }
 

@@ -22,7 +22,6 @@ struct EventNotifier::LoopThreadState : public virtual Core::RunLoop::ClientInte
     const std::shared_ptr<Core::RunLoop> runLoop;
     int                                  runLoopClientId;
     HandlerInterface                     *handler;
-    int                                  handlerAssociatedId;
 
     LoopThreadState(const std::shared_ptr<EventHub> &hub, int clientLoopId,
                     const std::shared_ptr<Core::RunLoop> &runLoop);

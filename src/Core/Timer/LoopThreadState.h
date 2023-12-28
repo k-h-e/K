@@ -31,7 +31,6 @@ struct Timer::LoopThreadState : public virtual RunLoop::ClientInterface {
     int                                 runLoopClientId;
     int                                 timer;
     HandlerInterface                    *handler;
-    int                                 handlerAssociatedId;
 
     LoopThreadState(const std::shared_ptr<RunLoop> &runLoop, const std::shared_ptr<Core::Timers> &timers);
     LoopThreadState(const LoopThreadState &other)            = delete;

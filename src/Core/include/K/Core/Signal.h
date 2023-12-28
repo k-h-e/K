@@ -30,11 +30,7 @@ class Signal : public virtual Core::Interface {
     class HandlerInterface : public virtual Core::Interface {
       public:
         //! Called when the signal has been raised.
-        /*!
-         *  \param id
-         *  ID that was given when the handler was registered.
-         */
-        virtual void OnSignal(int id) = 0;
+        virtual void OnSignal() = 0;
     };
 
     Signal(const std::shared_ptr<RunLoop> &runLoop);
@@ -52,12 +48,8 @@ class Signal : public virtual Core::Interface {
      *  The handler's methods get activated on the associated run loop's thread. They may call back into the signal.
      *
      *  The handler is expected to outlive the signal.
-     *
-     *  \param id
-     *  ID to be passed along with handler activations for the signal. Useful in case one wants to use one handler
-     *  with multiple signals.
      */
-    void Register(HandlerInterface *handler, int id);
+    void Register(HandlerInterface *handler);
     //! <b>[Thread-safe]</b> Raises the signal.
     void Raise();
 

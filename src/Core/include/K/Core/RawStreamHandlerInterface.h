@@ -18,11 +18,7 @@ namespace Core {
 class RawStreamHandlerInterface : public virtual StreamHandlerInterface {
   public:
     //! Hands over another portion of raw stream data to the handler.
-    /*!
-     *  \param id
-     *  Activation ID that was registered together with the handler.
-     */
-    virtual void OnRawStreamData(int id, const void *data, int dataSize) = 0;
+    virtual void OnRawStreamData(const void *data, int dataSize) = 0;
 };
 
 }    // Namespace Core.

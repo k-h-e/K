@@ -46,11 +46,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     class HandlerInterface : public virtual K::Core::Interface {
       public:
         //! Tells the handler that the network event coupling has entered error state.
-        /*!
-         *  \param id
-         *  ID that was given when the handler was registered.
-         */
-        virtual void OnNetworkEventCouplingErrorState(int id) = 0;
+        virtual void OnNetworkEventCouplingErrorState() = 0;
     };
 
     NetworkEventCoupling(
@@ -72,12 +68,8 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
      *  event coupling.
      *
      *  The handler is expected to outlive the network event coupling.
-     *
-     *  \param id
-     *  ID to be passed along with handler activations network event coupling. Useful in case one wants to use one
-     *  handler with multiple network event couplings.
      */
-    void Register(HandlerInterface *handler, int id);
+    void Register(HandlerInterface *handler);
     bool ErrorState() const override;
 
   private:
@@ -90,10 +82,10 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
                        AcceptingChunkData
     };
 
-    void OnRawStreamData(int id, const void *data, int dataSize) override;
-    void OnStreamError(int id, Core::StreamInterface::Error error) override;
-    void OnTimer(int id) override;
-    void OnEventsAvailable(int id) override;
+    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnStreamError(Core::StreamInterface::Error error) override;
+    void OnTimer() override;
+    void OnEventsAvailable() override;
     void Activate(bool deepActivation) override;
 
     void CopyDown();
@@ -113,7 +105,6 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     int                                     numSendsBetweenKeepAliveChecks_;
     int                                     hubClientId_;
     NetworkEventCoupling::HandlerInterface  *handler_;
-    int                                     handlerAssociatedId_;
     State                                   state_;
     K::Core::Buffer                         readBuffer_;
     int                                     readCursor_;

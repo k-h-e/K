@@ -42,11 +42,8 @@ class EventNotifier : public virtual Core::Interface {
         //! loop).
         /*!
          *  The notifier client needs to fetch all its events before it will get notified again.
-         *
-         *  \param id
-         *  ID that was given when the handler was registered.
          */
-        virtual void OnEventsAvailable(int id) = 0;
+        virtual void OnEventsAvailable() = 0;
     };
 
     EventNotifier(const std::shared_ptr<EventHub> &hub, int clientLoopId,
@@ -65,12 +62,8 @@ class EventNotifier : public virtual Core::Interface {
      *  notifier.
      *
      *  The handler is expected to outlive the event notifier.
-     *
-     *  \param id
-     *  ID to be passed along with handler activations by the event notifier. Useful in case one wants to use one
-     *  handler with multiple event notifiers.
      */
-    void Register(HandlerInterface *handler, int id);
+    void Register(HandlerInterface *handler);
 
   private:
     struct LoopThreadState;

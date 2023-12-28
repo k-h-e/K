@@ -40,7 +40,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     ConnectionEndPoint &operator=(ConnectionEndPoint &&other)      = delete;
     ~ConnectionEndPoint();
 
-    void Register(Core::RawStreamHandlerInterface *handler, int activationId) override;
+    void Register(Core::RawStreamHandlerInterface *handler) override;
     int WriteBlocking(const void *data, int dataSize) override;
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;
@@ -48,8 +48,8 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
 
   private:
     void Activate(bool deepActivation) override;
-    void OnStreamReadyRead(int id) override;
-    void OnStreamReadyWrite(int id) override;
+    void OnStreamReadyRead() override;
+    void OnStreamReadyWrite() override;
 
     void DispatchIncoming();
     void PushOutgoing();
@@ -58,7 +58,6 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     const std::shared_ptr<Core::RunLoop>  runLoop_;
     int                                   runLoopClientId_;
     Core::RawStreamHandlerInterface       *handler_;
-    int                                   handlerActivationId_;
     Core::Buffer                          readBuffer_;
     bool                                  readyRead_;
     Core::RingBuffer                      writeBuffer_;

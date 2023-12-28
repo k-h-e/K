@@ -94,16 +94,14 @@ Connection::~Connection() {
     }
 }
 
-void Connection::Register(HandlerInterface *handler, int id) {
+void Connection::Register(HandlerInterface *handler) {
     if (handler) {
         loopThreadState_->handler                = handler;
-        loopThreadState_->handlerAssociatedId    = id;
         loopThreadState_->handlerNeedsReadyRead  = true;
         loopThreadState_->handlerNeedsReadyWrite = true;
         loopThreadState_->RequestActivation(false);
     } else {
-        loopThreadState_->handler             = nullptr;
-        loopThreadState_->handlerAssociatedId = 0;
+        loopThreadState_->handler = nullptr;
     }
 }
 

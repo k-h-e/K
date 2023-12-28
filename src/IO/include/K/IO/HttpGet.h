@@ -13,13 +13,13 @@
 #include <optional>
 #include <string>
 #include <K/Core/AsyncInStreamInterface.h>
+#include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/RunLoop.h>
-#include <K/Core/StreamHandlerInterface.h>
 
 namespace K {
     namespace IO {
+        class ConnectionEndPoint;
         class ConnectionIO;
-        class InteractionConnectionEndPoint;
     }
 }
 
@@ -29,7 +29,7 @@ namespace IO {
 //! Performs an HTTP GET request.
 class HttpGet : public virtual Core::AsyncInStreamInterface,
                 private virtual Core::RunLoop::ClientInterface,
-                private virtual Core::StreamHandlerInterface {
+                private virtual Core::RawStreamHandlerInterface {
   public:
     HttpGet(const std::string &host, const std::string &resource, const std::shared_ptr<Core::RunLoop> &runLoop,
             const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
@@ -41,29 +41,28 @@ class HttpGet : public virtual Core::AsyncInStreamInterface,
     ~HttpGet();
     
     bool ErrorState() const override;
-    Error StreamError() const override;
-    void Register(Core::StreamHandlerInterface *handler, int activationId) override;
+    std::optional<Error> StreamError() const override;
+    void Register(Core::RawStreamHandlerInterface *handler) override;
 
   private:
     void Activate(bool deepActivation) override;
-    void OnStreamData(int id, const void *data, int dataSize) override;
-    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
+    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnStreamError(Core::StreamInterface::Error error) override;
     void OnHeaderData(const void *data, int dataSize);
     void OnContentData(const void *data, int dataSize);
     bool ProcessHeaderLine();
     
-    const std::shared_ptr<Core::RunLoop>            runLoop_;
-    int                                             runLoopClientId_;
-    std::shared_ptr<InteractionConnectionEndPoint>  endPoint_;
-    Core::StreamHandlerInterface                    *handler_;
-    int                                             handlerActivationId_;
-    std::string                                     line_;
-    bool                                            receivingHeader_;
-    int                                             numHeaderLines_;
-    std::optional<int>                              numContentBytes_;
-    int                                             numContentBytesDelivered_;
-    Core::StreamInterface::Error                    error_;
-    bool                                            signalError_;
+    const std::shared_ptr<Core::RunLoop>        runLoop_;
+    int                                         runLoopClientId_;
+    std::shared_ptr<ConnectionEndPoint>         endPoint_;
+    Core::RawStreamHandlerInterface             *handler_;
+    std::string                                 line_;
+    bool                                        receivingHeader_;
+    int                                         numHeaderLines_;
+    std::optional<int>                          numContentBytes_;
+    int                                         numContentBytesDelivered_;
+    std::optional<Core::StreamInterface::Error> error_;
+    bool                                        signalError_;
     
 };
 

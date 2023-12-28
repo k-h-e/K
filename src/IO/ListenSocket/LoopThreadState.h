@@ -33,7 +33,6 @@ struct ListenSocket::LoopThreadState : public virtual Core::RunLoop::ClientInter
     int                                        runLoopClientId;
 
     HandlerInterface                           *handler;
-    int                                        handlerAssociatedId;
     std::deque<std::unique_ptr<TcpConnection>> acceptedConnections;
     bool                                       error;
     bool                                       newHandlerRegistered;

@@ -27,9 +27,8 @@ Signal::~Signal() {
     loopThreadState_->runLoop->RemoveClient(loopThreadState_->runLoopClientId);
 }
 
-void Signal::Register(HandlerInterface *handler, int id) {
-    loopThreadState_->handler             = handler;
-    loopThreadState_->handlerAssociatedId = handler ? id : 0;
+void Signal::Register(HandlerInterface *handler) {
+    loopThreadState_->handler = handler;
 }
 
 void Signal::Raise() {

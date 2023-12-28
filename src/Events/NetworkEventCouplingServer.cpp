@@ -41,7 +41,6 @@ NetworkEventCouplingServer::NetworkEventCouplingServer(
           threadPool_{threadPool},
           runLoop_{runLoop},
           handler_{nullptr},
-          handlerActivationId_{0},
           port_{port},
           protocolVersion_{protocolVersion},
           keepAliveParameters_{keepAliveParameters},
@@ -60,10 +59,8 @@ NetworkEventCouplingServer::~NetworkEventCouplingServer() {
     // TODO: Check deconstruction.
 }
 
-void NetworkEventCouplingServer::Register(HandlerInterface *handler, int id) {
-    handler_             = handler;
-    handlerActivationId_ = handler ? id : 0;
-
+void NetworkEventCouplingServer::Register(HandlerInterface *handler) {
+    handler_ = handler;
     if (handler_) {
         if (coupling_) {
             signalCouplingInstallation_ = true;
@@ -78,38 +75,34 @@ void NetworkEventCouplingServer::Activate(bool deepActivation) {
     (void)deepActivation;
     if (signalCouplingInstallation_) {
         if (handler_) {
-            handler_->OnNetworkEventCouplingInstalled(handlerActivationId_);
+            handler_->OnNetworkEventCouplingInstalled();
         }
         signalCouplingInstallation_ = false;
     }
 }
 
-void NetworkEventCouplingServer::OnListenSocketAcceptedConnection(int id, unique_ptr<TcpConnection> connection) {
-    (void)id;
+void NetworkEventCouplingServer::OnListenSocketAcceptedConnection(unique_ptr<TcpConnection> connection) {
     InstallCoupling(std::move(connection));
 
     if (handler_) {
-        handler_->OnNetworkEventCouplingInstalled(handlerActivationId_);
+        handler_->OnNetworkEventCouplingInstalled();
     }
 }
 
-void NetworkEventCouplingServer::OnListenSocketErrorState(int id) {
-    (void)id;
+void NetworkEventCouplingServer::OnListenSocketErrorState() {
     UninstallListenSocket();
     InstallTimer();
 }
 
-void NetworkEventCouplingServer::OnNetworkEventCouplingErrorState(int id) {
-    (void)id;
+void NetworkEventCouplingServer::OnNetworkEventCouplingErrorState() {
     UninstallCoupling();
 
     if (handler_) {
-        handler_->OnNetworkEventCouplingUninstalled(handlerActivationId_);
+        handler_->OnNetworkEventCouplingUninstalled();
     }
 }
 
-void NetworkEventCouplingServer::OnTimer(int id) {
-    (void)id;
+void NetworkEventCouplingServer::OnTimer() {
     InstallListenSocket();
     UninstallTimer();
 }
@@ -117,13 +110,13 @@ void NetworkEventCouplingServer::OnTimer(int id) {
 void NetworkEventCouplingServer::InstallListenSocket() {
     UninstallListenSocket();
     listenSocket_ = make_unique<ListenSocket>(port_, runLoop_, connectionIO_, threadPool_);
-    listenSocket_->Register(this, 0);
+    listenSocket_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "listen socket installed, port=" + to_string(port_); });
 }
 
 void NetworkEventCouplingServer::UninstallListenSocket() {
     if (listenSocket_) {
-        listenSocket_->Register(nullptr, 0);    // Defensive.
+        listenSocket_->Register(nullptr);    // Defensive.
         listenSocket_.reset();
         Log::Print(Log::Level::Debug, this, [&]{ return "listen socket uninstalled, port=" + to_string(port_); });
     }
@@ -133,13 +126,13 @@ void NetworkEventCouplingServer::InstallCoupling(unique_ptr<TcpConnection> conne
     UninstallCoupling();
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
                                                   runLoop_, timers_);
-    coupling_->Register(this, 0);
+    coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, port=" + to_string(port_); });
 }
 
 void NetworkEventCouplingServer::UninstallCoupling() {
     if (coupling_) {
-        coupling_->Register(nullptr, 0);    // Defensive.
+        coupling_->Register(nullptr);    // Defensive.
         coupling_.reset();
         Log::Print(Log::Level::Debug, this, [&]{
             return "network event coupling uninstalled, port=" + to_string(port_);
@@ -150,12 +143,12 @@ void NetworkEventCouplingServer::UninstallCoupling() {
 void NetworkEventCouplingServer::InstallTimer() {
     UninstallTimer();
     timer_ = make_unique<Timer>(milliseconds(3000), runLoop_, timers_);
-    timer_->Register(this, 0);
+    timer_->Register(this);
 }
 
 void NetworkEventCouplingServer::UninstallTimer() {
     if (timer_) {
-        timer_->Register(nullptr, 0);    // Defensive.
+        timer_->Register(nullptr);    // Defensive.
         timer_.reset();
     }
 }

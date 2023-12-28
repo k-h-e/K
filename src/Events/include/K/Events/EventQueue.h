@@ -55,7 +55,7 @@ class EventQueue : public virtual Events::EventBusInterface<EventClass, EventHan
         void RegisterHandler(const Event::EventType &eventType, EventHandlerClass *handler);
         void UnregisterHandler(EventHandlerClass *handler);
         void Post(const Event &event);
-        void OnEventsAvailable(int id) override;
+        void OnEventsAvailable() override;
 
       private:
         const std::shared_ptr<K::Core::RunLoop>  runLoop_;
@@ -105,12 +105,12 @@ EventQueue<EventClass, EventHandlerClass>::Core::Core(const std::shared_ptr<Even
         : runLoop_(runLoop),
           eventLoop_(hub) {
     eventNotifier_ = std::make_unique<EventNotifier>(hub, eventLoop_.hubClientId(), runLoop_);
-    eventNotifier_->Register(this, 0);
+    eventNotifier_->Register(this);
 }
 
 template<class EventClass, class EventHandlerClass>
 EventQueue<EventClass, EventHandlerClass>::Core::~Core() {
-    eventNotifier_->Register(nullptr, 0);    // Defensive.
+    eventNotifier_->Register(nullptr);    // Defensive.
     eventNotifier_.reset();
 }
 
@@ -136,8 +136,7 @@ void EventQueue<EventClass, EventHandlerClass>::Core::Post(const Event &event) {
 }
 
 template<class EventClass, class EventHandlerClass>
-void EventQueue<EventClass, EventHandlerClass>::Core::OnEventsAvailable(int id) {
-    (void)id;
+void EventQueue<EventClass, EventHandlerClass>::Core::OnEventsAvailable() {
     if (!eventLoop_.Dispatch(true)) {
         K::Core::Log::Print(K::Core::Log::Level::Debug, this, [&]{
             return "event hub signalled termination, requesting run loop termination";

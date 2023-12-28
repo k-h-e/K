@@ -21,16 +21,13 @@ namespace K {
 namespace IO {
 
 TcpConnector::TcpConnector(const string &hostAndPort, IO::Deprecated::TcpConnector::HandlerInterface *handler,
-                           int handlerActivationId, const shared_ptr<RunLoop> &runLoop,
-                           const shared_ptr<ThreadPool> &threadPool)
+                           const shared_ptr<RunLoop> &runLoop, const shared_ptr<ThreadPool> &threadPool)
         : runLoop_{runLoop},
           handler_{handler},
-          handlerActivationId_{handlerActivationId},
           finished_{false} {
     runLoopClientId_   = runLoop_->AddClient(this);
     synchronizedState_ = make_unique<SynchronizedState>(runLoop_, runLoopClientId_);
-    connector_         = make_unique<IO::Deprecated::TcpConnector>(hostAndPort, synchronizedState_.get(), 0,
-                                                                   threadPool);
+    connector_         = make_unique<IO::Deprecated::TcpConnector>(hostAndPort, synchronizedState_.get(), threadPool);
 }
 
 TcpConnector::~TcpConnector() {
@@ -45,9 +42,9 @@ void TcpConnector::Activate(bool deepActivation) {
         synchronizedState_->Sync(&fd, &finished_);
         if (finished_) {
             if (fd) {
-                handler_->OnTcpConnectionEstablished(handlerActivationId_, *fd);
+                handler_->OnTcpConnectionEstablished(*fd);
             } else {
-                handler_->OnFailedToEstablishTcpConnection(handlerActivationId_);
+                handler_->OnFailedToEstablishTcpConnection();
             }
         }
     }

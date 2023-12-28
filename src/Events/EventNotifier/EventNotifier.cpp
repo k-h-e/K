@@ -30,14 +30,12 @@ EventNotifier::~EventNotifier() {
     loopThreadState_->runLoop->RemoveClient(loopThreadState_->runLoopClientId);
 }
 
-void EventNotifier::Register(HandlerInterface *handler, int id) {
+void EventNotifier::Register(HandlerInterface *handler) {
     if (handler) {
-        loopThreadState_->handler             = handler;
-        loopThreadState_->handlerAssociatedId = id;
+        loopThreadState_->handler = handler;
         loopThreadState_->runLoop->RequestActivation(loopThreadState_->runLoopClientId, false);
     } else  {
-        loopThreadState_->handler             = nullptr;
-        loopThreadState_->handlerAssociatedId = 0;
+        loopThreadState_->handler = nullptr;
     }
 }
 

@@ -11,10 +11,11 @@
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/TextWriter.h>
+#include <K/IO/ConnectionEndPoint.h>
 #include <K/IO/TcpConnection.h>
-#include <K/IO/InteractionConnectionEndPoint.h>
 
 using std::make_shared;
+using std::optional;
 using std::shared_ptr;
 using std::string;
 using std::to_string;
@@ -33,17 +34,15 @@ HttpGet::HttpGet(const string &host, const string &resource, const shared_ptr<Ru
                  const shared_ptr<ConnectionIO> &connectionIO)
         : runLoop_{runLoop},
           handler_{nullptr},
-          handlerActivationId_{0},
           receivingHeader_{true},
           numHeaderLines_{0},
           numContentBytesDelivered_{0},
-          error_{Error::None},
           signalError_{false} {
     runLoopClientId_ = runLoop_->AddClient(this);
     
     auto connection{make_shared<TcpConnection>(host, 80, runLoop, connectionIO)};
-    endPoint_ = make_shared<InteractionConnectionEndPoint>(connection, runLoop);
-    endPoint_->Register(this, 0);
+    endPoint_ = make_shared<ConnectionEndPoint>(connection, runLoop);
+    endPoint_->Register(this);
     TextWriter writer{endPoint_};
     writer.Write("GET ");
     writer.Write(resource);
@@ -56,23 +55,22 @@ HttpGet::HttpGet(const string &host, const string &resource, const shared_ptr<Ru
 }
 
 HttpGet::~HttpGet() {
-    endPoint_->Register(nullptr, 0);
+    endPoint_->Register(nullptr);
     runLoop_->RemoveClient(runLoopClientId_);
 }
 
 bool HttpGet::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error HttpGet::StreamError() const {
+optional<StreamInterface::Error> HttpGet::StreamError() const {
     return error_;
 }
 
-void HttpGet::Register(StreamHandlerInterface *handler, int activationId) {
-    handler_             = handler;
-    handlerActivationId_ = handler_ ? activationId : 0;
-    
-    if (error_ != Error::None) {
+void HttpGet::Register(RawStreamHandlerInterface *handler) {
+    handler_ = handler;
+
+    if (error_) {
         signalError_ = true;
         runLoop_->RequestActivation(runLoopClientId_, false);
     }
@@ -82,14 +80,13 @@ void HttpGet::Activate(bool deepActivation) {
     if (signalError_) {
         signalError_ = false;
         if (handler_) {
-            handler_->OnStreamEnteredErrorState(handlerActivationId_, error_);
+            handler_->OnStreamError(*error_);
         }
     }
 }
 
-void HttpGet::OnStreamData(int id, const void *data, int dataSize) {
-    (void)id;
-    if (error_ == Error::None) {
+void HttpGet::OnRawStreamData(const void *data, int dataSize) {
+    if (!error_) {
         if (receivingHeader_) {
             OnHeaderData(data, dataSize);
         } else {
@@ -98,11 +95,8 @@ void HttpGet::OnStreamData(int id, const void *data, int dataSize) {
     }
 }
 
-void HttpGet::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
-    (void)id;
-    assert (error != Error::None);
-    
-    if (error_ == Error::None) {
+void HttpGet::OnStreamError(StreamInterface::Error error) {
+    if (!error_) {
         if (error == Error::Eof) {
             if (!numContentBytes_ || (numContentBytesDelivered_ != *numContentBytes_)) {
                 error = Error::IO;
@@ -110,7 +104,7 @@ void HttpGet::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
         }
         
         error_ = error;
-        if (error_ == Error::Eof) {
+        if (*error_ == Error::Eof) {
             Log::Print(Log::Level::Debug, this, [&]{
                 return "EOF, bytes_received=" + to_string(numContentBytesDelivered_);
             });
@@ -120,7 +114,7 @@ void HttpGet::OnStreamEnteredErrorState(int id, StreamInterface::Error error) {
             });
         }
         if (handler_) {
-            handler_->OnStreamEnteredErrorState(handlerActivationId_, error_);
+            handler_->OnStreamError(*error_);
         }
     }
 }
@@ -137,16 +131,16 @@ void HttpGet::OnHeaderData(const void *data, int dataSize) {
                     if (numRemaining) {
                         numContentBytesDelivered_ += numRemaining;
                         if (handler_) {
-                            handler_->OnStreamData(handlerActivationId_, ptr + 1, numRemaining);
+                            handler_->OnRawStreamData(ptr + 1, numRemaining);
                         }
                     }
                 } else {
-                    OnStreamEnteredErrorState(0, Error::IO);
+                    OnStreamError(Error::IO);
                 }
                 return;
             } else {
                 if (!ProcessHeaderLine()) {
-                    OnStreamEnteredErrorState(0, Error::IO);
+                    OnStreamError(Error::IO);
                     return;
                 }
             }
@@ -163,7 +157,7 @@ void HttpGet::OnHeaderData(const void *data, int dataSize) {
 void HttpGet::OnContentData(const void *data, int dataSize) {
     numContentBytesDelivered_ += dataSize;
             
-    Error error = Error::None;
+    optional<Error> error;
     if (numContentBytesDelivered_ == *numContentBytes_) {
         error = Error::Eof;
     } else if (numContentBytesDelivered_ > *numContentBytes_) {
@@ -171,11 +165,11 @@ void HttpGet::OnContentData(const void *data, int dataSize) {
     }
     
     if (handler_) {
-        handler_->OnStreamData(handlerActivationId_, data, dataSize);
+        handler_->OnRawStreamData(data, dataSize);
     }
     
-    if (error != Error::None) {
-        OnStreamEnteredErrorState(handlerActivationId_, error);
+    if (error) {
+        OnStreamError(*error);
     }
 }
 

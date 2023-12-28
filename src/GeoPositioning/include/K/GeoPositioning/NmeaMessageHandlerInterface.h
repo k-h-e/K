@@ -20,11 +20,7 @@ class NmeaMessage;
 class NmeaMessageHandlerInterface : public virtual Core::StreamHandlerInterface {
   public:
     //! Asks the handler to process the specified NMEA message.
-    /*!
-     *  \param id
-     *  Activation ID that was registered together with the handler.
-     */
-    virtual void OnNmeaMessage(int id, const NmeaMessage &message) = 0;
+    virtual void OnNmeaMessage(const NmeaMessage &message) = 0;
 };
 
 }    // Namespace GeoPositioning.

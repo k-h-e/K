@@ -33,17 +33,9 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
     class HandlerInterface : public virtual Core::Interface {
       public:
         //! Hands over a newly accepted connection to the handler.
-        /*!
-         *  \param id
-         *  Activation ID that was registered together with the handler.
-         */
-        virtual void OnListenSocketAcceptedConnection(int id, std::unique_ptr<TcpConnection> connection) = 0;
+        virtual void OnListenSocketAcceptedConnection(std::unique_ptr<TcpConnection> connection) = 0;
         //! Informs the handler that the listen socket has entered error state.
-        /*!
-         *  \param id
-         *  ID that was given when the handler was registered.
-         */
-        virtual void OnListenSocketErrorState(int id) = 0;
+        virtual void OnListenSocketErrorState() = 0;
     };
 
     ListenSocket(
@@ -64,12 +56,8 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
      *  socket.
      *
      *  The handler is expected to outlive the listen socket.
-     *
-     *  \param id
-     *  ID to be passed along with handler activations for the listen socket. Useful in case one wants to use one
-     *  handler with multiple listen sockets.
      */
-    void Register(HandlerInterface *handler, int id);
+    void Register(HandlerInterface *handler);
     bool ErrorState() const override;
 
   private:

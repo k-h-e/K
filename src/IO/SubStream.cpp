@@ -8,6 +8,9 @@
 
 #include <K/IO/SubStream.h>
 
+#include <cassert>
+
+using std::optional;
 using std::shared_ptr;
 using K::Core::StreamInterface;
 
@@ -29,9 +32,9 @@ SubStream::SubStream(const shared_ptr<Core::SeekableBlockingInStreamInterface> &
         stream_->Seek(offset_);
         if (stream_->ErrorState()) {
             error_ = stream_->StreamError();
-            assert (error_ != Error::None);
+            assert (error_.has_value());
         } else {
-            error_ = Error::None;
+            error_.reset();
         }
     }
 }
@@ -40,7 +43,7 @@ int SubStream::ReadBlocking(void *buffer, int bufferSize) {
     assert (bufferSize > 0);
     int numRead = 0;
     
-    if (error_ == Error::None) {
+    if (!error_) {
         int64_t numLeft = size_ - position_;
         assert (numLeft >= 0);
         int numToRead = numLeft > bufferSize ? bufferSize : static_cast<int>(numLeft);
@@ -48,7 +51,7 @@ int SubStream::ReadBlocking(void *buffer, int bufferSize) {
             numRead = stream_->ReadBlocking(buffer, numToRead);
             if (!numRead) {
                 error_ = stream_->StreamError();
-                assert (error_ != Error::None);
+                assert (error_.has_value());
             } else {
                 position_ += numRead;
             }
@@ -61,14 +64,14 @@ int SubStream::ReadBlocking(void *buffer, int bufferSize) {
 }
 
 void SubStream::Seek(int64_t position) {
-    if (error_ == Error::None) {
+    if (!error_) {
         if ((position < 0) || (position >= size_)) {
             error_ = Error::User;
         } else {
             stream_->Seek(offset_ + position_);
             if (stream_->ErrorState()) {
                 error_ = stream_->StreamError();
-                assert (error_ != Error::None);
+                assert (error_.has_value());
             } else {
                 position_ = position;
             }
@@ -84,10 +87,10 @@ void SubStream::RecoverAndSeek(int64_t position) {
             stream_->RecoverAndSeek(offset_ + position);
             if (stream_->ErrorState()) {
                 error_ = stream_->StreamError();
-                assert (error_ != Error::None);
+                assert (error_.has_value());
             } else {
                 position_ = position;
-                error_    = Error::None;
+                error_.reset();
             }
         }
     } else {
@@ -100,10 +103,10 @@ int64_t SubStream::StreamPosition() const {
 }
 
 bool SubStream::ErrorState() const {
-    return (error_ != Error::None);
+    return (error_.has_value());
 }
 
-StreamInterface::Error SubStream::StreamError() const {
+optional<StreamInterface::Error> SubStream::StreamError() const {
     return error_;
 }
 

@@ -50,17 +50,10 @@ class NetworkEventCouplingServer : public virtual K::Core::Interface,
         /*!
          *  If the server already had a network event coupling installed, that coupling has been replaced by the new
          *  one.
-         *
-         *  \param id
-         *  ID that was given when the handler was registered.
          */
-        virtual void OnNetworkEventCouplingInstalled(int id) = 0;
+        virtual void OnNetworkEventCouplingInstalled() = 0;
         //! Called when the server has uninstalled its network event coupling.
-        /*!
-         *  \param id
-         *  ID that was given when the handler was registered.
-         */
-        virtual void OnNetworkEventCouplingUninstalled(int id) = 0;
+        virtual void OnNetworkEventCouplingUninstalled() = 0;
     };
 
     NetworkEventCouplingServer(
@@ -84,20 +77,16 @@ class NetworkEventCouplingServer : public virtual K::Core::Interface,
      *
      *  The handler is expected to outlive the network event coupling server. The handler will not get called upon
      *  destruction of the network event coupling server.
-     *
-     *  \param id
-     *  ID to be passed along with handler activations for the network event coupling server. Useful in case one wants
-     *  to use one handler with multiple network event coupling server.
      */
-    void Register(HandlerInterface *handler, int id);
+    void Register(HandlerInterface *handler);
 
   private:
     void Activate(bool deepActivation) override;
-    void OnListenSocketAcceptedConnection(int id, std::unique_ptr<IO::TcpConnection> connection)
+    void OnListenSocketAcceptedConnection(std::unique_ptr<IO::TcpConnection> connection)
         override;
-    void OnListenSocketErrorState(int id) override;
-    void OnNetworkEventCouplingErrorState(int id) override;
-    void OnTimer(int id) override;
+    void OnListenSocketErrorState() override;
+    void OnNetworkEventCouplingErrorState() override;
+    void OnTimer() override;
 
     void InstallListenSocket();
     void UninstallListenSocket();
@@ -114,7 +103,6 @@ class NetworkEventCouplingServer : public virtual K::Core::Interface,
     const std::shared_ptr<K::Core::RunLoop>  runLoop_;
     int                                      runLoopClientId_;
     HandlerInterface                         *handler_;
-    int                                      handlerActivationId_;
     int                                      port_;
     std::string                              protocolVersion_;
     IO::KeepAliveParameters                  keepAliveParameters_;

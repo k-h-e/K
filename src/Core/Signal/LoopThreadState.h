@@ -26,7 +26,6 @@ struct Signal::LoopThreadState : public virtual RunLoop::ClientInterface {
     const std::shared_ptr<RunLoop>      runLoop;
     int                                 runLoopClientId;
     HandlerInterface                    *handler;
-    int                                 handlerAssociatedId;
 
     LoopThreadState(const std::shared_ptr<RunLoop> &runLoop);
     LoopThreadState(const LoopThreadState &other)            = delete;

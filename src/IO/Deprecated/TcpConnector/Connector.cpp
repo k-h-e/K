@@ -18,20 +18,18 @@ namespace K {
 namespace IO {
 namespace Deprecated {
 
-TcpConnector::Connector::Connector(const std::string &hostAndPort, HandlerInterface *handler,
-                                   int handlerActivationId)
+TcpConnector::Connector::Connector(const std::string &hostAndPort, HandlerInterface *handler)
         : hostAndPort_{hostAndPort},
-          handler_{handler},
-          handlerActivationId_{handlerActivationId} {
+          handler_{handler} {
     // Nop.
 }
 
 void TcpConnector::Connector::ExecuteAction() {
     optional<int> fd{NetworkTools::ConnectTcp(hostAndPort_, this)};
     if (fd) {
-        handler_->OnTcpConnectionEstablished(handlerActivationId_, *fd);
+        handler_->OnTcpConnectionEstablished(*fd);
     } else {
-        handler_->OnFailedToEstablishTcpConnection(handlerActivationId_);
+        handler_->OnFailedToEstablishTcpConnection();
     }
 }
 

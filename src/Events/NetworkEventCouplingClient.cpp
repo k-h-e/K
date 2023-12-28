@@ -63,14 +63,12 @@ void NetworkEventCouplingClient::Disconnect() {
     Log::Print(Log::Level::Debug, this, [&]{ return "disconnected"; });
 }
 
-void NetworkEventCouplingClient::OnTcpConnectionEstablished(int id, int fd) {
-    (void)id;
+void NetworkEventCouplingClient::OnTcpConnectionEstablished(int fd) {
     connector_.reset();
     InstallCoupling(fd);
 }
 
-void NetworkEventCouplingClient::OnFailedToEstablishTcpConnection(int id) {
-    (void)id;
+void NetworkEventCouplingClient::OnFailedToEstablishTcpConnection() {
     Log::Print(Log::Level::Warning, this, [&]{
         return "failed to connect to " + hostAndPort_ + ", scheduling reconnect...";
     });
@@ -78,8 +76,7 @@ void NetworkEventCouplingClient::OnFailedToEstablishTcpConnection(int id) {
     ScheduleReconnect();
 }
 
-void NetworkEventCouplingClient::OnNetworkEventCouplingErrorState(int id) {
-    (void)id;
+void NetworkEventCouplingClient::OnNetworkEventCouplingErrorState() {
     UninstallCoupling();
     Log::Print(Log::Level::Warning, this, [&]{
         return "TCP connection down, host=" + hostAndPort_ + ". Scheduling reconnect...";
@@ -87,8 +84,7 @@ void NetworkEventCouplingClient::OnNetworkEventCouplingErrorState(int id) {
     ScheduleReconnect();
 }
 
-void NetworkEventCouplingClient::OnTimer(int id) {
-    (void)id;
+void NetworkEventCouplingClient::OnTimer() {
     timer_.reset();
     Log::Print(Log::Level::Debug, this, [&]{ return "attempting to reconnect to " + hostAndPort_ + "..."; });
     InstallConnector();
@@ -96,12 +92,12 @@ void NetworkEventCouplingClient::OnTimer(int id) {
 
 void NetworkEventCouplingClient::ScheduleReconnect() {
     timer_ = make_unique<Timer>(milliseconds(6000), runLoop_, timers_);
-    timer_->Register(this, 0);
+    timer_->Register(this);
 }
 
 void NetworkEventCouplingClient::InstallConnector() {
     connector_ = make_unique<TcpConnector>(
-                     hostAndPort_, static_cast<IO::Deprecated::TcpConnector::HandlerInterface *>(this), 0, runLoop_,
+                     hostAndPort_, static_cast<IO::Deprecated::TcpConnector::HandlerInterface *>(this), runLoop_,
                      threadPool_);
 }
 
@@ -109,7 +105,7 @@ void NetworkEventCouplingClient::InstallCoupling(int fd) {
     auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_);
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
                                                   runLoop_, timers_);
-    coupling_->Register(this, 0);
+    coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, host=" + hostAndPort_; });
 }
 

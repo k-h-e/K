@@ -27,7 +27,6 @@ Connection::LoopThreadState::LoopThreadState(
           runLoop(aRunLoop),
           runLoopClientId(0),
           handler(nullptr),
-          handlerAssociatedId(0),
           eof(false),
           clientReadPaused(false),
           clientWritePaused(false),
@@ -95,7 +94,7 @@ void Connection::LoopThreadState::Activate(bool deepActivation) {
         readIsNext            = false;
         Log::Print(Log::Level::DebugDebug, this, [&]{ return "ready read"; });
         if (handler) {
-            handler->OnStreamReadyRead(handlerAssociatedId);
+            handler->OnStreamReadyRead();
         }
     } else if (signalReadyWrite) {
         clientWritePaused      = false;
@@ -103,7 +102,7 @@ void Connection::LoopThreadState::Activate(bool deepActivation) {
         readIsNext             = true;
         Log::Print(Log::Level::DebugDebug, this, [&]{ return "ready write"; });
         if (handler) {
-            handler->OnStreamReadyWrite(handlerAssociatedId);
+            handler->OnStreamReadyWrite();
         }
     }
 }

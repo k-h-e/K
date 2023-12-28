@@ -34,17 +34,9 @@ class Connection : public virtual Core::NonBlockingIOStreamInterface {
     class HandlerInterface : public virtual K::Core::Interface {
     public:
         //! Tells the handler that the connection has just become ready to be read from.
-        /*!
-         *  \param id
-         *  ID that was given when the handler was registered.
-         */
-        virtual void OnStreamReadyRead(int id) = 0;
+        virtual void OnStreamReadyRead() = 0;
         //! Tells the handler that the connection has just become ready to be written to.
-        /*!
-         *  \param id
-         *  ID that was given when the handler was registered.
-         */
-        virtual void OnStreamReadyWrite(int id) = 0;
+        virtual void OnStreamReadyWrite() = 0;
     };
 
     //! Creates a new connection for the specified UNIX file descriptor.
@@ -70,12 +62,8 @@ class Connection : public virtual Core::NonBlockingIOStreamInterface {
      *  The handler's methods get activated on the associated run loop's thread. They may call back into the connection.
      *
      *  The handler is expected to outlive the connection.
-     *
-     *  \param id
-     *  ID to be passed along with handler activations for the stream. Useful in case one wants to use one handler
-     *  with multiple streams.
      */
-    void Register(HandlerInterface *handler, int id);
+    void Register(HandlerInterface *handler);
 
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     int ReadNonBlocking(void *buffer, int bufferSize) override;

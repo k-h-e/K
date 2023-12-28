@@ -11,7 +11,7 @@
 
 #include <memory>
 #include <vector>
-#include <K/Core/StreamHandlerInterface.h>
+#include <K/Core/RawStreamHandlerInterface.h>
 #include <K/GeoPositioning/RtcmMessage.h>
 
 namespace K {
@@ -20,16 +20,16 @@ namespace GeoPositioning {
 class RtcmMessageHandlerInterface;
 
 //! Parses a binary stream into RTCM messages.
-class RtcmParser : public virtual Core::StreamHandlerInterface {
+class RtcmParser : public virtual Core::RawStreamHandlerInterface {
   public:
-    RtcmParser(const std::shared_ptr<RtcmMessageHandlerInterface> &handler, int handlerActivationId);
+    RtcmParser(const std::shared_ptr<RtcmMessageHandlerInterface> &handler);
     RtcmParser(const RtcmParser &other)            = delete;
     RtcmParser &operator=(const RtcmParser &other) = delete;
     RtcmParser(RtcmParser &&other)                 = delete;
     RtcmParser &operator=(RtcmParser &&other)      = delete;
 
-    void OnStreamData(int id, const void *data, int dataSize) override;
-    void OnStreamEnteredErrorState(int id, Core::StreamInterface::Error error) override;
+    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnStreamError(Core::StreamInterface::Error error) override;
 
   private:
     enum class State { BetweenMessages,
@@ -38,12 +38,10 @@ class RtcmParser : public virtual Core::StreamHandlerInterface {
                        AcceptingCrc      };
 
     std::shared_ptr<RtcmMessageHandlerInterface> handler_;
-    int                                          handlerActivationId_;
     State                                        state_;
     int                                          payloadSize_;
     int                                          numSkipped_;
     RtcmMessage                                  message_;
-    bool                                         eof_;
     bool                                         error_;
 };
 

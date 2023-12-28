@@ -14,7 +14,7 @@
 
 namespace K {
     namespace Core {
-        class StreamHandlerInterface;
+        class RawStreamHandlerInterface;
     }
     namespace GeoPositioning {
         class RtcmMessageHandlerInterface;
@@ -43,8 +43,8 @@ class NtripDgnssClient : public Core::Interface {
   private:
     class ReadHandler;
 
-    K::IO::Deprecated::TcpConnection              connection_;
-    std::shared_ptr<Core::StreamHandlerInterface> readHandler_;
+    K::IO::Deprecated::TcpConnection                 connection_;
+    std::shared_ptr<Core::RawStreamHandlerInterface> readHandler_;
 };
 
 }    // Namespace GeoPositioning.

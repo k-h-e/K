@@ -38,15 +38,13 @@ ListenSocket::~ListenSocket() {
     loopThreadState_->runLoop->RemoveClient(loopThreadState_->runLoopClientId);
 }
 
-void ListenSocket::Register(HandlerInterface *handler, int id) {
+void ListenSocket::Register(HandlerInterface *handler) {
     if (handler) {
         loopThreadState_->handler              = handler;
-        loopThreadState_->handlerAssociatedId  = id;
         loopThreadState_->newHandlerRegistered = true;
         loopThreadState_->RequestActivation(false);
     } else {
         loopThreadState_->handler             = nullptr;
-        loopThreadState_->handlerAssociatedId = 0;
     }
 }
 

@@ -30,9 +30,8 @@ Timer::~Timer() {
     loopThreadState_->runLoop->RemoveClient(loopThreadState_->runLoopClientId);
 }
 
-void Timer::Register(HandlerInterface *handler, int id) {
-    loopThreadState_->handler             = handler;
-    loopThreadState_->handlerAssociatedId = handler ? id : 0;
+void Timer::Register(HandlerInterface *handler) {
+    loopThreadState_->handler = handler;
 }
 
 }    // Namespace Core.

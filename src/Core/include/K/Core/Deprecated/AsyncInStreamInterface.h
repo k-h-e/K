@@ -24,7 +24,7 @@ class AsyncInStreamInterface : public virtual InStreamInterface {
     /*!
      *  The handler methods will get called on an arbitrary thread and must not call back into the stream.
      */
-    virtual bool Register(const std::shared_ptr<RawStreamHandlerInterface> &handler, int activationId) = 0;
+    virtual bool Register(const std::shared_ptr<RawStreamHandlerInterface> &handler) = 0;
     //! Unregisters the specified read handler if it was registered.
     /*!
      *  When the method returns, it is guaranteed that the handler will not be called again. If registering another read

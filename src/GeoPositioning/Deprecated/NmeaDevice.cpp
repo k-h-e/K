@@ -48,8 +48,8 @@ bool NmeaDevice::Register(const shared_ptr<NmeaMessageHandlerInterface> &handler
     }
 
     if (!error_) {
-        auto parser{make_shared<NmeaParser>(handler, 0)};
-        if (connection_->Register(parser, 0)) {
+        auto parser{make_shared<NmeaParser>(handler)};
+        if (connection_->Register(parser)) {
             parser_  = parser;
             handler_ = handler;
         } else {
