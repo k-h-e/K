@@ -23,13 +23,13 @@ class NonBlockingInStreamInterface;
 class Buffer : public virtual BlockingOutStreamInterface {
   public:
     //! Allows for iterative buffer readout.
-	/*!
+    /*!
      *  A reader may only be used as long as the associated buffer is alive. Reading from a buffer via a reader may be
      *  interleaved with adding data via \ref Append().
-	 */
+     */
 
     class Reader : public virtual SeekableBlockingInStreamInterface {
-	  public:
+      public:
         Reader()                               = default;
         Reader(const Reader &other)            = default;
         Reader &operator=(const Reader &other) = default;
@@ -44,18 +44,18 @@ class Buffer : public virtual BlockingOutStreamInterface {
         void RecoverAndSeek(int64_t position) override;
         int64_t StreamPosition() const override;
 
-	  private:
-		friend class Buffer;
+      private:
+        friend class Buffer;
 
-		Reader(const Buffer *buffer);
+        Reader(const Buffer *buffer);
 
         const Buffer                          *buffer_;
         int                                   cursor_;
         std::optional<Error>                  error_;
-	};
+    };
 
-	//! Creates a buffer of the given initial size, but does not initialize its contents.
-	Buffer(int initialSize);
+    //! Creates a buffer of the given initial size, but does not initialize its contents.
+    Buffer(int initialSize);
     //! Creates an empty buffer.
     Buffer();
     Buffer(const Buffer &other)            = delete;
@@ -66,19 +66,19 @@ class Buffer : public virtual BlockingOutStreamInterface {
 
     //! Grants access to the buffer's data. Note that the handed-out memory location gets invalidated by subsequent
     //! calls to \ref Append().
-	void *Data();
+    void *Data();
     //! Grants read access to the buffer's data. Note that the handed-out memory location gets invalidated by subsequent
     //! calls to \ref Append().
     const void *Data() const;
-	//! Tells the current data size, in bytes.
+    //! Tells the current data size, in bytes.
     int DataSize() const;
-	//! Clears the buffer, which allows you to begin a new composition via \ref Append().
-	/*!
-	 *  All readers get invalidated.
-	 *
-	 *  This operation is fast and does not shrink the buffer's underlying capacity.
-	 */
-	void Clear();
+    //! Clears the buffer, which allows you to begin a new composition via \ref Append().
+    /*!
+     *  All readers get invalidated.
+     *
+     *  This operation is fast and does not shrink the buffer's underlying capacity.
+     */
+    void Clear();
     //! If \ref DataSize() is larger, the buffer gets shrinked to the specified size.
     /*!
      *  All readers get invalidated.
@@ -106,17 +106,17 @@ class Buffer : public virtual BlockingOutStreamInterface {
      */
     int AppendFromStream(NonBlockingInStreamInterface *stream, int maxNumBytes);
     //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
-	/*!
-	 *  The bytes potentially "appended" are undefined.
-	 *
-	 *  Fast operation.
-	 */
-	void RestoreToCurrentCapacity();
-	//! Provides a reader allowing for iterative buffer readout.
-	/*!
-	 *  The reader may only be used as long as the associated buffer is alive.
-	 */
-	Reader GetReader() const;
+    /*!
+     *  The bytes potentially "appended" are undefined.
+     *
+     *  Fast operation.
+     */
+    void RestoreToCurrentCapacity();
+    //! Provides a reader allowing for iterative buffer readout.
+    /*!
+     *  The reader may only be used as long as the associated buffer is alive.
+     */
+    Reader GetReader() const;
 
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;
