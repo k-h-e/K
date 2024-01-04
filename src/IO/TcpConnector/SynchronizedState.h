@@ -2,7 +2,7 @@
 //                                                                                                            //   //
 //    K                                                                                                      // //
 //    Kai's C++ Crossplatform Assets                                                                        ///
-//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//    (C) Copyright Kai Hergenröther.                                                                      //  //
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
@@ -10,6 +10,7 @@
 #define K_IO_TCPCONNECTOR_SYNCHRONIZEDSTATE_H_
 
 #include <mutex>
+#include <optional>
 #include <K/IO/TcpConnector.h>
 
 namespace K {

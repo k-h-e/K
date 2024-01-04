@@ -2,7 +2,7 @@
 //                                                                                                            //   //
 //    K                                                                                                      // //
 //    Kai's C++ Crossplatform Assets                                                                        ///
-//    (C) Copyright Kai Hergenröther. All rights reserved.                                                 //  //
+//    (C) Copyright Kai Hergenröther.                                                                      //  //
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
