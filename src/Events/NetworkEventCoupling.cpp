@@ -9,6 +9,7 @@
 #include <K/Events/NetworkEventCoupling.h>
 
 #include <cstring>
+
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Timer.h>
@@ -42,19 +43,23 @@ namespace Events {
 NetworkEventCoupling::NetworkEventCoupling(
             const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion,
             const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
+            const shared_ptr<Event> &connectedEvent, const shared_ptr<Event> &disconnectedEvent, 
             const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
-        : hub_(hub),
-          tcpConnection_(make_unique<ConnectionEndPoint>(tcpConnection, runLoop)),
-          runLoop_(runLoop),
-          protocolVersion_(protocolVersion),
-          handler_(nullptr),
-          state_(State::AcceptingChunkSize),
-          readCursor_(0),
-          readChunkSize_(0),
-          protocolVersionMatch_(false),
-          keepAliveReceived_(false),
-          error_(false),
-          signalErrorState_(false) {
+        : hub_{hub},
+          tcpConnection_{make_unique<ConnectionEndPoint>(tcpConnection, runLoop)},
+          runLoop_{runLoop},
+          protocolVersion_{protocolVersion},
+          handler_{nullptr},
+          connectedEvent_{connectedEvent},
+          disconnectedEvent_{disconnectedEvent},
+          state_{State::AcceptingChunkSize},
+          readCursor_{0},
+          readChunkSize_{0},
+          protocolVersionMatch_{false},
+          keepAliveReceived_{false},
+          error_{false},
+          signalErrorState_{false},
+          disconnectedEventPosted_{false} {
     hubClientId_ = hub_->RegisterEventLoop();
     tcpConnection_->Register(this);
 
@@ -79,6 +84,8 @@ NetworkEventCoupling::NetworkEventCoupling(
 }
 
 NetworkEventCoupling::~NetworkEventCoupling() {
+    EnsureDisconnectedEventPosted();
+
     runLoop_->RemoveClient(runLoopClientId_);
     eventNotifier_.reset();
     timer_.reset();
@@ -167,6 +174,9 @@ void NetworkEventCoupling::OnRawStreamData(const void *data, int dataSize) {
                                                                  length)) {
                                         if (protocolVersion_ == remoteProtocolVersion) {
                                             protocolVersionMatch_ = true;
+                                            if (connectedEvent_) {
+                                                hub_->Post(hubClientId_, *connectedEvent_, true);
+                                            }
                                             Log::Print(Log::Level::Debug, this, [&]{
                                                 return "protocol version check ok (\"" + remoteProtocolVersion
                                                     + "\")";
@@ -292,6 +302,8 @@ void NetworkEventCoupling::SendKeepAliveChunk() {
 
 void NetworkEventCoupling::EnterErrorState() {
     if (!error_) {
+        EnsureDisconnectedEventPosted();
+        
         eventNotifier_.reset();
         timer_.reset();
         tcpConnection_.reset();
@@ -302,6 +314,15 @@ void NetworkEventCoupling::EnterErrorState() {
         runLoop_->RequestActivation(runLoopClientId_, false);
 
         Log::Print(Log::Level::Warning, this, []{ return "entered error state"; });
+    }
+}
+
+void NetworkEventCoupling::EnsureDisconnectedEventPosted() {
+    if (!disconnectedEventPosted_) {
+        if (disconnectedEvent_ && protocolVersionMatch_) {
+            hub_->Post(hubClientId_, *disconnectedEvent_, true);
+            disconnectedEventPosted_ = true;
+        }
     }
 }
 

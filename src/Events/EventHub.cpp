@@ -140,14 +140,14 @@ void EventHub::Submit(int clientLoopId, const void *data, int dataSize, bool onl
     DoSubmit(critical, clientLoopId, data, dataSize, onlyDeliverToOthers);
 }    // ......................................................................................... critical section, end.
 
-void EventHub::Post(const Event &event) {
+void EventHub::Post(int clientLoopId, const Event &event, bool onlyDeliverToOthers) {
     unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     auto iter{eventIdToSlotMap_.find(event.Type().id)};
     assert(iter != eventIdToSlotMap_.end());
     int slot{iter->second};
     eventsToSchedule_ << slot;
     event.Serialize(&eventsToSchedule_);
-    DoSubmit(critical, 0, eventsToSchedule_.Data(), eventsToSchedule_.DataSize(), false);
+    DoSubmit(critical, clientLoopId, eventsToSchedule_.Data(), eventsToSchedule_.DataSize(), onlyDeliverToOthers);
     eventsToSchedule_.Clear();
 }    // ......................................................................................... critical section, end.
 
@@ -178,7 +178,13 @@ void EventHub::RequestShutDown(int clientLoopId) {
         });
     }
 }    // ......................................................................................... critical section, end.
- 
+
+void EventHub::Post(const Event &event) {
+    Post(0, event, false);
+}
+
+// ---
+
 // Expects lock to be held.
 void EventHub::DoSubmit(unique_lock<mutex> &critical, int clientLoopId, const void *data, int dataSize,
                         bool onlyDeliverToOthers) {

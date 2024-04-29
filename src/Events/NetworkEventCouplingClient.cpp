@@ -31,6 +31,7 @@ namespace Events {
 
 NetworkEventCouplingClient::NetworkEventCouplingClient(
     const string &protocolVersion, const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
+    const shared_ptr<Event> &connectedEvent, const std::shared_ptr<Event> &disconnectedEvent,
     const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<Timers> &timers,
     const shared_ptr<ThreadPool> &threadPool)
         : hub_{hub},
@@ -39,9 +40,10 @@ NetworkEventCouplingClient::NetworkEventCouplingClient(
           timers_{timers},
           runLoop_{runLoop},
           protocolVersion_{protocolVersion},
-          keepAliveParameters_{keepAliveParameters} {
+          keepAliveParameters_{keepAliveParameters},
+          connectedEvent_{connectedEvent},
+          disconnectedEvent_{disconnectedEvent} {
     // Nop.
-
 };
 
 NetworkEventCouplingClient::~NetworkEventCouplingClient() {
@@ -104,7 +106,7 @@ void NetworkEventCouplingClient::InstallConnector() {
 void NetworkEventCouplingClient::InstallCoupling(int fd) {
     auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_);
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
-                                                  runLoop_, timers_);
+                                                  connectedEvent_, disconnectedEvent_, runLoop_, timers_);
     coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, host=" + hostAndPort_; });
 }

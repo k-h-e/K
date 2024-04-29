@@ -99,6 +99,8 @@ class EventHub : public virtual EventReceiverInterface {
     //! Allows a client \ref EventLoop (thread) to submit the events represented by the specified serialized event data
     //! to the hub.
     void Submit(int clientLoopId, const void *data, int dataSize, bool onlyDeliverToOthers);
+    //! Allows a client \ref EventLoop (thread) to submit the specified event to the hub.
+    void Post(int clientLoopId, const Event &event, bool onlyDeliverToOthers);
     //! Asks all participating client \ref EventLoop s to finish running (but does not wait until that has happened).
     /*!
      *  Client \ref EventLoop s can check for whether shutdown is requested for them by inspecting the return value of
@@ -112,6 +114,7 @@ class EventHub : public virtual EventReceiverInterface {
      */
     void RequestShutDown(int clientLoopId);
 
+    // EventReceiverInterface...
     virtual void Post(const Event &event);
     
   private:

@@ -28,6 +28,7 @@ namespace K {
         class TcpConnection;
     }
     namespace Events {
+        class Event;
         class EventHub;
     }
 }
@@ -52,6 +53,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     NetworkEventCoupling(
         const std::shared_ptr<IO::TcpConnection> &tcpConnection, const std::string &protocolVersion,
         const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventHub> &hub,
+        const std::shared_ptr<Event> &connectedEvent, const std::shared_ptr<Event> &disconnectedEvent,
         const std::shared_ptr<K::Core::RunLoop> &runLoop, const std::shared_ptr<K::Core::Timers> &timers);
     NetworkEventCoupling()                                             = delete;
     NetworkEventCoupling(const NetworkEventCoupling &other)            = delete;
@@ -93,6 +95,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     void SendEventsChunk(const void *data, int dataSize);
     void SendKeepAliveChunk();
     void EnterErrorState();
+    void EnsureDisconnectedEventPosted();
 
     const std::shared_ptr<EventHub>         hub_;              // Thread safe.
 
@@ -105,6 +108,8 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     int                                     numSendsBetweenKeepAliveChecks_;
     int                                     hubClientId_;
     NetworkEventCoupling::HandlerInterface  *handler_;
+    std::shared_ptr<Event>                  connectedEvent_;
+    std::shared_ptr<Event>                  disconnectedEvent_;
     State                                   state_;
     K::Core::Buffer                         readBuffer_;
     int                                     readCursor_;
@@ -115,6 +120,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     bool                                    keepAliveReceived_;
     bool                                    error_;
     bool                                    signalErrorState_;
+    bool                                    disconnectedEventPosted_;
 };
 
 }    // Namespace Events.
