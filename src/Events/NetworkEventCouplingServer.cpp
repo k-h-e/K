@@ -125,7 +125,7 @@ void NetworkEventCouplingServer::UninstallListenSocket() {
 void NetworkEventCouplingServer::InstallCoupling(unique_ptr<TcpConnection> connection) {
     UninstallCoupling();
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
-                                                  runLoop_, timers_);
+                                                  nullptr, nullptr, runLoop_, timers_);
     coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, port=" + to_string(port_); });
 }
