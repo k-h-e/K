@@ -32,7 +32,8 @@ namespace Events {
 
 NetworkEventCouplingServer::NetworkEventCouplingServer(
             int port, const string &protocolVersion, const KeepAliveParameters &keepAliveParameters,
-            const shared_ptr<EventHub> &hub, const shared_ptr<RunLoop> &runLoop,
+            const shared_ptr<EventHub> &hub, const shared_ptr<Event> &connectedEvent,
+            const shared_ptr<Event> &disconnectedEvent, const shared_ptr<RunLoop> &runLoop,
             const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<Timers> &timers,
             const shared_ptr<ThreadPool> &threadPool)
         : hub_{hub},
@@ -44,6 +45,8 @@ NetworkEventCouplingServer::NetworkEventCouplingServer(
           port_{port},
           protocolVersion_{protocolVersion},
           keepAliveParameters_{keepAliveParameters},
+          connectedEvent_{connectedEvent},
+          disconnectedEvent_{disconnectedEvent},
           signalCouplingInstallation_{false} {
     runLoopClientId_ = runLoop_->AddClient(this);
     InstallListenSocket();
@@ -125,7 +128,7 @@ void NetworkEventCouplingServer::UninstallListenSocket() {
 void NetworkEventCouplingServer::InstallCoupling(unique_ptr<TcpConnection> connection) {
     UninstallCoupling();
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
-                                                  nullptr, nullptr, runLoop_, timers_);
+                                                  connectedEvent_, disconnectedEvent_, runLoop_, timers_);
     coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, port=" + to_string(port_); });
 }
