@@ -26,6 +26,8 @@ class StringTools {
     static std::vector<std::string> Tokenize(const std::string &text, const std::string &separators,
                                              bool suppressEmptyTokens);
     static std::string Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString);
+    static void Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters, bool trimLeft,
+                     bool trimRight);
     static void Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters);
     static bool Parse(const std::string &text, int *outValue);
     static bool Parse(const std::string &text, float *outValue);
@@ -35,6 +37,7 @@ class StringTools {
     static std::string ToLower(const std::string &text);
     static std::string ToBase64(const std::string &text);
     static std::string ToHex(const void *data, int dataSize);
+    static std::string AddressToHex(const void *data);
     static std::string GetCleanClassName(const Interface *instance);
     static std::string GetCleanClassName(const Interface *instance, int maxNumSegments);
     static void Serialize(const std::string &text, BlockingOutStreamInterface *stream);

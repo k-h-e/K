@@ -16,13 +16,15 @@
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/NumberTools.h>
 
-using std::string;
-using std::istringstream;
-using std::ostringstream;
-using std::vector;
 using std::invalid_argument;
-using std::out_of_range;
+using std::istringstream;
+using std::memcpy;
 using std::numeric_limits;
+using std::ostringstream;
+using std::out_of_range;
+using std::string;
+using std::unordered_set;
+using std::vector;
 using K::Core::NumberTools;
 
 namespace K {
@@ -31,7 +33,7 @@ namespace Core {
 const char * const StringTools::base64EncodeTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const char * const StringTools::hexEncodeTable    = "0123456789abcdef";
 
-vector<string> StringTools::Tokenize(const std::string &text, const std::string &separators, bool suppressEmptyTokens) {
+vector<string> StringTools::Tokenize(const string &text, const string &separators, bool suppressEmptyTokens) {
     vector<string> tokens;
     string         remainder = text;
     while (true) {
@@ -51,7 +53,7 @@ vector<string> StringTools::Tokenize(const std::string &text, const std::string 
     }
 }
 
-string StringTools::Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString) {
+string StringTools::Concatenate(const vector<string> &tokens, const string &separatorString) {
     ostringstream stream;
     bool first = true;
     for (const string &token : tokens) {
@@ -65,15 +67,19 @@ string StringTools::Concatenate(const std::vector<std::string> &tokens, const st
     return stream.str();
 }
 
-void StringTools::Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters) {
+void StringTools::Trim(string *inOutText, const unordered_set<char> &invalidCharacters, bool trimLeft, bool trimRight) {
     if (inOutText->length() > 0u) {
         int left  = 0;
         int right = static_cast<int>(inOutText->length()) - 1;
-        while ((left <= right) && (invalidCharacters.find((*inOutText)[left]) != invalidCharacters.end())) {
-            ++left;
+        if (trimLeft) {
+            while ((left <= right) && (invalidCharacters.find((*inOutText)[left]) != invalidCharacters.end())) {
+                ++left;
+            }
         }
-        while ((left <= right) && (invalidCharacters.find((*inOutText)[right]) != invalidCharacters.end())) {
-            --right;
+        if (trimRight) {
+            while ((left <= right) && (invalidCharacters.find((*inOutText)[right]) != invalidCharacters.end())) {
+                --right;
+            }
         }
 
         string result;
@@ -84,7 +90,11 @@ void StringTools::Trim(std::string *inOutText, const std::unordered_set<char> &i
     }
 }
 
-bool StringTools::Parse(const std::string &text, int *outValue) {
+void StringTools::Trim(string *inOutText, const unordered_set<char> &invalidCharacters) {
+    Trim(inOutText, invalidCharacters, true, true);
+}
+
+bool StringTools::Parse(const string &text, int *outValue) {
     try {
         *outValue = stoi(text);
         return true;
@@ -95,7 +105,7 @@ bool StringTools::Parse(const std::string &text, int *outValue) {
     return false;
 }
 
-bool StringTools::Parse(const std::string &text, float *outValue) {
+bool StringTools::Parse(const string &text, float *outValue) {
     try {
         *outValue = stof(text);
         return true;
@@ -106,7 +116,7 @@ bool StringTools::Parse(const std::string &text, float *outValue) {
     return false;
 }
 
-bool StringTools::Parse(const std::string &text, double *outValue) {
+bool StringTools::Parse(const string &text, double *outValue) {
     try {
         *outValue = stod(text);
         return true;
@@ -203,7 +213,7 @@ bool StringTools::ParseHex(const char *text, unsigned int *outValue) {
     return false;
 }
 
-string StringTools::ToLower(const std::string &text) {
+string StringTools::ToLower(const string &text) {
     string result;
     for (char character : text) {
         result.push_back(tolower(character));
@@ -211,7 +221,7 @@ string StringTools::ToLower(const std::string &text) {
     return result;
 }
 
-string StringTools::ToBase64(const std::string &text) {
+string StringTools::ToBase64(const string &text) {
     string result;
 
     uint8_t in[3];
@@ -256,6 +266,16 @@ string StringTools::ToHex(const void *data, int dataSize) {
     }
 
     return result;
+}
+
+string StringTools::AddressToHex(const void *data) {
+    auto address = reinterpret_cast<uintptr_t>(data);
+    NumberTools::Reverse(&address, sizeof(address));
+    string hexText { ToHex(&address, sizeof(address)) };
+    unordered_set<char> invalid;
+    invalid.insert('0');
+    Trim(&hexText, invalid, true, false);
+    return hexText;
 }
 
 string StringTools::GetCleanClassName(const Interface *instance) {
@@ -308,21 +328,21 @@ void StringTools::Deserialize(string *text, BlockingInStreamInterface *stream) {
 void StringTools::Serialize(const string &text, vector<uint8_t> *outBinary) {
     uint32_t size = static_cast<uint32_t>(text.size());
     outBinary->resize(sizeof(size) + size*sizeof(string::value_type));
-    std::memcpy(&(*outBinary)[0], &size, sizeof(size));
+    memcpy(&(*outBinary)[0], &size, sizeof(size));
     if (size) {
-        std::memcpy(&(*outBinary)[sizeof(size)], &text[0], size*sizeof(string::value_type));
+        memcpy(&(*outBinary)[sizeof(size)], &text[0], size*sizeof(string::value_type));
     }
 }
 
 bool StringTools::Deserialize(string *text, const void *binary, int binarySize) {
     uint32_t size;
     if (binarySize >= static_cast<int>(sizeof(size))) {
-        std::memcpy(&size, binary, sizeof(size));
+        memcpy(&size, binary, sizeof(size));
         if (static_cast<int>(sizeof(size) + size*sizeof(string::value_type)) >= binarySize) {
             text->resize(size);
             if (size) {
                 const uint8_t *binaryBytes = static_cast<const uint8_t *>(binary);
-                std::memcpy(&(*text)[0], &binaryBytes[sizeof(size)], size*sizeof(string::value_type));
+                memcpy(&(*text)[0], &binaryBytes[sizeof(size)], size*sizeof(string::value_type));
             }
             return true;
         }

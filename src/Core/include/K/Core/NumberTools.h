@@ -57,6 +57,17 @@ class NumberTools {
         ptr[1] = temp;
     }
 
+    static void Reverse(void *data, int dataSize) {
+        uint8_t *dataU8 { static_cast<uint8_t *>(data) };
+        uint8_t temp;
+        int num { dataSize / 2 };
+        for (int i = 0; i < num; ++i) {
+            temp = dataU8[i];
+            dataU8[i] = dataU8[dataSize - i - 1];
+            dataU8[dataSize - i - 1] = temp;
+        }
+    }
+
     static double DegToRad(double angleDeg);
     static double RadToDeg(double angleRad);
 };
