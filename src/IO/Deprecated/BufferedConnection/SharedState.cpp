@@ -11,15 +11,18 @@
 #include <cassert>
 #include <algorithm>
 
+#include <K/Core/IoBuffers.h>
 #include <K/Core/Log.h>
 #include <K/IO/ConnectionIO.h>
 
+using std::memcpy;
 using std::mutex;
 using std::optional;
 using std::shared_ptr;
 using std::to_string;
 using std::unique_lock;
 
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
@@ -28,11 +31,13 @@ namespace K {
 namespace IO {
 namespace Deprecated {
 
-BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
-        : connectionIO_(connectionIO),
-          handlerCalledInitially_(true),
-          bufferSizeThreshold_(bufferSizeThreshold),
-          canNotWrite_(true) {
+BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO,
+                                             const shared_ptr<IoBuffers> &ioBuffers)
+        : connectionIO_{connectionIO},
+          ioBuffers_{ioBuffers},
+          handlerCalledInitially_{true},
+          bufferSizeThreshold_{bufferSizeThreshold},
+          canNotWrite_{true} {
     // Nop.
 }
 
@@ -106,7 +111,9 @@ bool BufferedConnection::SharedState::OnDataRead(const void *data, int dataSize)
     EnsureHandlerCalledInitially();
     if (!error_) {
         if (handler_) {
-            handler_->OnRawStreamData(data, dataSize);
+            auto buffer = ioBuffers_->Get(dataSize);
+            memcpy(buffer->Content(), data, dataSize);
+            handler_->OnRawStreamData(std::move(buffer));
             return true;
         }
     }

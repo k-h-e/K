@@ -18,6 +18,7 @@
 
 namespace K {
     namespace Core {
+        class IoBuffers;
         class RawStreamHandlerInterface;
     }
 }
@@ -29,7 +30,8 @@ namespace Deprecated {
 //! State shared between threads of the buffered connection.
 class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInterface {
   public:
-    SharedState(int bufferSizeThreshold, const std::shared_ptr<ConnectionIO> &connectionIO);
+    SharedState(int bufferSizeThreshold, const std::shared_ptr<ConnectionIO> &connectionIO,
+                const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     SharedState(const SharedState &other)             = delete;
     SharedState &operator=(const SharedState &other)  = delete;
     SharedState(const SharedState &&other)            = delete;
@@ -60,6 +62,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
 
     std::condition_variable                          writeCanContinue_;
     std::shared_ptr<ConnectionIO>                    connectionIO_;
+    std::shared_ptr<Core::IoBuffers>                 ioBuffers_;
     std::shared_ptr<Core::RawStreamHandlerInterface> handler_;
     bool                                             handlerCalledInitially_;
     Core::RingBuffer                                 writeBuffer_;

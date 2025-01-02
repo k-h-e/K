@@ -6,35 +6,24 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_BUFFERPROVIDERINTERFACE_H_
-#define K_CORE_BUFFERPROVIDERINTERFACE_H_
+#ifndef K_CORE_IOBUFFERINTERFACE_H_
+#define K_CORE_IOBUFFERINTERFACE_H_
 
-#include <K/Core/UniqueHandle.h>
-
-namespace K {
-    namespace Core {
-        class BufferInterface;
-    }
-}
+#include <K/Core/Interface.h>
 
 namespace K {
 namespace Core {
 
-//! Interface to entities providing buffers.
-class BufferProviderInterface {
+//! Interface to I/O buffers.
+class IoBufferInterface : public virtual Interface {
   public:
-    //! Provides the smallest available buffer capable of holding the specified number of bytes, or the largest
-    //! available buffer in case no available buffer is large enough.
-    /*!
-     *  Always provides a buffer.
-     *
-     *  The provided buffer remains exlusively allocated to the owner of the passed out unique handle for as long as
-     *  that handle - or a potential decendant - lives.
-     */ 
-    virtual UniqueHandle<BufferInterface> Get(int size) = 0;
+    //! Grants access to the buffer content.
+    virtual void *Content() = 0;
+    //! Tells the buffer's size in bytes (guaranteed to be > 0).
+    virtual int Size() const = 0;
 };
 
 }    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_CORE_BUFFERPROVIDERINTERFACE_H_
+#endif    // K_CORE_IOBUFFERINTERFACE_H_

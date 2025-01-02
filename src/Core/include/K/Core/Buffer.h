@@ -98,13 +98,10 @@ class Buffer : public virtual BlockingOutStreamInterface {
     //! Appends data to the buffer by reading from the specified stream, potentially invalidating the memory location
     //! handed out earlier via \ref Data().
     /*!
-     *  \param maxNumBytes
-     *  Maximum number of bytes to read and append.
-     *
      *  \return
-     *  The number of bytes actually read and appended.
+     *  The number of bytes read and appended.
      */
-    int AppendFromStream(NonBlockingInStreamInterface *stream, int maxNumBytes);
+    int AppendFromStream(NonBlockingInStreamInterface *stream);
     //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
     /*!
      *  The bytes potentially "appended" are undefined.

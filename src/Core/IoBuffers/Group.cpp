@@ -6,20 +6,20 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include <K/Core/Buffers.h>
+#include <K/Core/IoBuffers.h>
 
 #include <cassert>
 
 #include <K/Core/Log.h>
 
-#include "Buffer.h"
+#include "IoBuffer.h"
 
 using std::to_string;
 
 namespace K {
 namespace Core {
 
-Buffers::Group::Group(int bufferSize, int buffersPerBucket, Buffers::State &state)
+IoBuffers::Group::Group(int bufferSize, int buffersPerBucket, IoBuffers::State &state)
         : state_{state},
           bufferSize_{bufferSize},
           buffersPerBucket_{buffersPerBucket},
@@ -36,8 +36,10 @@ Buffers::Group::Group(int bufferSize, int buffersPerBucket, Buffers::State &stat
     }
 }
 
-Buffers::Group::~Group() {
-    for (Buffer *buffers : bufferBuckets_) {
+IoBuffers::Group::~Group() {
+    bufferInfos_.Reset(2);
+    
+    for (IoBuffer *buffers : bufferBuckets_) {
         delete[] buffers;
     }
     bufferBuckets_.clear();
@@ -48,11 +50,11 @@ Buffers::Group::~Group() {
     memoryBuckets_.clear();
 }
 
-int Buffers::Group::BufferSize() const {
+int IoBuffers::Group::BufferSize() const {
     return bufferSize_;
 }
 
-Buffers::Group::Buffer *Buffers::Group::Get() {
+IoBuffers::Group::IoBuffer *IoBuffers::Group::Get() {
     auto iterator { bufferInfos_.Iterate(idleBuffers).begin() };
     if (iterator.AtEnd()) {
         AddBucket();
@@ -69,7 +71,7 @@ Buffers::Group::Buffer *Buffers::Group::Get() {
 
 // ---
 
-void Buffers::Group::AddBucket() {
+void IoBuffers::Group::AddBucket() {
     uint8_t   *memory { new uint8_t[buffersPerBucket_ * spacing_] };
     uintptr_t address { reinterpret_cast<uintptr_t>(memory) };
     int       offset  { 0 };
@@ -87,11 +89,11 @@ void Buffers::Group::AddBucket() {
 
     memoryBuckets_.push_back(memory);
 
-    Buffer *buffers { new Buffer[buffersPerBucket_] };
+    IoBuffer *buffers { new IoBuffer[buffersPerBucket_] };
     for (int i = 0; i < buffersPerBucket_; ++i) {
         int infoId;
         BufferInfo &info { bufferInfos_.Get(idleBuffers, &infoId) };
-        buffers[i] = Buffer{memory + offset, this, infoId};
+        buffers[i] = IoBuffer{memory + offset, this, infoId};
         info.buffer = &buffers[i];
         offset += spacing_;
     }

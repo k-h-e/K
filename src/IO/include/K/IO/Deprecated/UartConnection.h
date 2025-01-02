@@ -27,8 +27,9 @@ namespace Deprecated {
 class UartConnection : public BufferedConnection {
   public:
     //! Establishes a UART (serial) connection via the specified serial device.
-    UartConnection(const std::string &deviceFileName, Uart::BaudRate baudRate,
-                   const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    UartConnection(
+        const std::string &deviceFileName, Uart::BaudRate baudRate,
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     UartConnection(const UartConnection &other)             = delete;
     UartConnection &operator=(const UartConnection &other)  = delete;
     UartConnection(const UartConnection &&other)            = delete;

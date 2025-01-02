@@ -20,8 +20,9 @@ class NonBlockingIOStreamInterface;
 
 //! Connection state exclusively accessed from the run loop thread.
 struct Connection::LoopThreadState : public virtual Core::RunLoop::ClientInterface {
-    const std::shared_ptr<SynchronizedState> synchronizedState;    // Thread safe.
-    const std::shared_ptr<IO::ConnectionIO>  connectionIO;         // Thread safe.
+    const std::shared_ptr<SynchronizedState> synchronizedState;    // Thread-safe.
+    const std::shared_ptr<IO::ConnectionIO>  connectionIO;         // Thread-safe.
+    const std::shared_ptr<Core::IoBuffers>   ioBuffers;            // Thread-safe.
 
     const std::shared_ptr<Core::RunLoop>     runLoop;
     int                                      runLoopClientId;
@@ -44,7 +45,8 @@ struct Connection::LoopThreadState : public virtual Core::RunLoop::ClientInterfa
 
     LoopThreadState(
         const std::shared_ptr<Core::RunLoop> &aRunLoop, const std::shared_ptr<SynchronizedState> &aSynchronizedState,
-        int aBufferSizeConstraint, const std::shared_ptr<IO::ConnectionIO> &aConnectionIO);
+        int aBufferSizeConstraint, const std::shared_ptr<IO::ConnectionIO> &aConnectionIO,
+        const std::shared_ptr<Core::IoBuffers> &someIoBuffers);
     LoopThreadState()                                        = delete;
     LoopThreadState(const LoopThreadState &other)            = delete;
     LoopThreadState &operator=(const LoopThreadState &other) = delete;

@@ -84,7 +84,7 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
                        AcceptingChunkData
     };
 
-    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
     void OnTimer() override;
     void OnEventsAvailable() override;

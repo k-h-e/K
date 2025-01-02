@@ -29,12 +29,16 @@ namespace Deprecated {
 class TcpConnection : public BufferedConnection {
   public:
     //! Establishes a TCP network connection to the specified host, given by name and port, separated by a <c>':'</c>.
-    TcpConnection(const std::string &hostAndPort, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    TcpConnection(const std::string &hostAndPort, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+                  const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     //! Establishes a TCP network connection to the specified host.
-    TcpConnection(const std::string &host, int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    TcpConnection(const std::string &host, int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+                  const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     //! Establishes a TCP network connection to the specified host.
-    TcpConnection(uint32_t ip4Address, int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
-    TcpConnection(int fd, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+    TcpConnection(uint32_t ip4Address, int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+                  const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+    TcpConnection(int fd, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+                  const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     TcpConnection(const TcpConnection &other)             = delete;
     TcpConnection &operator=(const TcpConnection &other)  = delete;
     TcpConnection(const TcpConnection &&other)            = delete;

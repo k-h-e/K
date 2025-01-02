@@ -16,6 +16,7 @@ using std::make_unique;
 using std::shared_ptr;
 using std::string;
 using std::chrono::milliseconds;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RunLoop;
 using K::Core::ThreadPool;
@@ -32,10 +33,11 @@ namespace Events {
 NetworkEventCouplingClient::NetworkEventCouplingClient(
     const string &protocolVersion, const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
     const shared_ptr<Event> &connectedEvent, const std::shared_ptr<Event> &disconnectedEvent,
-    const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<Timers> &timers,
-    const shared_ptr<ThreadPool> &threadPool)
+    const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO,
+    const shared_ptr<IoBuffers> &ioBuffers, const shared_ptr<Timers> &timers, const shared_ptr<ThreadPool> &threadPool)
         : hub_{hub},
           connectionIO_{connectionIO},
+          ioBuffers_{ioBuffers},
           threadPool_{threadPool},
           timers_{timers},
           runLoop_{runLoop},
@@ -104,7 +106,7 @@ void NetworkEventCouplingClient::InstallConnector() {
 }
 
 void NetworkEventCouplingClient::InstallCoupling(int fd) {
-    auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_);
+    auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_, ioBuffers_);
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
                                                   connectedEvent_, disconnectedEvent_, runLoop_, timers_);
     coupling_->Register(this);

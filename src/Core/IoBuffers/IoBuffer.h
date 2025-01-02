@@ -6,30 +6,30 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_BUFFERS_GROUP_BUFFER_H_
-#define K_CORE_BUFFERS_GROUP_BUFFER_H_
+#ifndef K_CORE_BUFFERS_GROUP_IOBUFFER_H_
+#define K_CORE_BUFFERS_GROUP_IOBUFFER_H_
 
-#include <K/Core/Buffers.h>
+#include <K/Core/IoBuffers.h>
 
 namespace K {
 namespace Core {
 
-class Buffers::Group::Buffer : public virtual BufferInterface,
-                               public virtual ReferenceCountTrackerInterface {
+class IoBuffers::Group::IoBuffer : public virtual IoBufferInterface,
+                                   public virtual ReferenceCountTrackerInterface {
   public:
-    Buffer(uint8_t *memory, Group *group, int infoId);
-    Buffer();
-    Buffer(const Buffer &other)            = delete;
-    Buffer &operator=(const Buffer &other) = delete;
-    Buffer(Buffer &&other);
-    Buffer &operator=(Buffer &&other);
-    ~Buffer()                              = default;
+    IoBuffer(uint8_t *memory, Group *group, int infoId);
+    IoBuffer();
+    IoBuffer(const IoBuffer &other)            = delete;
+    IoBuffer &operator=(const IoBuffer &other) = delete;
+    IoBuffer(IoBuffer &&other);
+    IoBuffer &operator=(IoBuffer &&other);
+    ~IoBuffer()                                = default;
 
     void SetSize(int size);
 
-    // BufferInterface...
-    const void *Data() const override;
-    virtual int DataSize() const override;
+    // IoBufferInterface...
+    void *Content() override;
+    virtual int Size() const override;
 
     // ReferenceCountTrackerInterface...
     void OnReferenceAdded() override;
@@ -45,4 +45,4 @@ class Buffers::Group::Buffer : public virtual BufferInterface,
 }    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_CORE_BUFFERS_GROUP_BUFFER_H_
+#endif    // K_CORE_BUFFERS_GROUP_IOBUFFER_H_

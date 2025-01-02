@@ -10,6 +10,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <K/Core/IoBufferInterface.h>
 #include <K/Core/NonBlockingInStreamInterface.h>
 #include <K/Core/NumberTools.h>
 #include <K/Core/ResultAcceptor.h>
@@ -70,16 +71,14 @@ void Buffer::AppendFromMemory(const void *data, int dataSize) {
     }
 }
 
-int Buffer::AppendFromStream(NonBlockingInStreamInterface *stream, int maxNumBytes) {
-    assert(maxNumBytes > 0);
-    int numFree = static_cast<int>(buffer_.size()) - bufferFill_;
-    if (!numFree) {
-        Grow();
-        numFree = static_cast<int>(buffer_.size()) - bufferFill_;
+int Buffer::AppendFromStream(NonBlockingInStreamInterface *stream) {
+    auto buffer = stream->ReadNonBlocking();
+    if (buffer) {
+        AppendFromMemory(buffer->Content(), buffer->Size());
+        return buffer->Size();
+    } else {
+        return 0;
     }
-    int numRead = stream->ReadNonBlocking(&buffer_[bufferFill_], min(numFree, maxNumBytes));
-    bufferFill_ += numRead;
-    return numRead;
 }
 
 void Buffer::RestoreToCurrentCapacity() {

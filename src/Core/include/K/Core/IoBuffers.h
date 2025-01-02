@@ -6,13 +6,12 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_BUFFERS_H_
-#define K_CORE_BUFFERS_H_
+#ifndef K_CORE_IOBUFFERS_H_
+#define K_CORE_IOBUFFERS_H_
 
 #include <vector>
 
-#include <K/Core/BufferInterface.h>
-#include <K/Core/BufferProviderInterface.h>
+#include <K/Core/IoBufferInterface.h>
 #include <K/Core/ReferenceCountTrackerInterface.h>
 #include <K/Core/ReusableItems.h>
 #include <K/Core/UniqueHandle.h>
@@ -25,17 +24,23 @@ namespace Core {
  *  The class is thread-safe, i.e its public non-static member methods are. The handed out buffers may be passed to
  *  different, arbitrary threads.
  */
-class Buffers : public virtual BufferProviderInterface {
+class IoBuffers : public virtual Interface {
   public:
-    Buffers();
-    Buffers(const Buffers &other)            = delete;
-    Buffers &operator=(const Buffers &other) = delete;
-    Buffers(Buffers &&other)                 = delete;
-    Buffers &operator=(Buffers &&other)      = delete;
-    ~Buffers()                               = default;
+    IoBuffers();
+    IoBuffers(const IoBuffers &other)            = delete;
+    IoBuffers &operator=(const IoBuffers &other) = delete;
+    IoBuffers(IoBuffers &&other)                 = delete;
+    IoBuffers &operator=(IoBuffers &&other)      = delete;
+    ~IoBuffers()                                 = default;
 
-    // BufferProviderInterface...
-    UniqueHandle<BufferInterface> Get(int size) override;
+    //! Provides an I/O buffer of the specified size.
+    /*!
+     *  The provided buffer remains exlusively allocated to the owner of the passed out unique handle for as long as
+     *  that handle - or a potential decendant - lives.
+     * 
+     *  \return I/O buffer of specified size.
+     */ 
+    UniqueHandle<IoBufferInterface> Get(int size);
 
   private:
     struct State;
@@ -45,11 +50,11 @@ class Buffers : public virtual BufferProviderInterface {
         static const int idleBuffers  = 0;
         static const int inUseBuffers = 1;
 
-        class Buffer;
+        class IoBuffer;
 
         struct BufferInfo {
-            Buffer *buffer;
-            int    numReferences;
+            IoBuffer *buffer;
+            int      numReferences;
 
             BufferInfo() : buffer{nullptr}, numReferences{0} {}
         };
@@ -63,7 +68,7 @@ class Buffers : public virtual BufferProviderInterface {
         ~Group();
         
         int BufferSize() const;
-        Buffer *Get();
+        IoBuffer *Get();
         
       private:
         void AddBucket();
@@ -74,7 +79,7 @@ class Buffers : public virtual BufferProviderInterface {
         int                       alignment_;
         int                       spacing_;
         ReusableItems<BufferInfo> bufferInfos_;
-        std::vector<Buffer *>     bufferBuckets_;
+        std::vector<IoBuffer *>   bufferBuckets_;
         std::vector<uint8_t *>    memoryBuckets_;
     };
 
@@ -102,4 +107,4 @@ class Buffers : public virtual BufferProviderInterface {
 }    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_CORE_BUFFERS_H_
+#endif    // K_CORE_IOBUFFERS_H_

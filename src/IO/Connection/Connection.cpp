@@ -8,6 +8,10 @@
 
 #include <K/IO/Connection.h>
 
+#include <cassert>
+
+#include <K/Core/IoBufferInterface.h>
+#include <K/Core/IoBuffers.h>
 #include <K/Core/Log.h>
 #include <K/Core/ResultAcceptor.h>
 #include <K/Core/RunLoop.h>
@@ -23,20 +27,23 @@ using std::optional;
 using std::shared_ptr;
 using std::to_string;
 
+using K::Core::IoBufferInterface;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
+using K::Core::UniqueHandle;
 using K::IO::IOTools;
 
 namespace K {
 namespace IO {
 
 Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_ptr<RunLoop> &runLoop,
-                       const shared_ptr<ConnectionIO> &connectionIO)
+                       const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<IoBuffers> &ioBuffers)
         : loopThreadState_(make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop, ValidateBufferSizeConstraint(bufferSizeConstraint)),
-              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO)) {
+              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO, ioBuffers)) {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 
@@ -109,11 +116,18 @@ void Connection::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &result
     closeResultAcceptor_ = resultAcceptor;
 }
 
-int Connection::ReadNonBlocking(void *buffer, int bufferSize) {
+UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
+    UniqueHandle<IoBufferInterface> buffer;
     int numRead = 0;
     if (!ErrorState()) {
-        numRead = loopThreadState_->readBuffer.Get(buffer, bufferSize);
+        // TODO: Remove buffer here.
+        const int temporaryBufferSize = 1024;
+        uint8_t temporaryBuffer[temporaryBufferSize];
+        numRead = loopThreadState_->readBuffer.Get(temporaryBuffer, temporaryBufferSize);
         if (numRead) {
+            buffer = loopThreadState_->ioBuffers->Get(numRead);
+            assert(buffer->Size() == numRead);
+            memcpy(buffer->Content(), temporaryBuffer, numRead);
             loopThreadState_->RequestActivation(true);
         } else {
             if (loopThreadState_->eof) {
@@ -125,7 +139,7 @@ int Connection::ReadNonBlocking(void *buffer, int bufferSize) {
     }
 
     Log::Print(Log::Level::DebugDebug, this, [&]{ return "ReadNonBlocking(), num_read=" + to_string(numRead); });
-    return numRead;
+    return buffer;
 }
 
 int Connection::WriteNonBlocking(const void *data, int dataSize) {

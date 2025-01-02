@@ -6,11 +6,11 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include <K/Core/Buffers.h>
+#include <K/Core/IoBuffers.h>
 
 #include <cassert>
 
-#include "Buffer.h"
+#include "IoBuffer.h"
 
 using std::make_shared;
 using std::make_unique;
@@ -20,7 +20,7 @@ using std::unique_lock;
 namespace K {
 namespace Core {
 
-Buffers::Buffers()
+IoBuffers::IoBuffers()
         : state_{make_shared<State>()} {
     state_->groups.push_back(make_unique<Group>(  32, 16, *state_));
     state_->groups.push_back(make_unique<Group>(  64, 16, *state_));
@@ -32,30 +32,29 @@ Buffers::Buffers()
     state_->groups.push_back(make_unique<Group>(4096,  4, *state_));
 }
 
-UniqueHandle<BufferInterface> Buffers::Get(int size) {
+UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
     assert(size > 0);
-    Group::Buffer *buffer;
+    Group::IoBuffer *buffer;
     {
         unique_lock<mutex> critical(state_->mutex);    // ..............................................................
-        Group *group   { SelectGroup(size) };
-        int bufferSize { size <= group->BufferSize() ? size : group->BufferSize() };
+        Group *group { SelectGroup(size) };
         buffer = group->Get();
-        buffer->SetSize(bufferSize);
+        buffer->SetSize(size);
     }    // ............................................................................................................
 
-    return UniqueHandle<BufferInterface>{buffer, buffer, state_};
+    return UniqueHandle<IoBufferInterface>{buffer, buffer, state_};
 }
 
 // ---
 
-Buffers::Group *Buffers::SelectGroup(int size) {
+IoBuffers::Group *IoBuffers::SelectGroup(int size) {
     for (auto &group : state_->groups) {
         if (group->BufferSize() >= size) {
             return group.get();
         }
     }
 
-    return state_->groups.back().get();
+    assert(false);
 }
 
 }    // Namespace Core.

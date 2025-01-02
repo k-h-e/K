@@ -13,6 +13,7 @@
 
 using std::shared_ptr;
 using std::to_string;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RunLoop;
 
@@ -21,23 +22,25 @@ namespace IO {
 
 Connection::LoopThreadState::LoopThreadState(
     const shared_ptr<RunLoop> &aRunLoop, const shared_ptr<SynchronizedState> &aSynchronizedState,
-    int aBufferSizeConstraint, const shared_ptr<ConnectionIO> &aConnectionIO)
-        : synchronizedState(aSynchronizedState),
-          connectionIO(aConnectionIO),
-          runLoop(aRunLoop),
-          runLoopClientId(0),
-          handler(nullptr),
-          eof(false),
-          clientReadPaused(false),
-          clientWritePaused(false),
-          handlerNeedsReadyRead(false),
-          handlerNeedsReadyWrite(false),
-          unpauseIORead(false),
-          unpauseIOWrite(false),
-          readIsNext(false),
-          bufferSizeConstraint(aBufferSizeConstraint),
-          activationRequested(false),
-          requestedActivationIsDeep(false) {
+    int aBufferSizeConstraint, const shared_ptr<ConnectionIO> &aConnectionIO,
+    const shared_ptr<IoBuffers> &someIoBuffers)
+        : synchronizedState{aSynchronizedState},
+          connectionIO{aConnectionIO},
+          ioBuffers{someIoBuffers},
+          runLoop{aRunLoop},
+          runLoopClientId{0},
+          handler{nullptr},
+          eof{false},
+          clientReadPaused{false},
+          clientWritePaused{false},
+          handlerNeedsReadyRead{false},
+          handlerNeedsReadyWrite{false},
+          unpauseIORead{false},
+          unpauseIOWrite{false},
+          readIsNext{false},
+          bufferSizeConstraint{aBufferSizeConstraint},
+          activationRequested{false},
+          requestedActivationIsDeep{false} {
     // Nop.
 }
 

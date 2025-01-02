@@ -9,6 +9,8 @@
 #ifndef K_CORE_UNIQUEHANDLE_H_
 #define K_CORE_UNIQUEHANDLE_H_
 
+#include <cassert>
+
 #include <K/Core/HandleBase.h>
 
 namespace K {

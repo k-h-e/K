@@ -20,6 +20,7 @@ using std::shared_ptr;
 using std::make_shared;
 using std::optional;
 using std::to_string;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::RawStreamHandlerInterface;
@@ -30,10 +31,11 @@ namespace IO {
 namespace Deprecated {
 
 BufferedConnection::BufferedConnection(
-    optional<int> fd, int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO)
+    optional<int> fd, int bufferSizeThreshold, const shared_ptr<ConnectionIO> &connectionIO,
+    const shared_ptr<IoBuffers> &ioBuffers)
         : connectionIO_(connectionIO),
           fd_(fd) {
-    sharedState_ = make_shared<SharedState>(bufferSizeThreshold, connectionIO_);
+    sharedState_ = make_shared<SharedState>(bufferSizeThreshold, connectionIO_, ioBuffers);
     if (fd_) {
         if (!connectionIO_->Register(sharedState_, *fd_)) {
             (void)IOTools::CloseFileDescriptor(*fd_, this);

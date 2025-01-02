@@ -6,7 +6,7 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include "Buffer.h"
+#include "IoBuffer.h"
 
 #include <cassert>
 
@@ -20,7 +20,7 @@ using std::unique_lock;
 namespace K {
 namespace Core {
 
-Buffers::Group::Buffer::Buffer(uint8_t *memory, Buffers::Group *group, int infoId)
+IoBuffers::Group::IoBuffer::IoBuffer(uint8_t *memory, IoBuffers::Group *group, int infoId)
         : group_{group},
           infoId_{infoId},
           memory_{memory},
@@ -28,9 +28,9 @@ Buffers::Group::Buffer::Buffer(uint8_t *memory, Buffers::Group *group, int infoI
     // Nop.
 }
 
-Buffers::Group::Buffer::Buffer() : Buffer{nullptr, nullptr, 0} {}
+IoBuffers::Group::IoBuffer::IoBuffer() : IoBuffer{nullptr, nullptr, 0} {}
 
-Buffers::Group::Buffer::Buffer(Buffer &&other)
+IoBuffers::Group::IoBuffer::IoBuffer(IoBuffer &&other)
         : group_{nullptr},
           infoId_{0},
           memory_{nullptr},
@@ -38,7 +38,7 @@ Buffers::Group::Buffer::Buffer(Buffer &&other)
     *this = std::move(other);
 }
 
-Buffers::Group::Buffer &Buffers::Group::Buffer::operator=(Buffers::Group::Buffer &&other) {
+IoBuffers::Group::IoBuffer &IoBuffers::Group::IoBuffer::operator=(IoBuffers::Group::IoBuffer &&other) {
     group_         = other.group_;
     infoId_        = other.infoId_;
     memory_        = other.memory_;
@@ -52,7 +52,7 @@ Buffers::Group::Buffer &Buffers::Group::Buffer::operator=(Buffers::Group::Buffer
     return *this;
 }
 
-void Buffers::Group::Buffer::SetSize(int size) {
+void IoBuffers::Group::IoBuffer::SetSize(int size) {
     assert(size > 0);
     assert(group_ != nullptr);
     assert(size <= group_->BufferSize());
@@ -69,22 +69,22 @@ void Buffers::Group::Buffer::SetSize(int size) {
     });
 }
 
-const void *Buffers::Group::Buffer::Data() const {
+void *IoBuffers::Group::IoBuffer::Content()  {
     assert(memory_ != nullptr);
     return memory_;
 }
 
-int Buffers::Group::Buffer::DataSize() const {
+int IoBuffers::Group::IoBuffer::Size() const {
     assert(size_ > 0);
     return size_;
 }
 
-void Buffers::Group::Buffer::OnReferenceAdded() {
+void IoBuffers::Group::IoBuffer::OnReferenceAdded() {
     unique_lock<mutex> critical(group_->state_.mutex);    // ...........................................................
     ++group_->bufferInfos_.Item(infoId_).numReferences;
 }    // ................................................................................................................
 
-void Buffers::Group::Buffer::OnReferenceRemoved() {
+void IoBuffers::Group::IoBuffer::OnReferenceRemoved() {
     unique_lock<mutex> critical(group_->state_.mutex);    // ...........................................................
     BufferInfo &info = group_->bufferInfos_.Item(infoId_);
     assert(info.numReferences > 0);

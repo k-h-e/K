@@ -116,11 +116,11 @@ void ConnectionEndPoint::OnStreamReadyWrite() {
 
 void ConnectionEndPoint::DispatchIncoming() {
     if (!error_ && readyRead_) {
-        readBuffer_.Clear();
-        if (readBuffer_.AppendFromStream(connection_.get(), 2048)) {
+        auto buffer = connection_->ReadNonBlocking();
+        if (buffer) {
             runLoop_->RequestActivation(runLoopClientId_, false);
             if (handler_) {
-                handler_->OnRawStreamData(readBuffer_.Data(), readBuffer_.DataSize());
+                handler_->OnRawStreamData(std::move(buffer));
             }
         } else {
             readyRead_ = false;

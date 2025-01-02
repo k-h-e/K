@@ -10,6 +10,7 @@
 
 #include <cstring>
 
+#include <K/Core/IoBufferInterface.h>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Timer.h>
@@ -27,12 +28,14 @@ using std::to_string;
 using std::unique_ptr;
 using std::vector;
 using K::Core::Buffer;
+using K::Core::IoBufferInterface;
 using K::Core::Log;
+using K::Core::RunLoop;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
 using K::Core::Timers;
 using K::Core::Timer;
-using K::Core::RunLoop;
+using K::Core::UniqueHandle;
 using K::IO::ConnectionEndPoint;
 using K::IO::KeepAliveParameters;
 using K::IO::TcpConnection;
@@ -111,9 +114,9 @@ bool NetworkEventCoupling::ErrorState() const {
     return error_;
 }
 
-void NetworkEventCoupling::OnRawStreamData(const void *data, int dataSize) {
-    readBuffer_.AppendFromMemory(data, dataSize);
-    uint8_t *buffer = static_cast<uint8_t *>(readBuffer_.Data());
+void NetworkEventCoupling::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
+    readBuffer_.AppendFromMemory(buffer->Content(), buffer->Size());
+    uint8_t *bufferU8 = static_cast<uint8_t *>(readBuffer_.Data());
 
     uint32_t  chunkSizeU32;
     const int sizeFieldSize = static_cast<int>(sizeof(chunkSizeU32));
@@ -123,7 +126,7 @@ void NetworkEventCoupling::OnRawStreamData(const void *data, int dataSize) {
         switch (state_) {
             case State::AcceptingChunkSize:
                 if (numToProcess >= sizeFieldSize) {
-                    memcpy(&chunkSizeU32, &buffer[readCursor_], sizeFieldSize);
+                    memcpy(&chunkSizeU32, &bufferU8[readCursor_], sizeFieldSize);
                     readChunkSize_ = static_cast<int>(chunkSizeU32);
                     if (readChunkSize_ >= static_cast<int>(sizeof(ChunkType))) {
                         readCursor_ += sizeFieldSize;
@@ -141,7 +144,7 @@ void NetworkEventCoupling::OnRawStreamData(const void *data, int dataSize) {
             case State::AcceptingChunkData:
                 if (numToProcess >= readChunkSize_) {
                     ChunkType chunkType;
-                    memcpy(&chunkType, &buffer[readCursor_], sizeof(chunkType));
+                    memcpy(&chunkType, &bufferU8[readCursor_], sizeof(chunkType));
                     switch (chunkType) {
                         case ChunkType::KeepAlive:
                             keepAliveReceived_ = true;
@@ -152,7 +155,8 @@ void NetworkEventCoupling::OnRawStreamData(const void *data, int dataSize) {
                                     int offset = static_cast<int>(sizeof(chunkType));
                                     if (readChunkSize_ > offset) {
                                         int eventDataSize = readChunkSize_ - offset;
-                                        hub_->Submit(hubClientId_, &buffer[readCursor_ + offset], eventDataSize, true);
+                                        hub_->Submit(hubClientId_, &bufferU8[readCursor_ + offset], eventDataSize,
+                                                     true);
                                     } else {
                                         EnterErrorState();
                                     }
@@ -170,8 +174,8 @@ void NetworkEventCoupling::OnRawStreamData(const void *data, int dataSize) {
                                 if (readChunkSize_ > offset) {
                                     int length = readChunkSize_ - offset;
                                     string remoteProtocolVersion;
-                                    if (StringTools::Deserialize(&remoteProtocolVersion, &buffer[readCursor_ + offset],
-                                                                 length)) {
+                                    if (StringTools::Deserialize(&remoteProtocolVersion,
+                                                                 &bufferU8[readCursor_ + offset], length)) {
                                         if (protocolVersion_ == remoteProtocolVersion) {
                                             protocolVersionMatch_ = true;
                                             if (connectedEvent_) {

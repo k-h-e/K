@@ -18,6 +18,7 @@
 
 namespace K {
     namespace Core {
+        class IoBuffers;
         class Timers;
         class ThreadPool;
         class RunLoop;
@@ -47,8 +48,8 @@ class NetworkEventCouplingClient : public virtual Core::Interface,
         const std::string &protocolVersion, const IO::KeepAliveParameters &keepAliveParameters,
         const std::shared_ptr<EventHub> &hub, const std::shared_ptr<Event> &connectedEvent,
         const std::shared_ptr<Event> &disconnectedEvent, const std::shared_ptr<K::Core::RunLoop> &runLoop,
-        const std::shared_ptr<IO::ConnectionIO> &connectionIO, const std::shared_ptr<K::Core::Timers> &timers,
-        const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+        const std::shared_ptr<IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers,
+        const std::shared_ptr<K::Core::Timers> &timers, const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     NetworkEventCouplingClient()                                                   = delete;
     NetworkEventCouplingClient(const NetworkEventCouplingClient &other)            = delete;
     NetworkEventCouplingClient &operator=(const NetworkEventCouplingClient &other) = delete;
@@ -74,6 +75,7 @@ class NetworkEventCouplingClient : public virtual Core::Interface,
 
     const std::shared_ptr<EventHub>            hub_;             // Thread-safe.
     const std::shared_ptr<IO::ConnectionIO>    connectionIO_;    // Thread-safe.
+    const std::shared_ptr<Core::IoBuffers>     ioBuffers_;       // Thread-safe.
     const std::shared_ptr<K::Core::ThreadPool> threadPool_;      // Thread-safe.
     const std::shared_ptr<K::Core::Timers>     timers_;          // Thread-safe.
 

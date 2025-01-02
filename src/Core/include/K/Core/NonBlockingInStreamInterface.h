@@ -9,7 +9,14 @@
 #ifndef K_CORE_NONBLOCKINGINSTREAMINTERFACE_H_
 #define K_CORE_NONBLOCKINGINSTREAMINTERFACE_H_
 
+#include <K/Core/UniqueHandle.h>
 #include <K/Core/InStreamInterface.h>
+
+namespace K {
+    namespace Core {
+        class IoBufferInterface;
+    }
+}
 
 namespace K {
 namespace Core {
@@ -17,13 +24,11 @@ namespace Core {
 //! Interface to nonblocking input streams.
 class NonBlockingInStreamInterface : public virtual InStreamInterface {
   public:
-    //! Reads data into the specified buffer with nonblocking semantics.
+    //! Reads data with nonblocking semantics.
     /*!
-     *  \return
-     *  Number of bytes actually read. Will not be larger than the buffer size. Might be less than the buffer size
-     *  (short read). <c>0</c> means that no data was available for reading.
+     *  \return Buffer with read data, or a null-handle in case no data was available for reading.
      */
-    virtual int ReadNonBlocking(void *buffer, int bufferSize) = 0;
+    virtual UniqueHandle<IoBufferInterface> ReadNonBlocking() = 0;
 };
 
 }    // Namespace Core.
