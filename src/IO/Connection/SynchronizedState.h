@@ -11,7 +11,7 @@
 
 #include <mutex>
 #include <optional>
-#include <K/Core/RingBuffer.h>
+#include <K/Core/BinaryQueue.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/Connection.h>
 
@@ -49,8 +49,8 @@ class Connection::SynchronizedState : public virtual IO::ConnectionIO::ClientInt
     std::mutex lock_;    // Protects everything below...
     const std::shared_ptr<Core::RunLoop> runLoop_;
     std::optional<int>                   runLoopClientId_;
-    Core::RingBuffer                     readBuffer_;
-    Core::RingBuffer                     writeBuffer_;
+    Core::BinaryQueue                     readQueue_;
+    Core::BinaryQueue                    writeQueue_;
     bool                                 error_;
     bool                                 eof_;
     bool                                 ioReadPaused_;

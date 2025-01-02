@@ -47,19 +47,19 @@ void Connection::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
             loopThreadState->error                  = Error::IO;
         }
     } else {
-        readBuffer_.TransferTo(&loopThreadState->readBuffer, loopThreadState->bufferSizeConstraint);
-        if (ioReadPaused_ && (readBuffer_.Size() < bufferSizeConstraint_)) {
+        readQueue_.TransferTo(&loopThreadState->readQueue, loopThreadState->bufferSizeConstraint);
+        if (ioReadPaused_ && (readQueue_.Size() < bufferSizeConstraint_)) {
             loopThreadState->unpauseIORead = true;
             ioReadPaused_ = false;
         }
 
-        loopThreadState->writeBuffer.TransferTo(&writeBuffer_, bufferSizeConstraint_);
-        if (ioWritePaused_ && !writeBuffer_.Empty()) {
+        loopThreadState->writeQueue.TransferTo(&writeQueue_, bufferSizeConstraint_);
+        if (ioWritePaused_ && !writeQueue_.Empty()) {
             loopThreadState->unpauseIOWrite = true;
             ioWritePaused_ = false;
         }
 
-        if (eof_ && readBuffer_.Empty()) {
+        if (eof_ && readQueue_.Empty()) {
             if (!loopThreadState->eof) {
                 loopThreadState->handlerNeedsReadyRead = true;
                 loopThreadState->eof                   = true;
@@ -71,9 +71,9 @@ void Connection::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
 bool Connection::SynchronizedState::OnDataRead(const void *data, int dataSize) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
     if (!error_ && !eof_) {
-        readBuffer_.Put(data, dataSize);
+        readQueue_.Put(data, dataSize);
         RequestSync(critical);
-        if (readBuffer_.Size() >= bufferSizeConstraint_) {
+        if (readQueue_.Size() >= bufferSizeConstraint_) {
             ioReadPaused_ = true;
             return false;
         } else {
@@ -88,7 +88,7 @@ int Connection::SynchronizedState::OnReadyWrite(void *buffer, int bufferSize) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
     int numWritten = 0;
     if (!error_) {
-        numWritten = writeBuffer_.Get(buffer, bufferSize);
+        numWritten = writeQueue_.Get(buffer, bufferSize);
         if (numWritten) {
             RequestSync(critical);
         } else {
@@ -100,7 +100,7 @@ int Connection::SynchronizedState::OnReadyWrite(void *buffer, int bufferSize) {
 
 void Connection::SynchronizedState::OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
-    writeBuffer_.PutBack(unwrittenData, unwrittenDataSize);
+    writeQueue_.PutBack(unwrittenData, unwrittenDataSize);
 }    // ......................................................................................... critical section, end.
 
 void Connection::SynchronizedState::OnCustomCall() {

@@ -62,7 +62,7 @@ void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler) {
 int ConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
     if (!error_) {
-        writeBuffer_.Put(data, dataSize);
+        writeQueue_.Put(data, dataSize);
         PushOutgoing();
         if (!error_) {
             return dataSize;
@@ -135,9 +135,9 @@ void ConnectionEndPoint::DispatchIncoming() {
 }
 
 void ConnectionEndPoint::PushOutgoing() {
-    if (!error_ && readyWrite_ && !writeBuffer_.Empty()) {
-        writeBuffer_.TransferTo(connection_.get());
-        if (!writeBuffer_.Empty()) {
+    if (!error_ && readyWrite_ && !writeQueue_.Empty()) {
+        writeQueue_.TransferTo(connection_.get());
+        if (!writeQueue_.Empty()) {
              readyWrite_ = false;
              if (connection_->ErrorState()) {
                  error_       = connection_->StreamError();

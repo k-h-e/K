@@ -10,9 +10,10 @@
 #define K_IO_CONNECTIONENDPOINT_H_
 
 #include <memory>
+
+#include <K/Core/BinaryQueue.h>
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/Buffer.h>
-#include <K/Core/RingBuffer.h>
 #include <K/Core/AsyncInStreamInterface.h>
 #include <K/Core/RunLoop.h>
 #include <K/IO/Connection.h>
@@ -60,7 +61,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     Core::RawStreamHandlerInterface       *handler_;
     Core::Buffer                          readBuffer_;
     bool                                  readyRead_;
-    Core::RingBuffer                      writeBuffer_;
+    Core::BinaryQueue                     writeQueue_;
     bool                                  readyWrite_;
     std::optional<Error>                  error_;
     bool                                  signalError_;

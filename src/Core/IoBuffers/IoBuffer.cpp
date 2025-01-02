@@ -9,6 +9,7 @@
 #include "IoBuffer.h"
 
 #include <cassert>
+#include <mutex>
 
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>

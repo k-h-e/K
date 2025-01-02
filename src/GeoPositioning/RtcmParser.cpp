@@ -9,13 +9,17 @@
 #include <K/GeoPositioning/RtcmParser.h>
 
 #include <cassert>
+
+#include <K/Core/IoBufferInterface.h>
 #include <K/Core/Log.h>
 #include <K/GeoPositioning/RtcmMessageHandlerInterface.h>
 
 using std::shared_ptr;
 using std::to_string;
+using K::Core::IoBufferInterface;
 using K::Core::Log;
 using K::Core::StreamInterface;
+using K::Core::UniqueHandle;
 
 namespace K {
 namespace GeoPositioning {
@@ -29,9 +33,10 @@ RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler)
    // Nop.
 }
 
-void RtcmParser::OnRawStreamData(const void *data, int dataSize) {
+void RtcmParser::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
     if (!error_) {
-        const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
+        const uint8_t *dataPtr { static_cast<const uint8_t *>(buffer->Content()) };
+        const int     dataSize { buffer->Size() };
         for (int i = 0; i < dataSize; ++i) {
             uint8_t byte = *dataPtr++;
 

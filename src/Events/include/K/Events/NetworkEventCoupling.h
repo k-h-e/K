@@ -10,10 +10,10 @@
 #define K_EVENTS_NETWORKEVENTCOUPLING_H_
 
 #include <memory>
+
 #include <K/Core/Buffer.h>
 #include <K/Core/ErrorStateInterface.h>
 #include <K/Core/RawStreamHandlerInterface.h>
-#include <K/Core/RingBuffer.h>
 #include <K/Core/RunLoop.h>
 #include <K/Core/Timer.h>
 #include <K/Events/EventNotifier.h>

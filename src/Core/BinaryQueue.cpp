@@ -6,31 +6,32 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include <K/Core/RingBuffer.h>
+#include <K/Core/BinaryQueue.h>
 
 #include <cassert>
 #include <cstring>
+
 #include <K/Core/NonBlockingOutStreamInterface.h>
 
 namespace K {
 namespace Core {
 
-RingBuffer::RingBuffer()
+BinaryQueue::BinaryQueue()
     : capacity_(256),
       cursor_(0),
       fill_(0) {
     buffer_.resize(capacity_);
 }
 
-int RingBuffer::Size() const {
+int BinaryQueue::Size() const {
     return fill_;
 }
 
-bool RingBuffer::Empty() const {
+bool BinaryQueue::Empty() const {
     return !fill_;
 }
 
-int RingBuffer::Get(void *outBuffer, int bufferSize) {
+int BinaryQueue::Get(void *outBuffer, int bufferSize) {
     assert(bufferSize > 0);
     if (fill_) {
         int numToRead = std::min(capacity_ - cursor_, fill_);    // >= 1.
@@ -50,7 +51,7 @@ int RingBuffer::Get(void *outBuffer, int bufferSize) {
     }
 }
 
-void RingBuffer::Put(const void *data, int dataSize) {
+void BinaryQueue::Put(const void *data, int dataSize) {
     assert(dataSize > 0);
     while (capacity_ - fill_ < dataSize) {
         Grow();
@@ -68,7 +69,7 @@ void RingBuffer::Put(const void *data, int dataSize) {
     fill_ += dataSize;
 }
 
-void RingBuffer::PutBack(const void *data, int dataSize) {
+void BinaryQueue::PutBack(const void *data, int dataSize) {
     assert(dataSize > 0);
     while (capacity_ - fill_ < dataSize) {
         Grow();
@@ -88,7 +89,7 @@ void RingBuffer::PutBack(const void *data, int dataSize) {
     fill_ += dataSize;
 }
 
-void RingBuffer::TransferTo(RingBuffer *other, int maxSize) {
+void BinaryQueue::TransferTo(BinaryQueue *other, int maxSize) {
     while (fill_ && (other->Size() < maxSize)) {
         int numToTransfer = std::min(capacity_ - cursor_, fill_);                // >= 1.
         numToTransfer     = std::min(numToTransfer, maxSize - other->Size());    // >= 1.
@@ -101,7 +102,7 @@ void RingBuffer::TransferTo(RingBuffer *other, int maxSize) {
     }
 }
 
-void RingBuffer::TransferTo(NonBlockingOutStreamInterface *stream) {
+void BinaryQueue::TransferTo(NonBlockingOutStreamInterface *stream) {
     bool done = false;
     while (fill_ && !done) {
         int numToTransfer = std::min(capacity_ - cursor_, fill_);    // >= 1.
@@ -118,7 +119,7 @@ void RingBuffer::TransferTo(NonBlockingOutStreamInterface *stream) {
     }
 }
 
-void RingBuffer::Grow() {
+void BinaryQueue::Grow() {
     int oldCapacity = capacity_;
     capacity_ *= 2;
     buffer_.resize(capacity_);

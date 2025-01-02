@@ -18,10 +18,13 @@ using std::make_shared;
 using std::string;
 using std::to_string;
 using std::stringstream;
+using K::Core::IoBufferInterface;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
+using K::Core::UniqueHandle;
 using K::GeoPositioning::RtcmParser;
 using K::IO::ConnectionIO;
 
@@ -31,7 +34,7 @@ namespace GeoPositioning {
 class NtripDgnssClient::ReadHandler : public virtual RawStreamHandlerInterface {
   public:
     ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler);
-    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) override;
     void OnStreamError(StreamInterface::Error error) override;
 
   private:
@@ -40,8 +43,9 @@ class NtripDgnssClient::ReadHandler : public virtual RawStreamHandlerInterface {
 
 NtripDgnssClient::NtripDgnssClient(
     const string &host, const string &mountPoint, const string &user, const string &passWord, const string &positionGga,
-    const shared_ptr<RtcmMessageHandlerInterface> &messageHandler, const shared_ptr<ConnectionIO> &connectionIO)
-        : connection_{host, connectionIO},
+    const shared_ptr<RtcmMessageHandlerInterface> &messageHandler, const shared_ptr<ConnectionIO> &connectionIO,
+    const shared_ptr<IoBuffers> &ioBuffers)
+        : connection_{host, connectionIO, ioBuffers},
           readHandler_{make_shared<ReadHandler>(messageHandler)} {
     connection_.Register(readHandler_);
 
@@ -74,8 +78,8 @@ NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerIn
     // Nop.
 }
 
-void NtripDgnssClient::ReadHandler::OnRawStreamData(const void *data, int dataSize) {
-    parser_.OnRawStreamData(data, dataSize);
+void NtripDgnssClient::ReadHandler::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
+    parser_.OnRawStreamData(std::move(buffer));
 }
 
 void NtripDgnssClient::ReadHandler::OnStreamError(StreamInterface::Error error) {

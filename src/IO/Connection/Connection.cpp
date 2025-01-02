@@ -9,6 +9,7 @@
 #include <K/IO/Connection.h>
 
 #include <cassert>
+#include <cstring>
 
 #include <K/Core/IoBufferInterface.h>
 #include <K/Core/IoBuffers.h>
@@ -23,6 +24,7 @@
 
 using std::make_shared;
 using std::make_unique;
+using std::memcpy;
 using std::optional;
 using std::shared_ptr;
 using std::to_string;
@@ -123,7 +125,7 @@ UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
         // TODO: Remove buffer here.
         const int temporaryBufferSize = 1024;
         uint8_t temporaryBuffer[temporaryBufferSize];
-        numRead = loopThreadState_->readBuffer.Get(temporaryBuffer, temporaryBufferSize);
+        numRead = loopThreadState_->readQueue.Get(temporaryBuffer, temporaryBufferSize);
         if (numRead) {
             buffer = loopThreadState_->ioBuffers->Get(numRead);
             assert(buffer->Size() == numRead);
@@ -145,11 +147,11 @@ UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
 int Connection::WriteNonBlocking(const void *data, int dataSize) {
     int numWritten = 0;  
     if (!ErrorState()) {
-        if (loopThreadState_->bufferSizeConstraint > loopThreadState_->writeBuffer.Size()) {
-            int numToWrite = std::min(loopThreadState_->bufferSizeConstraint - loopThreadState_->writeBuffer.Size(),
+        if (loopThreadState_->bufferSizeConstraint > loopThreadState_->writeQueue.Size()) {
+            int numToWrite = std::min(loopThreadState_->bufferSizeConstraint - loopThreadState_->writeQueue.Size(),
                                       dataSize);
             if (numToWrite > 0) {    // Defensive.
-                loopThreadState_->writeBuffer.Put(data, numToWrite);
+                loopThreadState_->writeQueue.Put(data, numToWrite);
                 numWritten = numToWrite;
             }
         }

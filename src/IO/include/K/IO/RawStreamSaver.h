@@ -35,7 +35,7 @@ class RawStreamSaver : public virtual Core::RawStreamHandlerInterface {
     RawStreamSaver &operator=(RawStreamSaver &&other)      = delete;
     ~RawStreamSaver()                                      = default;
 
-    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
 
   private:

@@ -15,6 +15,7 @@
 using std::make_shared;
 using std::make_unique;
 using std::shared_ptr;
+using K::Core::IoBuffers;
 using K::Core::RunLoop;
 using K::Core::ThreadPool;
 using K::IO::ConnectionIO;
@@ -22,11 +23,13 @@ using K::IO::ConnectionIO;
 namespace K {
 namespace IO {
 
-ListenSocket::ListenSocket(int port, const shared_ptr<RunLoop> &runLoop,
-                           const shared_ptr<ConnectionIO> &connectionIO, const std::shared_ptr<ThreadPool> &threadPool)
+ListenSocket::ListenSocket(
+    int port, const shared_ptr<RunLoop> &runLoop, const shared_ptr<ConnectionIO> &connectionIO,
+    const std::shared_ptr<IoBuffers> &ioBuffers, const std::shared_ptr<ThreadPool> &threadPool)
         : loopThreadState_(make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop),
-              make_shared<Deprecated::ListenSocket>(port, connectionIO, threadPool), connectionIO)) {
+              make_shared<Deprecated::ListenSocket>(port, connectionIO, ioBuffers, threadPool), connectionIO,
+              ioBuffers)) {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 

@@ -18,6 +18,7 @@
 
 namespace K {
     namespace Core {
+        class IoBuffers;
         class ThreadPool;
     }
     namespace IO {
@@ -40,8 +41,9 @@ namespace Deprecated {
 class ListenSocket::SharedState : public virtual K::Core::ErrorStateInterface,
                                   public virtual K::Core::CompletionHandlerInterface {
   public:
-    SharedState(int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-                const std::shared_ptr<K::Core::ThreadPool> &threadPool);
+    SharedState(
+        int port, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
+        const std::shared_ptr<Core::IoBuffers> &ioBuffers, const std::shared_ptr<K::Core::ThreadPool> &threadPool);
     SharedState(const SharedState &other)             = delete;
     SharedState &operator=(const SharedState &other)  = delete;
     SharedState(SharedState &&other)                  = delete;
@@ -72,6 +74,7 @@ class ListenSocket::SharedState : public virtual K::Core::ErrorStateInterface,
     bool                                 error_;
     bool                                 shuttingDown_;
     std::shared_ptr<K::IO::ConnectionIO> connectionIO_;
+    std::shared_ptr<Core::IoBuffers>     ioBuffers_;
     std::shared_ptr<K::Core::ThreadPool> threadPool_;
 };
 

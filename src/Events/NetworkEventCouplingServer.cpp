@@ -17,6 +17,7 @@ using std::unique_ptr;
 using std::string;
 using std::to_string;
 using std::chrono::milliseconds;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RunLoop;
 using K::Core::ThreadPool;
@@ -34,10 +35,11 @@ NetworkEventCouplingServer::NetworkEventCouplingServer(
             int port, const string &protocolVersion, const KeepAliveParameters &keepAliveParameters,
             const shared_ptr<EventHub> &hub, const shared_ptr<Event> &connectedEvent,
             const shared_ptr<Event> &disconnectedEvent, const shared_ptr<RunLoop> &runLoop,
-            const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<Timers> &timers,
-            const shared_ptr<ThreadPool> &threadPool)
+            const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<IoBuffers> &ioBuffers,
+            const shared_ptr<Timers> &timers, const shared_ptr<ThreadPool> &threadPool)
         : hub_{hub},
           connectionIO_{connectionIO},
+          ioBuffers_{ioBuffers},
           timers_{timers},
           threadPool_{threadPool},
           runLoop_{runLoop},
@@ -112,7 +114,7 @@ void NetworkEventCouplingServer::OnTimer() {
 
 void NetworkEventCouplingServer::InstallListenSocket() {
     UninstallListenSocket();
-    listenSocket_ = make_unique<ListenSocket>(port_, runLoop_, connectionIO_, threadPool_);
+    listenSocket_ = make_unique<ListenSocket>(port_, runLoop_, connectionIO_, ioBuffers_, threadPool_);
     listenSocket_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "listen socket installed, port=" + to_string(port_); });
 }

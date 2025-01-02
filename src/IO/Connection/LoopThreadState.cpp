@@ -75,10 +75,10 @@ void Connection::LoopThreadState::Activate(bool deepActivation) {
     bool signalReadyRead  = false;
     bool signalReadyWrite = false;
 
-    if ((clientReadPaused && !readBuffer.Empty()) || handlerNeedsReadyRead) {
+    if ((clientReadPaused && !readQueue.Empty()) || handlerNeedsReadyRead) {
         signalReadyRead = true;
     }
-    if ((clientWritePaused && (writeBuffer.Size() < bufferSizeConstraint)) || handlerNeedsReadyWrite) {
+    if ((clientWritePaused && (writeQueue.Size() < bufferSizeConstraint)) || handlerNeedsReadyWrite) {
         signalReadyWrite = true;
     }
 

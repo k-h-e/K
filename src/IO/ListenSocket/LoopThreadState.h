@@ -15,6 +15,9 @@
 #include <K/IO/Deprecated/ListenSocket.h>
 
 namespace K {
+    namespace Core {
+        class IoBuffers;
+    }
     namespace IO {
         class TcpConnection;
     }
@@ -25,9 +28,10 @@ namespace IO {
 
 //! State exclusively accessed from the run loop thread.
 struct ListenSocket::LoopThreadState : public virtual Core::RunLoop::ClientInterface {
-    const std::shared_ptr<SynchronizedState>        synchronizedState;    // Thread safe.
-    const std::shared_ptr<Deprecated::ListenSocket> listenSocket;         // Thread safe.
-    const std::shared_ptr<IO::ConnectionIO>         connectionIO;         // Thread safe.
+    const std::shared_ptr<SynchronizedState>        synchronizedState;    // Thread-safe.
+    const std::shared_ptr<Deprecated::ListenSocket> listenSocket;         // Thread-safe.
+    const std::shared_ptr<IO::ConnectionIO>         connectionIO;         // Thread-safe.
+    const std::shared_ptr<Core::IoBuffers>          ioBuffers;            // Thread-safe.
 
     const std::shared_ptr<Core::RunLoop>       runLoop;
     int                                        runLoopClientId;
@@ -42,7 +46,7 @@ struct ListenSocket::LoopThreadState : public virtual Core::RunLoop::ClientInter
     LoopThreadState(
         const std::shared_ptr<Core::RunLoop> &aRunLoop, const std::shared_ptr<SynchronizedState> &aSynchronizedState,
         const std::shared_ptr<Deprecated::ListenSocket> &aListenSocket,
-        const std::shared_ptr<IO::ConnectionIO> &aConnectionIO);
+        const std::shared_ptr<IO::ConnectionIO> &aConnectionIO, const std::shared_ptr<Core::IoBuffers> &someIoBuffers);
     LoopThreadState()                                        = delete;
     LoopThreadState(const LoopThreadState &other)            = delete;
     LoopThreadState &operator=(const LoopThreadState &other) = delete;

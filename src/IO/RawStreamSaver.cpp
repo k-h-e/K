@@ -8,13 +8,16 @@
 
 #include <K/IO/RawStreamSaver.h>
 
+#include <K/Core/IoBufferInterface.h>
 #include <K/IO/File.h>
 #include <K/IO/StreamBuffer.h>
 
 using std::make_shared;
 using std::make_unique;
 using std::string;
+using K::Core::IoBufferInterface;
 using K::Core::StreamInterface;
+using K::Core::UniqueHandle;
 using K::IO::Path;
 
 namespace K {
@@ -26,9 +29,9 @@ RawStreamSaver::RawStreamSaver(const Path &fileName)
     // Nop.
 }
 
-void RawStreamSaver::OnRawStreamData(const void *data, int dataSize) {
+void RawStreamSaver::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
     if (fileStream_) {
-        WriteItem(fileStream_.get(), data, dataSize);
+        WriteItem(fileStream_.get(), buffer->Content(), buffer->Size());
     }
 }
 

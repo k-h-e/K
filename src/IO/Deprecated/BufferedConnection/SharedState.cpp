@@ -8,8 +8,9 @@
 
 #include "SharedState.h"
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <cstring>
 
 #include <K/Core/IoBuffers.h>
 #include <K/Core/Log.h>
@@ -77,12 +78,12 @@ void BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) 
     const uint8_t *data   = static_cast<const uint8_t *>(item);
     int           numLeft = itemSize;
     while ((!error_) && numLeft) {
-        int bufferFill = writeBuffer_.Size();
+        int bufferFill = writeQueue_.Size();
         if (bufferFill >= bufferSizeThreshold_) {
             writeCanContinue_.wait(critical);
         } else {
             int numToCopy = std::min(numLeft, bufferSizeThreshold_ - bufferFill);    // Will be > 0.
-            writeBuffer_.Put(data, numToCopy);
+            writeQueue_.Put(data, numToCopy);
             data    += numToCopy;
             numLeft -= numToCopy;
             if (canNotWrite_) {
@@ -125,7 +126,7 @@ int BufferedConnection::SharedState::OnReadyWrite(void *buffer, int bufferSize) 
     assert(bufferSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
-    int numWritten = writeBuffer_.Get(buffer, bufferSize);
+    int numWritten = writeQueue_.Get(buffer, bufferSize);
     if (!numWritten) {
         canNotWrite_ = true;
     } else {
@@ -138,7 +139,7 @@ void BufferedConnection::SharedState::OnIncompleteWrite(const void *unwrittenDat
     assert (unwrittenDataSize > 0);
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
-    writeBuffer_.PutBack(unwrittenData, unwrittenDataSize);
+    writeQueue_.PutBack(unwrittenData, unwrittenDataSize);
 }    // ......................................................................................... critical section, end.
 
 void BufferedConnection::SharedState::OnCustomCall() {

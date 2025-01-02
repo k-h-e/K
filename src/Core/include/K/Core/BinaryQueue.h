@@ -6,8 +6,8 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_RINGBUFFER_H_
-#define K_CORE_RINGBUFFER_H_
+#ifndef K_CORE_BINARYQUEUE_H_
+#define K_CORE_BINARYQUEUE_H_
 
 #include <cstdint>
 #include <vector>
@@ -17,41 +17,42 @@ namespace Core {
 
 class NonBlockingOutStreamInterface;
 
-//! Ring buffer with FIFO semantics.
-class RingBuffer {
+//! Binary data queue.
+class BinaryQueue {
   public:
-    RingBuffer();
-    RingBuffer(const RingBuffer &other)            = delete;
-    RingBuffer &operator=(const RingBuffer &other) = delete;
-    RingBuffer(RingBuffer &&other)                 = delete;
-    RingBuffer &operator=(RingBuffer &&other)      = delete;
+    BinaryQueue();
+    BinaryQueue(const BinaryQueue &other)            = delete;
+    BinaryQueue &operator=(const BinaryQueue &other) = delete;
+    BinaryQueue(BinaryQueue &&other)                 = delete;
+    BinaryQueue &operator=(BinaryQueue &&other)      = delete;
+    ~BinaryQueue()                                   = default;
 
-    //! Returns the number of bytes currently in the ring buffer.
+    //! Returns the number of bytes currently in the queue.
     int Size() const;
-    //! Tells whether the ring buffer is currently empty.
+    //! Tells whether the queue is currently empty.
     bool Empty() const;
-    //! Gets (and removes) at most <c>bufferSize</c> bytes from the buffer.
+    //! Gets (and removes) at most <c>bufferSize</c> bytes from the queue.
     /*!
      *  \return
-     *  Number of bytes actually fetched from the buffer. <c>0</c> means the buffer was empty.
+     *  Number of bytes actually fetched from the queue. <c>0</c> means the queue was empty.
      */
     int Get(void *outBuffer, int bufferSize);
-    //! Puts (a copy of) the specified data in the buffer.
+    //! Puts (a copy of) the specified data in the queue.
     /*!
-     *  The buffer grows as needed.
+     *  The queue grows as needed.
      */
     void Put(const void *data, int dataSize);
-    //! Puts back (a copy of) the specified data into the buffer.
+    //! Puts back (a copy of) the specified data into the queue.
     /*!
-     *  Intended for data that has been previously taken out of the buffer via <c>Get()</c>, but could not be consumed
+     *  Intended for data that has been previously taken out of the queue via <c>Get()</c>, but could not be consumed
      *  by the client. The put back data will be the first to be delivered with the next call to <c>Get()</c>.
      *
-     *  The buffer grows as needed.
+     *  The queue grows as needed.
      */
     void PutBack(const void *data, int dataSize);
-    //! Transfers data to the specified other ring buffer, as long as the other ring buffer's size does not exceed the
-    //! size specified.
-    void TransferTo(RingBuffer *other, int maxSize);
+    //! Transfers data to the specified other queue, as long as the other queue's size does not exceed the size
+    //! specified.
+    void TransferTo(BinaryQueue *other, int maxSize);
     //! Transfers data to the specified stream, as long as the stream accepts more data.
     void TransferTo(NonBlockingOutStreamInterface *stream);
 
@@ -67,4 +68,4 @@ class RingBuffer {
 }    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_CORE_RINGBUFFER_H_
+#endif    // K_CORE_BINARYQUEUE_H_

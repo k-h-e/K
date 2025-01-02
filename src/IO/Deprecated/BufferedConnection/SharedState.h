@@ -12,7 +12,8 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
-#include <K/Core/RingBuffer.h>
+
+#include <K/Core/BinaryQueue.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/Deprecated/BufferedConnection.h>
 
@@ -65,7 +66,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     std::shared_ptr<Core::IoBuffers>                 ioBuffers_;
     std::shared_ptr<Core::RawStreamHandlerInterface> handler_;
     bool                                             handlerCalledInitially_;
-    Core::RingBuffer                                 writeBuffer_;
+    Core::BinaryQueue                                writeQueue_;
     int                                              bufferSizeThreshold_;
     bool                                             canNotWrite_;
     std::optional<StreamInterface::Error>            error_;

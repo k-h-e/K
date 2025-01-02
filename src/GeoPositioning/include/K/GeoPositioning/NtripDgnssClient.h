@@ -14,6 +14,7 @@
 
 namespace K {
     namespace Core {
+        class IoBuffers;
         class RawStreamHandlerInterface;
     }
     namespace GeoPositioning {
@@ -31,7 +32,7 @@ class NtripDgnssClient : public Core::Interface {
     NtripDgnssClient(
         const std::string &host, const std::string &mountPoint, const std::string &user, const std::string &passWord,
         const std::string &positionGga, const std::shared_ptr<RtcmMessageHandlerInterface> &messageHandler,
-        const std::shared_ptr<IO::ConnectionIO> &connectionIO);
+        const std::shared_ptr<IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     NtripDgnssClient(const NtripDgnssClient &other)            = delete;
     NtripDgnssClient &operator=(const NtripDgnssClient &other) = delete;
     NtripDgnssClient(NtripDgnssClient &&other)                 = delete;

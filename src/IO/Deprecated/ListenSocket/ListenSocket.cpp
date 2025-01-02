@@ -12,6 +12,7 @@
 
 using std::make_shared;
 using std::shared_ptr;
+using K::Core::IoBuffers;
 using K::Core::ThreadPool;
 using K::IO::Socket;
 
@@ -20,8 +21,8 @@ namespace IO {
 namespace Deprecated {
 
 ListenSocket::ListenSocket(int port, const shared_ptr<ConnectionIO> &connectionIO,
-                           const shared_ptr<ThreadPool> &threadPool) {
-    shared_ = make_shared<SharedState>(port, connectionIO, threadPool);
+                           const shared_ptr<IoBuffers> &ioBuffers, const shared_ptr<ThreadPool> &threadPool) {
+    shared_ = make_shared<SharedState>(port, connectionIO, ioBuffers, threadPool);
 }
 
 void ListenSocket::Register(HandlerInterface *handler, bool fileDescriptorMode) {

@@ -14,6 +14,7 @@
 
 namespace K {
     namespace Core {
+        class IoBuffers;
         class ThreadPool;
     }
     namespace IO {
@@ -42,8 +43,9 @@ class ListenSocket : public virtual Core::ErrorStateInterface {
         virtual void OnListenSocketErrorState() = 0;
     };
 
-    ListenSocket(int port, const std::shared_ptr<ConnectionIO> &connectionIO,
-                 const std::shared_ptr<Core::ThreadPool> &threadPool);
+    ListenSocket(
+        int port, const std::shared_ptr<ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers,
+        const std::shared_ptr<Core::ThreadPool> &threadPool);
     ListenSocket(const ListenSocket &other)             = delete;
     ListenSocket &operator=(const ListenSocket &other)  = delete;
     ListenSocket(ListenSocket &&other)                  = delete;

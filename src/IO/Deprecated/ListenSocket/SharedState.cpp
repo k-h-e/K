@@ -22,6 +22,7 @@ using std::optional;
 using std::shared_ptr;
 using std::to_string;
 using std::unique_lock;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::ThreadPool;
 using K::IO::IOTools;
@@ -32,17 +33,19 @@ namespace K {
 namespace IO {
 namespace Deprecated {
 
-ListenSocket::SharedState::SharedState(int port, const shared_ptr<ConnectionIO> &connectionIO,
-                                       const shared_ptr<ThreadPool> &threadPool)
-        : port_(port),
-          handler_(nullptr),
-          handlerFileDescriptorMode_(false),
-          handlerUpdatedInitially_(false),
-          acceptorThreadRunning_(false),
-          error_(false),
-          shuttingDown_(false),
-          connectionIO_(connectionIO),
-          threadPool_(threadPool) {
+ListenSocket::SharedState::SharedState(
+    int port, const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<IoBuffers> &ioBuffers,
+    const shared_ptr<ThreadPool> &threadPool)
+        : port_{port},
+          handler_{nullptr},
+          handlerFileDescriptorMode_{false},
+          handlerUpdatedInitially_{false},
+          acceptorThreadRunning_{false},
+          error_{false},
+          shuttingDown_{false},
+          connectionIO_{connectionIO},
+          ioBuffers_{ioBuffers},
+          threadPool_{threadPool} {
     acceptor_ = make_unique<Acceptor>(port, this);
 
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
@@ -84,7 +87,7 @@ void ListenSocket::SharedState::OnConnectionAccepted(int fd) {
             if (handlerFileDescriptorMode_) {
                 handler_->OnListenSocketAcceptedConnection(fd);
             } else {
-                auto connection = make_shared<TcpConnection>(fd, connectionIO_);
+                auto connection = make_shared<TcpConnection>(fd, connectionIO_, ioBuffers_);
                 handler_->OnListenSocketAcceptedConnection(connection);
             }
         } else {
