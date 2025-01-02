@@ -106,9 +106,9 @@ void NetworkEventCouplingClient::InstallConnector() {
 }
 
 void NetworkEventCouplingClient::InstallCoupling(int fd) {
-    auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_, ioBuffers_);
+    auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_);
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
-                                                  connectedEvent_, disconnectedEvent_, runLoop_, timers_);
+                                                  connectedEvent_, disconnectedEvent_, runLoop_, ioBuffers_, timers_);
     coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, host=" + hostAndPort_; });
 }

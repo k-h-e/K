@@ -20,6 +20,7 @@
 
 namespace K {
     namespace Core {
+        class IoBuffers;
         class Timers;
     }
     namespace IO {
@@ -37,14 +38,14 @@ namespace K {
 namespace Events {
 
 //! Extends the event mechanism to other nodes across the network.
-class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
+class NetworkEventCoupling : public virtual Core::ErrorStateInterface,
                              private virtual Core::RawStreamHandlerInterface,
-                             private virtual K::Core::Timer::HandlerInterface,
+                             private virtual Core::Timer::HandlerInterface,
                              private virtual EventNotifier::HandlerInterface,
-                             private virtual K::Core::RunLoop::ClientInterface {
+                             private virtual Core::RunLoop::ClientInterface {
   public:
     //! Interface to network event coupling handlers.
-    class HandlerInterface : public virtual K::Core::Interface {
+    class HandlerInterface : public virtual Core::Interface {
       public:
         //! Tells the handler that the network event coupling has entered error state.
         virtual void OnNetworkEventCouplingErrorState() = 0;
@@ -54,7 +55,8 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
         const std::shared_ptr<IO::TcpConnection> &tcpConnection, const std::string &protocolVersion,
         const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventHub> &hub,
         const std::shared_ptr<Event> &connectedEvent, const std::shared_ptr<Event> &disconnectedEvent,
-        const std::shared_ptr<K::Core::RunLoop> &runLoop, const std::shared_ptr<K::Core::Timers> &timers);
+        const std::shared_ptr<Core::RunLoop> &runLoop, const std::shared_ptr<Core::IoBuffers> &ioBuffers,
+        const std::shared_ptr<Core::Timers> &timers);
     NetworkEventCoupling()                                             = delete;
     NetworkEventCoupling(const NetworkEventCoupling &other)            = delete;
     NetworkEventCoupling &operator=(const NetworkEventCoupling &other) = delete;
@@ -100,9 +102,9 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     const std::shared_ptr<EventHub>         hub_;              // Thread safe.
 
     std::unique_ptr<IO::ConnectionEndPoint> tcpConnection_;    // Present <=> not in error state.
-    std::unique_ptr<K::Core::Timer>         timer_;            // Present <=> not in error state.
+    std::unique_ptr<Core::Timer>            timer_;            // Present <=> not in error state.
     std::unique_ptr<EventNotifier>          eventNotifier_;    // Present <=> not in error state.
-    const std::shared_ptr<K::Core::RunLoop> runLoop_;
+    const std::shared_ptr<Core::RunLoop>    runLoop_;
     int                                     runLoopClientId_;
     std::string                             protocolVersion_;
     int                                     numSendsBetweenKeepAliveChecks_;
@@ -111,10 +113,10 @@ class NetworkEventCoupling : public virtual K::Core::ErrorStateInterface,
     std::shared_ptr<Event>                  connectedEvent_;
     std::shared_ptr<Event>                  disconnectedEvent_;
     State                                   state_;
-    K::Core::Buffer                         readBuffer_;
+    Core::Buffer                            readBuffer_;
     int                                     readCursor_;
     int                                     readChunkSize_;
-    std::unique_ptr<K::Core::Buffer>        eventBuffer_;
+    std::unique_ptr<Core::Buffer>           eventBuffer_;
     bool                                    protocolVersionMatch_;
     int                                     numKeepAliveSendsUntilCheck_;
     bool                                    keepAliveReceived_;

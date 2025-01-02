@@ -10,22 +10,31 @@
 
 #include <unistd.h>
 #include <signal.h>
+
+#include <cstring>
+
+#include <K/Core/IoBuffers.h>
 #include <K/Core/Log.h>
 #include <K/IO/IOTools.h>
+
 #include "SharedState.h"
 
+using std::memcpy;
 using std::shared_ptr;
+using std::size_t;
 using std::to_string;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::IO::IOTools;
 
 namespace K {
 namespace IO {
 
-ConnectionIO::Worker::Worker(int pipe, shared_ptr<SharedState> sharedState)
-        : sharedState_(sharedState),
-          pipe_(pipe),
-          highestFileDescriptor_(-1) {
+ConnectionIO::Worker::Worker(int pipe, shared_ptr<SharedState> sharedState, const shared_ptr<IoBuffers> &ioBuffers)
+        : sharedState_{sharedState},
+          ioBuffers_{ioBuffers},
+          pipe_{pipe},
+          highestFileDescriptor_{-1} {
     // Nop.
 }
 
@@ -261,7 +270,9 @@ void ConnectionIO::Worker::Read(ClientInfo *clientInfo) {
             });
             numReadTotal += numRead;
             if (clientInfo->client) {
-                if (!clientInfo->client->OnDataRead(buffer_, numRead)) {
+                auto buffer = ioBuffers_->Get(numRead);
+                memcpy(buffer->Content(), buffer_, static_cast<size_t>(numRead));
+                if (!clientInfo->client->OnDataRead(std::move(buffer))) {
                     clientInfo->canRead = false;
                     return;
                 }
@@ -288,44 +299,42 @@ void ConnectionIO::Worker::Read(ClientInfo *clientInfo) {
 }
 
 void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
-    int numWrittenTotal = 0;
+    int numWrittenTotal { 0 };
     while (numWrittenTotal < bufferSize) {
-        int numToWrite = clientInfo->client->OnReadyWrite(buffer_, bufferSize);
-        if (!numToWrite) {
+        auto buffer = clientInfo->client->OnReadyWrite();
+        if (!buffer) {
             clientInfo->canWrite = false;
             if (clientInfo->unregistering) {
                 ScheduleClientDeregistration(*clientInfo);
             }
             return;
-        }
-        else {
-            const uint8_t *data   = buffer_;
-            int           numLeft = numToWrite;
+        } else {
+            const uint8_t *data   { static_cast<uint8_t *>(buffer->Content()) };
+            int           numLeft { buffer->Size() };
             while (numLeft) {
                 int numWritten = write(clientInfo->fileDescriptor, data, numLeft);
                 if (numWritten > 0) {
+                    numWrittenTotal += numWritten;
+                    data    += numWritten;
+                    numLeft -= numWritten;
                     Log::Print(Log::Level::DebugDebug, this, [&]{
                         return "fd " + to_string(clientInfo->fileDescriptor)  + " <- " + to_string(numWritten)
                             + " bytes";
                     });
-                    numWrittenTotal += numWritten;
-                    data    += numWritten;
-                    numLeft -= numWritten;
-                }
-                else if (numWritten == -1) {
+                } else if (numWritten == -1) {
                     if (errno == EINTR) {
                         continue;
                     }
 
                     if (errno == EAGAIN) {
+                        auto toPutBack = ioBuffers_->Get(numLeft);
+                        memcpy(toPutBack->Content(), data, static_cast<size_t>(numLeft));
+                        clientInfo->client->OnIncompleteWrite(std::move(toPutBack));
                         Log::Print(Log::Level::Debug, this, [&]{
                             return "incomplete write on fd " + to_string(clientInfo->fileDescriptor)
                                 + ", put back " + to_string(numLeft) + " bytes";
                         });
-
-                        clientInfo->client->OnIncompleteWrite(data, numLeft);
-                    }
-                    else {
+                    } else {
                         SetClientError(clientInfo);
                     }
 

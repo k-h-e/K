@@ -11,8 +11,6 @@
 #include <cassert>
 #include <cstring>
 
-#include <K/Core/NonBlockingOutStreamInterface.h>
-
 namespace K {
 namespace Core {
 
@@ -99,23 +97,6 @@ void BinaryQueue::TransferTo(BinaryQueue *other, int maxSize) {
             cursor_ = 0;
         }
         fill_ -= numToTransfer;
-    }
-}
-
-void BinaryQueue::TransferTo(NonBlockingOutStreamInterface *stream) {
-    bool done = false;
-    while (fill_ && !done) {
-        int numToTransfer = std::min(capacity_ - cursor_, fill_);    // >= 1.
-        int numWritten    = stream->WriteNonBlocking(&buffer_[cursor_], numToTransfer);
-        if (numWritten) {
-            cursor_ += numWritten;
-            if (cursor_ == capacity_) {
-                cursor_ = 0;
-            }
-            fill_ -= numWritten;
-        } else {
-            done = true;
-        }
     }
 }
 

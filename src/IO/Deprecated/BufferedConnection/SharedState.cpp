@@ -20,13 +20,16 @@ using std::memcpy;
 using std::mutex;
 using std::optional;
 using std::shared_ptr;
+using std::size_t;
 using std::to_string;
 using std::unique_lock;
 
+using K::Core::IoBufferInterface;
 using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
+using K::Core::UniqueHandle;
 
 namespace K {
 namespace IO {
@@ -43,7 +46,7 @@ BufferedConnection::SharedState::SharedState(int bufferSizeThreshold, const shar
 }
 
 void BufferedConnection::SharedState::SetError() {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (!error_) {
         error_ = Error::Unspecific;
         Log::Print(Log::Level::Warning, this, []{ return "error state was set"; });
@@ -52,7 +55,7 @@ void BufferedConnection::SharedState::SetError() {
 
 bool BufferedConnection::SharedState::Register(const shared_ptr<RawStreamHandlerInterface> &handler) {
     assert(handler);
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (!error_) {
         handler_                = handler;
         handlerCalledInitially_ = false;
@@ -66,7 +69,7 @@ bool BufferedConnection::SharedState::Register(const shared_ptr<RawStreamHandler
 
 void BufferedConnection::SharedState::Unregister(const shared_ptr<RawStreamHandlerInterface> &handler) {
     assert(handler);
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (handler == handler_) {
         handler_.reset();
     }
@@ -74,22 +77,20 @@ void BufferedConnection::SharedState::Unregister(const shared_ptr<RawStreamHandl
 
 void BufferedConnection::SharedState::WriteItem(const void *item, int itemSize) {
     assert(itemSize > 0);
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
-    const uint8_t *data   = static_cast<const uint8_t *>(item);
-    int           numLeft = itemSize;
-    while ((!error_) && numLeft) {
-        int bufferFill = writeQueue_.Size();
-        if (bufferFill >= bufferSizeThreshold_) {
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
+    bool done { false };
+    while (!done && !error_) {
+        if (writeQueue_.PayloadSize() >= static_cast<size_t>(bufferSizeThreshold_)) {
             writeCanContinue_.wait(critical);
         } else {
-            int numToCopy = std::min(numLeft, bufferSizeThreshold_ - bufferFill);    // Will be > 0.
-            writeQueue_.Put(data, numToCopy);
-            data    += numToCopy;
-            numLeft -= numToCopy;
+            auto buffer = ioBuffers_->Get(itemSize);
+            memcpy(buffer->Content(), item, static_cast<size_t>(itemSize));
+            writeQueue_.Put(std::move(buffer));
             if (canNotWrite_) {
                 connectionIO_->SetClientCanWrite(this);
                 canNotWrite_ = false;
             }
+            done = true;
         }
     }
 }    // ......................................................................................... critical section, end.
@@ -107,13 +108,11 @@ optional<StreamInterface::Error> BufferedConnection::SharedState::StreamError() 
 
 // ----
 
-bool BufferedConnection::SharedState::OnDataRead(const void *data, int dataSize) {
+bool BufferedConnection::SharedState::OnDataRead(UniqueHandle<IoBufferInterface> buffer) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     if (!error_) {
         if (handler_) {
-            auto buffer = ioBuffers_->Get(dataSize);
-            memcpy(buffer->Content(), data, dataSize);
             handler_->OnRawStreamData(std::move(buffer));
             return true;
         }
@@ -122,24 +121,22 @@ bool BufferedConnection::SharedState::OnDataRead(const void *data, int dataSize)
     return false;
 }    // ......................................................................................... critical section, end.
 
-int BufferedConnection::SharedState::OnReadyWrite(void *buffer, int bufferSize) {
-    assert(bufferSize > 0);
+UniqueHandle<IoBufferInterface> BufferedConnection::SharedState::OnReadyWrite() {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
-    int numWritten = writeQueue_.Get(buffer, bufferSize);
-    if (!numWritten) {
-        canNotWrite_ = true;
-    } else {
+    auto buffer = writeQueue_.Get();
+    if (buffer) {
         writeCanContinue_.notify_all();
+    } else {
+        canNotWrite_ = true;
     }
-    return numWritten;
+    return buffer;
 }    // ......................................................................................... critical section, end.
 
-void BufferedConnection::SharedState::OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) {
-    assert (unwrittenDataSize > 0);
+void BufferedConnection::SharedState::OnIncompleteWrite(UniqueHandle<IoBufferInterface> buffer) {
     unique_lock<mutex> critical(lock_);    // Critical section..........................................................
     EnsureHandlerCalledInitially();
-    writeQueue_.PutBack(unwrittenData, unwrittenDataSize);
+    writeQueue_.PutBack(std::move(buffer));
 }    // ......................................................................................... critical section, end.
 
 void BufferedConnection::SharedState::OnCustomCall() {

@@ -9,13 +9,18 @@
 #include <K/IO/ConnectionEndPoint.h>
 
 #include <cassert>
+#include <cstring>
 
+#include <K/Core/IoBuffers.h>
 #include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/ResultAcceptor.h>
 
+using std::memcpy;
 using std::optional;
 using std::shared_ptr;
+using std::size_t;
 
+using K::Core::IoBuffers;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::ResultAcceptor;
 using K::Core::RunLoop;
@@ -24,8 +29,10 @@ using K::Core::StreamInterface;
 namespace K {
 namespace IO {
 
-ConnectionEndPoint::ConnectionEndPoint(const shared_ptr<Connection> &connection, const shared_ptr<RunLoop> &runLoop)
-        : connection_{connection},
+ConnectionEndPoint::ConnectionEndPoint(const shared_ptr<Connection> &connection, const shared_ptr<RunLoop> &runLoop,
+                                       const shared_ptr<IoBuffers> &ioBuffers)
+        : ioBuffers_{ioBuffers},
+          connection_{connection},
           runLoop_{runLoop},
           handler_{nullptr},
           readyRead_{false},
@@ -62,7 +69,9 @@ void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler) {
 int ConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
     if (!error_) {
-        writeQueue_.Put(data, dataSize);
+        auto buffer = ioBuffers_->Get(dataSize);
+        memcpy(buffer->Content(), data, static_cast<size_t>(dataSize));
+        writeQueue_.Put(std::move(buffer));
         PushOutgoing();
         if (!error_) {
             return dataSize;
@@ -136,15 +145,15 @@ void ConnectionEndPoint::DispatchIncoming() {
 
 void ConnectionEndPoint::PushOutgoing() {
     if (!error_ && readyWrite_ && !writeQueue_.Empty()) {
-        writeQueue_.TransferTo(connection_.get());
+        Transfer(writeQueue_, *connection_);
         if (!writeQueue_.Empty()) {
-             readyWrite_ = false;
-             if (connection_->ErrorState()) {
-                 error_       = connection_->StreamError();
+            readyWrite_ = false;
+            if (connection_->ErrorState()) {
+                error_       = connection_->StreamError();
                 assert (error_.has_value());
-                 signalError_ = true;
-                 runLoop_->RequestActivation(runLoopClientId_, false);
-             }
+                signalError_ = true;
+                runLoop_->RequestActivation(runLoopClientId_, false);
+            }
         }
     }
 }

@@ -28,8 +28,7 @@ ListenSocket::ListenSocket(
     const std::shared_ptr<IoBuffers> &ioBuffers, const std::shared_ptr<ThreadPool> &threadPool)
         : loopThreadState_(make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop),
-              make_shared<Deprecated::ListenSocket>(port, connectionIO, ioBuffers, threadPool), connectionIO,
-              ioBuffers)) {
+              make_shared<Deprecated::ListenSocket>(port, connectionIO, ioBuffers, threadPool), connectionIO)) {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 

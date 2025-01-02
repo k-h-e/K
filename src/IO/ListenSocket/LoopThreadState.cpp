@@ -14,7 +14,6 @@
 
 using std::shared_ptr;
 using std::unique_ptr;
-using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RunLoop;
 using K::IO::ConnectionIO;
@@ -24,12 +23,10 @@ namespace IO {
 
 ListenSocket::LoopThreadState::LoopThreadState(
     const shared_ptr<RunLoop> &aRunLoop, const shared_ptr<SynchronizedState> &aSynchronizedState,
-    const shared_ptr<Deprecated::ListenSocket> &aListenSocket, const std::shared_ptr<ConnectionIO> &aConnectionIO,
-    const shared_ptr<IoBuffers> &someIoBuffers)
+    const shared_ptr<Deprecated::ListenSocket> &aListenSocket, const std::shared_ptr<ConnectionIO> &aConnectionIO)
         : synchronizedState{aSynchronizedState},
           listenSocket{aListenSocket},
           connectionIO{aConnectionIO},
-          ioBuffers{someIoBuffers},
           runLoop{aRunLoop},
           runLoopClientId{0},
           handler{nullptr},

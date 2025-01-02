@@ -16,7 +16,6 @@
 
 namespace K {
     namespace Core {
-        class IoBuffers;
         class ResultAcceptor;
         class RunLoop;
     }
@@ -48,7 +47,7 @@ class Connection : public virtual Core::NonBlockingIOStreamInterface {
      */
     Connection(
         std::optional<int> fd, int bufferSizeConstraint, const std::shared_ptr<Core::RunLoop> &runLoop,
-        const std::shared_ptr<ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+        const std::shared_ptr<ConnectionIO> &connectionIO);
     Connection()                                   = delete;
     Connection(const Connection &other)            = delete;
     Connection &operator=(const Connection &other) = delete;
@@ -68,7 +67,8 @@ class Connection : public virtual Core::NonBlockingIOStreamInterface {
 
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     Core::UniqueHandle<Core::IoBufferInterface> ReadNonBlocking() override;
-    int WriteNonBlocking(const void *data, int dataSize) override;
+    Core::UniqueHandle<Core::IoBufferInterface> WriteNonBlocking(Core::UniqueHandle<Core::IoBufferInterface> buffer)
+        override;
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;
 

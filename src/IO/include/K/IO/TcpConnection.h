@@ -27,15 +27,15 @@ class TcpConnection : public Connection {
     //! Establishes a TCP network connection to the specified host, given by name and port, separated by a <c>':'</c>.
     TcpConnection(
         const std::string &hostAndPort, const std::shared_ptr<Core::RunLoop> &runLoop,
-        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     //! Establishes a TCP network connection to the specified host.
     TcpConnection(
         const std::string &host, int port, const std::shared_ptr<Core::RunLoop> &runLoop,
-        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     //! Establishes a TCP network connection to the specified host.
     TcpConnection(
         uint32_t ip4Address, int port, const std::shared_ptr<Core::RunLoop> &runLoop,
-        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     //! Takes over the already open TCP socket represented by the specified UNIX file descriptor.
     /*!
      *  \param fd
@@ -44,7 +44,7 @@ class TcpConnection : public Connection {
      */
     TcpConnection(
         int fd, const std::shared_ptr<Core::RunLoop> &runLoop,
-        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
     TcpConnection()                                       = delete;
     TcpConnection(const TcpConnection &other)             = delete;
     TcpConnection &operator=(const TcpConnection &other)  = delete;

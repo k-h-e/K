@@ -13,7 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include <K/Core/BinaryQueue.h>
+#include <K/Core/IoBufferQueue.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/Deprecated/BufferedConnection.h>
 
@@ -48,9 +48,9 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     std::optional<StreamInterface::Error> StreamError();
 
     // ConnectionIO::ClientInterface...
-    bool OnDataRead(const void *data, int dataSize) override;
-    int OnReadyWrite(void *buffer, int bufferSize) override;
-    void OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) override;
+    bool OnDataRead(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    Core::UniqueHandle<Core::IoBufferInterface> OnReadyWrite() override;
+    void OnIncompleteWrite(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
     void OnCustomCall() override;
     void OnEof() override;
     void OnError() override;
@@ -66,7 +66,7 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     std::shared_ptr<Core::IoBuffers>                 ioBuffers_;
     std::shared_ptr<Core::RawStreamHandlerInterface> handler_;
     bool                                             handlerCalledInitially_;
-    Core::BinaryQueue                                writeQueue_;
+    Core::IoBufferQueue                              writeQueue_;
     int                                              bufferSizeThreshold_;
     bool                                             canNotWrite_;
     std::optional<StreamInterface::Error>            error_;

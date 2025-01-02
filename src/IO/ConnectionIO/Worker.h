@@ -10,11 +10,20 @@
 #define K_IO_CONNECTIONIO_WORKER_H_
 
 #include <sys/select.h>
+
 #include <unordered_map>
 #include <unordered_set>
+
 #include <K/Core/ActionInterface.h>
 #include <K/IO/ConnectionIO.h>
+
 #include "WorkInfo.h"
+
+namespace K {
+    namespace Core {
+        class IoBuffers;
+    }
+}
 
 namespace K {
 namespace IO {
@@ -22,7 +31,7 @@ namespace IO {
 //! Worker for the central I/O mechanism.
 class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
   public:
-    Worker(int pipe, std::shared_ptr<SharedState> sharedState);
+    Worker(int pipe, std::shared_ptr<SharedState> sharedState, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     Worker(const Worker &other)            = delete;
     Worker &operator=(const Worker &other) = delete;
     Worker(Worker &&other)                 = delete;
@@ -76,7 +85,8 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
     void SetClientError(ClientInfo *clientInfo);
     void ScheduleClientDeregistration(const ClientInfo &clientInfo);
 
-    std::shared_ptr<SharedState> sharedState_;
+    std::shared_ptr<SharedState>     sharedState_;    // Thread-safe.
+    std::shared_ptr<Core::IoBuffers> ioBuffers_;      // Thread-safe.
 
     int                                               pipe_;
     fd_set                                            readSet_;

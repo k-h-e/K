@@ -12,8 +12,8 @@
 #include "SynchronizedState.h"
 
 using std::shared_ptr;
+using std::size_t;
 using std::to_string;
-using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RunLoop;
 
@@ -22,11 +22,9 @@ namespace IO {
 
 Connection::LoopThreadState::LoopThreadState(
     const shared_ptr<RunLoop> &aRunLoop, const shared_ptr<SynchronizedState> &aSynchronizedState,
-    int aBufferSizeConstraint, const shared_ptr<ConnectionIO> &aConnectionIO,
-    const shared_ptr<IoBuffers> &someIoBuffers)
+    int aBufferSizeConstraint, const shared_ptr<ConnectionIO> &aConnectionIO)
         : synchronizedState{aSynchronizedState},
           connectionIO{aConnectionIO},
-          ioBuffers{someIoBuffers},
           runLoop{aRunLoop},
           runLoopClientId{0},
           handler{nullptr},
@@ -78,7 +76,8 @@ void Connection::LoopThreadState::Activate(bool deepActivation) {
     if ((clientReadPaused && !readQueue.Empty()) || handlerNeedsReadyRead) {
         signalReadyRead = true;
     }
-    if ((clientWritePaused && (writeQueue.Size() < bufferSizeConstraint)) || handlerNeedsReadyWrite) {
+    if ((clientWritePaused && (writeQueue.PayloadSize() < static_cast<size_t>(bufferSizeConstraint)))
+            || handlerNeedsReadyWrite) {
         signalReadyWrite = true;
     }
 

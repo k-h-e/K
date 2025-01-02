@@ -50,7 +50,7 @@ void ListenSocket::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
     } else {
         while (!acceptedConnections_.empty()) {
             auto connection = make_unique<TcpConnection>(acceptedConnections_.front(), runLoop_,
-                                                         loopThreadState->connectionIO, loopThreadState->ioBuffers);
+                                                         loopThreadState->connectionIO);
             acceptedConnections_.pop_front();
             loopThreadState->acceptedConnections.push_back(std::move(connection));
         }

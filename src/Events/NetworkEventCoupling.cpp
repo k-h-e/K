@@ -29,6 +29,7 @@ using std::unique_ptr;
 using std::vector;
 using K::Core::Buffer;
 using K::Core::IoBufferInterface;
+using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
@@ -44,12 +45,12 @@ namespace K {
 namespace Events {
 
 NetworkEventCoupling::NetworkEventCoupling(
-            const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion,
-            const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
-            const shared_ptr<Event> &connectedEvent, const shared_ptr<Event> &disconnectedEvent, 
-            const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
+    const shared_ptr<TcpConnection> &tcpConnection, const string &protocolVersion,
+    const KeepAliveParameters &keepAliveParameters, const shared_ptr<EventHub> &hub,
+    const shared_ptr<Event> &connectedEvent, const shared_ptr<Event> &disconnectedEvent, 
+    const shared_ptr<RunLoop> &runLoop, const shared_ptr<IoBuffers> &ioBuffers, const shared_ptr<Timers> &timers)
         : hub_{hub},
-          tcpConnection_{make_unique<ConnectionEndPoint>(tcpConnection, runLoop)},
+          tcpConnection_{make_unique<ConnectionEndPoint>(tcpConnection, runLoop, ioBuffers)},
           runLoop_{runLoop},
           protocolVersion_{protocolVersion},
           handler_{nullptr},

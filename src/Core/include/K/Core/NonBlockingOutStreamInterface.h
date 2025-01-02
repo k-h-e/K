@@ -11,6 +11,14 @@
 
 #include <K/Core/OutStreamInterface.h>
 
+#include <K/Core/UniqueHandle.h>
+
+namespace K {
+    namespace Core {
+        class IoBufferInterface;
+    }
+}
+
 namespace K {
 namespace Core {
 
@@ -19,11 +27,10 @@ class NonBlockingOutStreamInterface : public virtual OutStreamInterface {
   public:
     //! Writes the specified data to the stream with nonblocking semantics.
     /*!
-     *  \return
-     *  Number of bytes actually written. Might be less than the data size (short write). <c>0</c> means that no data
-     *  could be accepted for writing.
+     *  \return Null-handle in case all data was accepted for writing, or otherwise the data that could not be accepted
+     *          at the current time.
      */
-    virtual int WriteNonBlocking(const void *data, int dataSize) = 0;
+    virtual UniqueHandle<IoBufferInterface> WriteNonBlocking(UniqueHandle<IoBufferInterface> buffer) = 0;
 };
 
 }    // Namespace Core.

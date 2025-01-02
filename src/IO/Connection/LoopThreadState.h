@@ -9,7 +9,7 @@
 #ifndef K_IO_CONNECTION_LOOPTHREADSTATE_H_
 #define K_IO_CONNECTION_LOOPTHREADSTATE_H_
 
-#include <K/Core/BinaryQueue.h>
+#include <K/Core/IoBufferQueue.h>
 #include <K/Core/RunLoop.h>
 #include <K/IO/Connection.h>
 
@@ -22,14 +22,13 @@ class NonBlockingIOStreamInterface;
 struct Connection::LoopThreadState : public virtual Core::RunLoop::ClientInterface {
     const std::shared_ptr<SynchronizedState> synchronizedState;    // Thread-safe.
     const std::shared_ptr<IO::ConnectionIO>  connectionIO;         // Thread-safe.
-    const std::shared_ptr<Core::IoBuffers>   ioBuffers;            // Thread-safe.
 
     const std::shared_ptr<Core::RunLoop>     runLoop;
     int                                      runLoopClientId;
 
     Connection::HandlerInterface             *handler;
-    Core::BinaryQueue                        readQueue;
-    Core::BinaryQueue                        writeQueue;
+    Core::IoBufferQueue                      readQueue;
+    Core::IoBufferQueue                      writeQueue;
     std::optional<Error>                     error;
     bool                                     eof;
     bool                                     clientReadPaused;
@@ -45,8 +44,7 @@ struct Connection::LoopThreadState : public virtual Core::RunLoop::ClientInterfa
 
     LoopThreadState(
         const std::shared_ptr<Core::RunLoop> &aRunLoop, const std::shared_ptr<SynchronizedState> &aSynchronizedState,
-        int aBufferSizeConstraint, const std::shared_ptr<IO::ConnectionIO> &aConnectionIO,
-        const std::shared_ptr<Core::IoBuffers> &someIoBuffers);
+        int aBufferSizeConstraint, const std::shared_ptr<IO::ConnectionIO> &aConnectionIO);
     LoopThreadState()                                        = delete;
     LoopThreadState(const LoopThreadState &other)            = delete;
     LoopThreadState &operator=(const LoopThreadState &other) = delete;

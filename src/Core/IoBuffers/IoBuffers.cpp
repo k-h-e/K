@@ -30,7 +30,8 @@ IoBuffers::IoBuffers()
     state_->groups.push_back(make_unique<Group>( 512,  8, *state_));
     state_->groups.push_back(make_unique<Group>(1024,  4, *state_));
     state_->groups.push_back(make_unique<Group>(2048,  4, *state_));
-    state_->groups.push_back(make_unique<Group>(4096,  4, *state_));
+    state_->groups.push_back(make_unique<Group>(4096,  2, *state_));
+    state_->groups.push_back(make_unique<Group>(8192,  1, *state_));
 }
 
 UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {

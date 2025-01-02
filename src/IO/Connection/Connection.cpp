@@ -12,7 +12,6 @@
 #include <cstring>
 
 #include <K/Core/IoBufferInterface.h>
-#include <K/Core/IoBuffers.h>
 #include <K/Core/Log.h>
 #include <K/Core/ResultAcceptor.h>
 #include <K/Core/RunLoop.h>
@@ -27,10 +26,10 @@ using std::make_unique;
 using std::memcpy;
 using std::optional;
 using std::shared_ptr;
+using std::size_t;
 using std::to_string;
 
 using K::Core::IoBufferInterface;
-using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::RunLoop;
@@ -42,10 +41,10 @@ namespace K {
 namespace IO {
 
 Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_ptr<RunLoop> &runLoop,
-                       const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<IoBuffers> &ioBuffers)
+                       const shared_ptr<ConnectionIO> &connectionIO)
         : loopThreadState_(make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop, ValidateBufferSizeConstraint(bufferSizeConstraint)),
-              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO, ioBuffers)) {
+              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO)) {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 
@@ -122,14 +121,9 @@ UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
     UniqueHandle<IoBufferInterface> buffer;
     int numRead = 0;
     if (!ErrorState()) {
-        // TODO: Remove buffer here.
-        const int temporaryBufferSize = 1024;
-        uint8_t temporaryBuffer[temporaryBufferSize];
-        numRead = loopThreadState_->readQueue.Get(temporaryBuffer, temporaryBufferSize);
-        if (numRead) {
-            buffer = loopThreadState_->ioBuffers->Get(numRead);
-            assert(buffer->Size() == numRead);
-            memcpy(buffer->Content(), temporaryBuffer, numRead);
+        buffer = loopThreadState_->readQueue.Get();
+        if (buffer) {
+            numRead = buffer->Size();
             loopThreadState_->RequestActivation(true);
         } else {
             if (loopThreadState_->eof) {
@@ -144,19 +138,13 @@ UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
     return buffer;
 }
 
-int Connection::WriteNonBlocking(const void *data, int dataSize) {
+UniqueHandle<IoBufferInterface> Connection::WriteNonBlocking(UniqueHandle<IoBufferInterface> buffer) {
+    UniqueHandle<IoBufferInterface> unaccepted;
     int numWritten = 0;  
     if (!ErrorState()) {
-        if (loopThreadState_->bufferSizeConstraint > loopThreadState_->writeQueue.Size()) {
-            int numToWrite = std::min(loopThreadState_->bufferSizeConstraint - loopThreadState_->writeQueue.Size(),
-                                      dataSize);
-            if (numToWrite > 0) {    // Defensive.
-                loopThreadState_->writeQueue.Put(data, numToWrite);
-                numWritten = numToWrite;
-            }
-        }
-
-        if (numWritten) {
+        if (loopThreadState_->writeQueue.PayloadSize() < static_cast<size_t>(loopThreadState_->bufferSizeConstraint)) {
+            numWritten = buffer->Size();
+            loopThreadState_->writeQueue.Put(std::move(buffer));
             loopThreadState_->RequestActivation(true);
         } else {
             loopThreadState_->clientWritePaused = true;
@@ -164,7 +152,7 @@ int Connection::WriteNonBlocking(const void *data, int dataSize) {
     }
 
     Log::Print(Log::Level::DebugDebug, this, [&]{ return "WriteNonBlocking(), num_written=" + to_string(numWritten); });
-    return numWritten;
+    return unaccepted;
 }
 
 bool Connection::ErrorState() const {

@@ -53,8 +53,6 @@ class BinaryQueue {
     //! Transfers data to the specified other queue, as long as the other queue's size does not exceed the size
     //! specified.
     void TransferTo(BinaryQueue *other, int maxSize);
-    //! Transfers data to the specified stream, as long as the stream accepts more data.
-    void TransferTo(NonBlockingOutStreamInterface *stream);
 
   private:
     void Grow();

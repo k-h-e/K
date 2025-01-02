@@ -11,7 +11,7 @@
 
 #include <mutex>
 #include <optional>
-#include <K/Core/BinaryQueue.h>
+#include <K/Core/IoBufferQueue.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/Connection.h>
 
@@ -35,9 +35,9 @@ class Connection::SynchronizedState : public virtual IO::ConnectionIO::ClientInt
     void SetRunLoopClientId(int id);
     void Sync(LoopThreadState *loopThreadState);
 
-    bool OnDataRead(const void *data, int dataSize) override;
-    int OnReadyWrite(void *buffer, int bufferSize) override;
-    void OnIncompleteWrite(const void *unwrittenData, int unwrittenDataSize) override;
+    bool OnDataRead(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    Core::UniqueHandle<Core::IoBufferInterface> OnReadyWrite() override;
+    void OnIncompleteWrite(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
     void OnCustomCall() override;
     void OnEof() override;
     void OnError() override;
@@ -49,8 +49,8 @@ class Connection::SynchronizedState : public virtual IO::ConnectionIO::ClientInt
     std::mutex lock_;    // Protects everything below...
     const std::shared_ptr<Core::RunLoop> runLoop_;
     std::optional<int>                   runLoopClientId_;
-    Core::BinaryQueue                     readQueue_;
-    Core::BinaryQueue                    writeQueue_;
+    Core::IoBufferQueue                  readQueue_;
+    Core::IoBufferQueue                  writeQueue_;
     bool                                 error_;
     bool                                 eof_;
     bool                                 ioReadPaused_;
