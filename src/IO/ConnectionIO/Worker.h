@@ -15,6 +15,7 @@
 #include <unordered_set>
 
 #include <K/Core/ActionInterface.h>
+#include <K/Core/IoBufferQueue.h>
 #include <K/IO/ConnectionIO.h>
 
 #include "WorkInfo.h"
@@ -93,6 +94,7 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
     fd_set                                            writeSet_;
     int                                               highestFileDescriptor_;
     uint8_t                                           buffer_[bufferSize];
+    Core::IoBufferQueue                               workingQueue_;
     WorkInfo                                          workInfo_;
     std::unordered_map<ClientInterface *, ClientInfo> clients_;
     std::vector<ClientInterface *>                    clientsToUnregister_;

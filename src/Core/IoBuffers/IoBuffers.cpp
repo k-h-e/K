@@ -23,6 +23,7 @@ namespace Core {
 
 IoBuffers::IoBuffers()
         : state_{make_shared<State>()} {
+    state_->groups.push_back(make_unique<Group>(  16, 16, *state_));
     state_->groups.push_back(make_unique<Group>(  32, 16, *state_));
     state_->groups.push_back(make_unique<Group>(  64, 16, *state_));
     state_->groups.push_back(make_unique<Group>( 128,  8, *state_));
@@ -31,17 +32,16 @@ IoBuffers::IoBuffers()
     state_->groups.push_back(make_unique<Group>(1024,  4, *state_));
     state_->groups.push_back(make_unique<Group>(2048,  4, *state_));
     state_->groups.push_back(make_unique<Group>(4096,  2, *state_));
-    state_->groups.push_back(make_unique<Group>(8192,  1, *state_));
 }
 
-UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
+UniqueHandle<IoBufferInterface> IoBuffers::Get2(int size) {
     assert(size > 0);
     Group::IoBuffer *buffer;
     {
         unique_lock<mutex> critical(state_->mutex);    // ..............................................................
         Group *group { SelectGroup(size) };
         buffer = group->Get();
-        buffer->SetSize(size);
+        buffer->SetSize(size <= group->BufferSize() ? size : group->BufferSize());
     }    // ............................................................................................................
 
     return UniqueHandle<IoBufferInterface>{buffer, buffer, state_};
@@ -56,7 +56,7 @@ IoBuffers::Group *IoBuffers::SelectGroup(int size) {
         }
     }
 
-    assert(false);
+    return state_->groups.back().get();
 }
 
 }    // Namespace Core.

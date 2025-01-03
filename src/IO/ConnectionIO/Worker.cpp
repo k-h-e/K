@@ -40,7 +40,7 @@ ConnectionIO::Worker::Worker(int pipe, shared_ptr<SharedState> sharedState, cons
 
 ConnectionIO::Worker::~Worker() {
     if (pipe_ != -1) {
-        (void)IOTools::CloseFileDescriptor(pipe_, this);
+        (void) IOTools::CloseFileDescriptor(pipe_, this);
     }
 }
 
@@ -48,13 +48,13 @@ void ConnectionIO::Worker::ExecuteAction() {
     Log::Print(Log::Level::Debug, this, [&]{ return "spawning, pipe=" + to_string(pipe_) + "..."; });
 
     if (pipe_ != -1) {
-        ClientInfo pipeInfo(pipe_, nullptr);
+        ClientInfo pipeInfo{pipe_, nullptr};
         if (BlockSigPipe()) {
-            bool done = false;
+            bool done { false };
             while (!done) {
                 SetUpSelectSets();
                 Log::Print(Log::Level::DebugDebug, this, []{ return "sleeping..."; });
-                int result = select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, nullptr, nullptr);
+                int result { select(highestFileDescriptor_ + 1, &readSet_, &writeSet_, nullptr, nullptr) };
                 Log::Print(Log::Level::DebugDebug, this, [&]{ return "woken up, select_result=" + to_string(result); });
                 if (result > 0) {
                     clientsToUnregister_.clear();
@@ -63,8 +63,7 @@ void ConnectionIO::Worker::ExecuteAction() {
                         Read(&pipeInfo);
                         if (pipeInfo.error || pipeInfo.eof) {
                             done = true;
-                        }
-                        else {
+                        } else {
                             if (!ProcessClientRequests()) {
                                 Log::Print(Log::Level::Debug, this, []{ return "shutdown requested"; });
                                 done = true;
@@ -72,25 +71,22 @@ void ConnectionIO::Worker::ExecuteAction() {
                         }
                     }
                     UnregisterClients();
-                }
-                else if (result < 0) {
+                } else if (result < 0) {
                     if (errno == EINTR) {
                         // Nop.
-                    }
-                    else {
+                    } else {
                         Log::Print(Log::Level::Warning, this, []{ return "select() call failed"; });
                         done = true;
                     }
                 }
             }
         }
-    }
-    else {
+    } else {
         Log::Print(Log::Level::Warning, this, []{ return "bad pipe"; });
     }
 
     for (auto &pair : clients_) {
-        ClientInfo &clientInfo = pair.second;
+        ClientInfo &clientInfo { pair.second };
         if (!clientInfo.error) {
             clientInfo.client->OnError();
         }
@@ -118,7 +114,7 @@ void ConnectionIO::Worker::SetUpSelectSets() {
     highestFileDescriptor_ = -1;
 
     for (auto &pair : clients_) {
-        ClientInfo &clientInfo = pair.second;
+        ClientInfo &clientInfo { pair.second };
         if (!clientInfo.error) {
             if (clientInfo.canRead && !clientInfo.eof) {
                 FD_SET(clientInfo.fileDescriptor, &readSet_);
@@ -142,7 +138,7 @@ void ConnectionIO::Worker::UpdateHighestFileDescriptor(int fileDescriptor) {
 
 void ConnectionIO::Worker::DoIO() {
     for (auto &pair : clients_) {
-        ClientInfo &clientInfo = pair.second;
+        ClientInfo &clientInfo { pair.second };
         if (!clientInfo.error) {
             if (clientInfo.canRead && !clientInfo.eof && FD_ISSET(clientInfo.fileDescriptor, &readSet_)) {
                 Read(&clientInfo);
@@ -158,9 +154,9 @@ void ConnectionIO::Worker::UnregisterClients() {
     for (ClientInterface *client : clientsToUnregister_) {
         auto iter = clients_.find(client);
         if (iter != clients_.end()) {
-            ClientInfo &clientInfo = iter->second;
-            int  fd               = clientInfo.fileDescriptor;
-            bool finalStreamError = clientInfo.error;
+            ClientInfo &clientInfo { iter->second };
+            int  fd               { clientInfo.fileDescriptor };
+            bool finalStreamError { clientInfo.error };
             clients_.erase(client);
             fileDescriptors_.erase(fd);
             sharedState_->OnClientUnregistered(finalStreamError);
@@ -175,15 +171,14 @@ void ConnectionIO::Worker::UnregisterClients() {
 }
 
 bool ConnectionIO::Worker::ProcessClientRequests() {
-    bool shutDownRequested = false;
+    bool shutDownRequested { false };
 
     sharedState_->GetWork(&workInfo_);
     if (workInfo_.shutDownRequested) {
         shutDownRequested = true;
-    }
-    else {
+    } else {
         if (workInfo_.registrationInfo.client) {
-            bool success = false;
+            bool success { false };
             if (clients_.find(workInfo_.registrationInfo.client.get()) == clients_.end()) {
                 if (fileDescriptors_.find(workInfo_.registrationInfo.fileDescriptor) == fileDescriptors_.end()) {
                     clients_[workInfo_.registrationInfo.client.get()]
@@ -194,13 +189,11 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
                              + ", num=" + to_string(clients_.size());
                     });
                     success = true;
-                }
-                else {
+                } else {
                     Log::Print(Log::Level::Warning, this, [&]{
                         return "fd " + to_string(workInfo_.registrationInfo.fileDescriptor) + " already registered"; });
                 }
-            }
-            else {
+            } else {
                 Log::Print(Log::Level::Warning, this, []{ return "client already registered"; });
             }
             sharedState_->OnClientRegistered(success);
@@ -209,15 +202,14 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
         if (workInfo_.unregistrationInfo.client) {
             auto iter = clients_.find(workInfo_.unregistrationInfo.client.get());
             if (iter != clients_.end()) {
-                ClientInfo &clientInfo = iter->second;
+                ClientInfo &clientInfo { iter->second };
                 clientInfo.unregistering = true;
                 clientInfo.canWrite      = true;
 
                 if (clientInfo.error) {
                     ScheduleClientDeregistration(clientInfo);
                 }
-            }
-            else {
+            } else {
                 Log::Print(Log::Level::Warning, this, [&]{ return "no such client to unregister"; });
                 sharedState_->OnClientUnregistered(true);
             }
@@ -261,33 +253,36 @@ bool ConnectionIO::Worker::ProcessClientRequests() {
 }
 
 void ConnectionIO::Worker::Read(ClientInfo *clientInfo) {
-    int numReadTotal = 0;
+    int numReadTotal { 0 };
     while (numReadTotal < bufferSize) {
-        int numRead = read(clientInfo->fileDescriptor, buffer_, bufferSize);
+        int numRead { static_cast<int>(read(clientInfo->fileDescriptor, buffer_, bufferSize)) };
         if (numRead > 0) {
+            numReadTotal += numRead;
             Log::Print(Log::Level::DebugDebug, this, [&]{
                 return "fd " + to_string(clientInfo->fileDescriptor)  + " -> " + to_string(numRead) + " bytes";
             });
-            numReadTotal += numRead;
+            
             if (clientInfo->client) {
-                auto buffer = ioBuffers_->Get(numRead);
-                memcpy(buffer->Content(), buffer_, static_cast<size_t>(numRead));
-                if (!clientInfo->client->OnDataRead(std::move(buffer))) {
-                    clientInfo->canRead = false;
+                workingQueue_.Clear();
+                Put(buffer_, numRead, workingQueue_, *ioBuffers_);
+                while (auto buffer = workingQueue_.Get()) {
+                    if (!clientInfo->client->OnDataRead(std::move(buffer))) {
+                        clientInfo->canRead = false;
+                    }
+                }
+
+                if (!clientInfo->canRead) {
                     return;
                 }
             }
-        }
-        else if (numRead == -1) {
+        } else if (numRead == -1) {
             if (errno == EINTR) {
                 continue;
-            }
-            if (errno != EAGAIN) {
+            } else if (errno != EAGAIN) {
                 SetClientError(clientInfo);
             }
             return;
-        }
-        else {
+        } else {
             Log::Print(Log::Level::Debug, this, [&]{ return "EOF on fd " + to_string(clientInfo->fileDescriptor); });
             clientInfo->eof = true;
             if (clientInfo->client) {
@@ -312,7 +307,7 @@ void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
             const uint8_t *data   { static_cast<uint8_t *>(buffer->Content()) };
             int           numLeft { buffer->Size() };
             while (numLeft) {
-                int numWritten = write(clientInfo->fileDescriptor, data, numLeft);
+                int numWritten { static_cast<int>(write(clientInfo->fileDescriptor, data, numLeft)) };
                 if (numWritten > 0) {
                     numWrittenTotal += numWritten;
                     data    += numWritten;
@@ -324,12 +319,12 @@ void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
                 } else if (numWritten == -1) {
                     if (errno == EINTR) {
                         continue;
-                    }
-
-                    if (errno == EAGAIN) {
-                        auto toPutBack = ioBuffers_->Get(numLeft);
-                        memcpy(toPutBack->Content(), data, static_cast<size_t>(numLeft));
-                        clientInfo->client->OnIncompleteWrite(std::move(toPutBack));
+                    } else if (errno == EAGAIN) {
+                        workingQueue_.Clear();
+                        Put(data, numLeft, workingQueue_, *ioBuffers_);
+                        while (auto buffer = workingQueue_.GetBack()) {
+                            clientInfo->client->OnIncompleteWrite(std::move(buffer));
+                        } 
                         Log::Print(Log::Level::Debug, this, [&]{
                             return "incomplete write on fd " + to_string(clientInfo->fileDescriptor)
                                 + ", put back " + to_string(numLeft) + " bytes";

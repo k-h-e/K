@@ -10,6 +10,8 @@
 #define K_IO_RAWSTREAMHANDLERTEE_H_
 
 #include <memory>
+
+#include <K/Core/IoBufferQueue.h>
 #include <K/Core/RawStreamHandlerInterface.h>
 
 namespace K {
@@ -40,6 +42,7 @@ class RawStreamHandlerTee : public virtual Core::RawStreamHandlerInterface {
 
     std::shared_ptr<Core::RawStreamHandlerInterface> streamHandler1_;
     std::shared_ptr<Core::RawStreamHandlerInterface> streamHandler2_;
+    Core::IoBufferQueue                              workingQueue_;
 };
 
 }    // Namespace IO.

@@ -28,15 +28,18 @@ RawStreamHandlerTee::RawStreamHandlerTee(
     const shared_ptr<RawStreamHandlerInterface> &streamHandler2, const shared_ptr<IoBuffers> &ioBuffers)
         : ioBuffers_{ioBuffers},
           streamHandler1_{streamHandler1},
-          streamHandler2_(streamHandler2) {
+          streamHandler2_{streamHandler2} {
     // Nop.
 }
 
 void RawStreamHandlerTee::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
-    auto bufferCopy = ioBuffers_->Get(buffer->Size());
-    memcpy(bufferCopy->Content(), buffer->Content(), static_cast<size_t>(buffer->Size()));
+    workingQueue_.Clear();
+    Put(buffer->Content(), buffer->Size(), workingQueue_, *ioBuffers_);
+    
     streamHandler1_->OnRawStreamData(std::move(buffer));
-    streamHandler2_->OnRawStreamData(std::move(bufferCopy));
+    while (auto copy = workingQueue_.Get()) {
+        streamHandler2_->OnRawStreamData(std::move(copy));
+    }
 }
 
 void RawStreamHandlerTee::OnStreamError(StreamInterface::Error error) {

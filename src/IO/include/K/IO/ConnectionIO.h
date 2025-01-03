@@ -34,10 +34,10 @@ class ConnectionIO : public virtual K::Core::Interface {
   public:
     class ClientInterface : public virtual K::Core::Interface {
       public:
-        //! Provides the client with read data.
+        //! Delivers another portion of read data to the client.
         /*!
-         *  \return
-         *  <c>true</c> in case the client can accept more read data.
+         *  \return <c>false</c> in case the client asks to pause reading. The client must however always accept more
+         *          read data passed via OnDataRead(). 
          */
         virtual bool OnDataRead(Core::UniqueHandle<Core::IoBufferInterface> buffer) = 0;
         //! Asks the client to provide data to write.

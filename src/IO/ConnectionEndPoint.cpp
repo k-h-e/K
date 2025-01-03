@@ -68,10 +68,8 @@ void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler) {
 
 int ConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
-    if (!error_) {
-        auto buffer = ioBuffers_->Get(dataSize);
-        memcpy(buffer->Content(), data, static_cast<size_t>(dataSize));
-        writeQueue_.Put(std::move(buffer));
+    if (!error_) { 
+        Put(data, dataSize, writeQueue_, *ioBuffers_);
         PushOutgoing();
         if (!error_) {
             return dataSize;

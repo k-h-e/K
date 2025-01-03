@@ -33,14 +33,15 @@ class IoBuffers : public virtual Interface {
     IoBuffers &operator=(IoBuffers &&other)      = delete;
     ~IoBuffers()                                 = default;
 
-    //! Provides an I/O buffer of the specified size.
+    //! Provides an I/O buffer of the size specified, or a smaller one in case the requested size exceeds the maximum
+    //! supported buffer size.
     /*!
      *  The provided buffer remains exlusively allocated to the owner of the passed out unique handle for as long as
      *  that handle - or a potential decendant - lives.
      * 
-     *  \return I/O buffer of specified size.
+     *  \return I/O buffer.
      */ 
-    UniqueHandle<IoBufferInterface> Get(int size);
+    UniqueHandle<IoBufferInterface> Get2(int size);
 
   private:
     struct State;

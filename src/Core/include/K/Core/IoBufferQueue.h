@@ -16,6 +16,7 @@
 namespace K {
     namespace Core {
         class IoBufferInterface;
+        class IoBuffers;
         class NonBlockingOutStreamInterface;
     }
 }
@@ -37,8 +38,8 @@ class IoBufferQueue {
     std::size_t PayloadSize() const;
     //! Tells whether the queue is empty.
     bool Empty() const;
-    //! Puts the specified I/O buffer into the queue. 
-    void Put(UniqueHandle<IoBufferInterface> buffer);
+    //! Clears the queue.
+    void Clear();
     //! Removes and returns the next I/O buffer from the queue, or returns a null-handle in case the queue was empty.
     UniqueHandle<IoBufferInterface> Get(); 
     //! Puts the specified I/O buffer back into the queue. 
@@ -47,6 +48,11 @@ class IoBufferQueue {
      *  by the client. The put back data will be the first to be delivered with the next call to <c>Get()</c>.
      */
     void PutBack(UniqueHandle<IoBufferInterface> buffer);
+    //! Puts the specified I/O buffer into the queue. 
+    void Put(UniqueHandle<IoBufferInterface> buffer);
+    //! Removes and returns the last I/O buffer put into the queue via Put(), or returns a null-handle in case the queue
+    //! was empty.
+    UniqueHandle<IoBufferInterface> GetBack(); 
 
   private:
     std::deque<UniqueHandle<IoBufferInterface>> buffers_;
@@ -59,6 +65,8 @@ void Transfer(IoBufferQueue &source, IoBufferQueue &destination, std::size_t max
 //! Transfers data from the source queue to the specified stream, as long as the stream accepts data (and the source
 //! queue is not empty).
 void Transfer(IoBufferQueue &source, NonBlockingOutStreamInterface &stream);
+//! Puts (a copy of) the specified binary source data to the destination queue.
+void Put(const void *sourceData, int sourceDataSize, IoBufferQueue &destination, IoBuffers &ioBuffers);
 
 }    // Namespace Core.
 }    // Namespace K.
