@@ -32,8 +32,8 @@ using K::Core::Buffer;
 using K::Core::IoBufferInterface;
 using K::Core::IoBuffers;
 using K::Core::Log;
-using K::Core::BlockingInStreamInterface;
 using K::Core::RunLoop;
+using K::Core::SeekableBlockingInStreamInterface;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
 using K::Core::Timers;
@@ -281,9 +281,16 @@ void NetworkEventCoupling::CopyDown() {
     }
 }
 
-void NetworkEventCoupling::FilterEvents(BlockingInStreamInterface &stream) {
-    while (!stream.ErrorState()) {
-
+void NetworkEventCoupling::FilterEvents(SeekableBlockingInStreamInterface &stream) {
+    int      slot;
+    uint32_t size;
+    while (!stream.ErrorState()) {    
+        stream >> slot;
+        stream >> size;
+        if (!stream.ErrorState()) {
+            Log::Print(Log::Level::Debug, this, [&]{ return "event found, type_slot=" + to_string(slot); });
+            stream.Seek(stream.StreamPosition() + static_cast<int64_t>(size));
+        }
     }
 
     assert(stream.StreamError() == StreamInterface::Error::Eof);

@@ -93,7 +93,7 @@ class NetworkEventCoupling : public virtual Core::ErrorStateInterface,
     void Activate(bool deepActivation) override;
 
     void CopyDown();
-    void FilterEvents(Core::BlockingInStreamInterface &stream);
+    void FilterEvents(Core::SeekableBlockingInStreamInterface &stream);
     void SendVersionChunk();
     void SendEventsChunk(const void *data, int dataSize);
     void SendKeepAliveChunk();
