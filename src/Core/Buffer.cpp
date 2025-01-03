@@ -49,6 +49,10 @@ int Buffer::DataSize() const {
     return bufferFill_;
 }
 
+bool Buffer::Empty() const {
+    return (bufferFill_ > 0);
+}
+
 void Buffer::Clear() {
     bufferFill_ = 0;
 }

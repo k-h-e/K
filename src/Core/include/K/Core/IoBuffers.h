@@ -41,7 +41,7 @@ class IoBuffers : public virtual Interface {
      * 
      *  \return I/O buffer.
      */ 
-    UniqueHandle<IoBufferInterface> Get2(int size);
+    UniqueHandle<IoBufferInterface> Get(int size);
 
   private:
     struct State;

@@ -37,6 +37,7 @@ ConnectionEndPoint::ConnectionEndPoint(const shared_ptr<Connection> &connection,
           handler_{nullptr},
           readyRead_{false},
           readyWrite_{false},
+          activationRequested_{false},
           signalError_{false} {
     runLoopClientId_ = runLoop_->AddClient(this);
     connection_->Register(this);
@@ -61,22 +62,25 @@ void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler) {
     if (handler_) {
         if (error_) {
             signalError_ = true;
-            runLoop_->RequestActivation(runLoopClientId_, false);
+            RequestActivation();
         }
     }
 }
 
 int ConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
+    int numWritten { 0 };
     if (!error_) { 
-        Put(data, dataSize, writeQueue_, *ioBuffers_);
-        PushOutgoing();
-        if (!error_) {
-            return dataSize;
+        writeBuffer_.AppendFromMemory(data, dataSize);
+        RequestActivation();
+        numWritten = dataSize;
+
+        if (writeBuffer_.DataSize() > pushThreshold) {
+            PushOutgoing();
         }
     }
 
-    return 0;
+    return numWritten;
 }
 
 bool ConnectionEndPoint::ErrorState() const {
@@ -91,19 +95,30 @@ void ConnectionEndPoint::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor>
     closeResultAcceptor_ = resultAcceptor;
 }
 
+// ---
+
 void ConnectionEndPoint::Activate(bool deepActivation) {
     (void) deepActivation;
+
+    if (!error_) {
+        PushOutgoing();    // Might call RequestActivation(). Call this before resetting requested flag to avoid
+                           // unnecessary activations.
+    }
+
+    activationRequested_ = false;
 
     if (signalError_) {
         signalError_ = false;
         if (readyRead_) {
-            runLoop_->RequestActivation(runLoopClientId_, false);
+            RequestActivation();
         }
         if (handler_ && error_) {
             handler_->OnStreamError(*error_);
         }
-    } else {
-        DispatchIncoming();
+    } else if (!error_) {
+        if (readyRead_) {
+            DispatchIncoming();
+        }
     }
 }
 
@@ -122,27 +137,30 @@ void ConnectionEndPoint::OnStreamReadyWrite() {
 }
 
 void ConnectionEndPoint::DispatchIncoming() {
-    if (!error_ && readyRead_) {
-        auto buffer = connection_->ReadNonBlocking();
-        if (buffer) {
-            runLoop_->RequestActivation(runLoopClientId_, false);
-            if (handler_) {
-                handler_->OnRawStreamData(std::move(buffer));
-            }
-        } else {
-            readyRead_ = false;
-            if (connection_->ErrorState()) {
-                error_       = connection_->StreamError();
-                assert (error_.has_value());
-                signalError_ = true;
-                runLoop_->RequestActivation(runLoopClientId_, false);
-            }
+    auto buffer = connection_->ReadNonBlocking();
+    if (buffer) {
+        RequestActivation();
+        if (handler_) {
+            handler_->OnRawStreamData(std::move(buffer));
+        }
+    } else {
+        readyRead_ = false;
+        if (connection_->ErrorState()) {
+            error_       = connection_->StreamError();
+            assert (error_.has_value());
+            signalError_ = true;
+            RequestActivation();
         }
     }
 }
 
 void ConnectionEndPoint::PushOutgoing() {
-    if (!error_ && readyWrite_ && !writeQueue_.Empty()) {
+    if (!writeBuffer_.Empty()) {
+        Put(writeBuffer_.Data(), writeBuffer_.DataSize(), writeQueue_, *ioBuffers_);
+        writeBuffer_.Clear();
+    }
+
+    if (readyWrite_ && !writeQueue_.Empty()) {
         Transfer(writeQueue_, *connection_);
         if (!writeQueue_.Empty()) {
             readyWrite_ = false;
@@ -150,9 +168,16 @@ void ConnectionEndPoint::PushOutgoing() {
                 error_       = connection_->StreamError();
                 assert (error_.has_value());
                 signalError_ = true;
-                runLoop_->RequestActivation(runLoopClientId_, false);
+                RequestActivation();
             }
         }
+    }
+}
+
+void ConnectionEndPoint::RequestActivation() {
+    if (!activationRequested_) {
+        runLoop_->RequestActivation(runLoopClientId_, false);
+        activationRequested_ = true;
     }
 }
 

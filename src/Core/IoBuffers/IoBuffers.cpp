@@ -34,7 +34,7 @@ IoBuffers::IoBuffers()
     state_->groups.push_back(make_unique<Group>(4096,  2, *state_));
 }
 
-UniqueHandle<IoBufferInterface> IoBuffers::Get2(int size) {
+UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
     assert(size > 0);
     Group::IoBuffer *buffer;
     {

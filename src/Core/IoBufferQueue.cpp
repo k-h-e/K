@@ -98,7 +98,7 @@ void Put(const void *sourceData, int sourceDataSize, IoBufferQueue &destination,
     const uint8_t *source { static_cast<const uint8_t *>(sourceData) };
     int           numLeft { sourceDataSize };
     while (numLeft > 0) {
-        auto buffer = ioBuffers.Get2(numLeft);
+        auto buffer = ioBuffers.Get(numLeft);
         memcpy(buffer->Content(), source, static_cast<size_t>(buffer->Size()));
         source  += buffer->Size();
         numLeft -= buffer->Size();

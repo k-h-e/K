@@ -72,6 +72,8 @@ class Buffer : public virtual BlockingOutStreamInterface {
     const void *Data() const;
     //! Tells the current data size, in bytes.
     int DataSize() const;
+    //! Tells whether the buffer is empty. 
+    bool Empty() const;
     //! Clears the buffer, which allows you to begin a new composition via \ref Append().
     /*!
      *  All readers get invalidated.

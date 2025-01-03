@@ -13,6 +13,7 @@
 
 #include <K/Core/AsyncInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
+#include <K/Core/Buffer.h>
 #include <K/Core/IoBufferQueue.h>
 #include <K/Core/RunLoop.h>
 #include <K/IO/Connection.h>
@@ -49,24 +50,29 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
+    static const int pushThreshold { 4096 };
+
     void Activate(bool deepActivation) override;
     void OnStreamReadyRead() override;
     void OnStreamReadyWrite() override;
 
     void DispatchIncoming();
     void PushOutgoing();
+    void RequestActivation();
 
-    const std::shared_ptr<Core::IoBuffers> &ioBuffers_;
+    const std::shared_ptr<Core::IoBuffers> &ioBuffers_;    // Thread-safe.
 
     const std::shared_ptr<Connection>     connection_;
     const std::shared_ptr<Core::RunLoop>  runLoop_;
     int                                   runLoopClientId_;
     Core::RawStreamHandlerInterface       *handler_;
-    bool                                  readyRead_;
+    Core::Buffer                          writeBuffer_;
     Core::IoBufferQueue                   writeQueue_;
+    bool                                  readyRead_;
     bool                                  readyWrite_;
-    std::optional<Error>                  error_;
+    bool                                  activationRequested_;
     bool                                  signalError_;
+    std::optional<Error>                  error_;
     std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
 };
 
