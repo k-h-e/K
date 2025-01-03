@@ -162,11 +162,23 @@ void EventLoop<EventClass, EventHandlerClass>::UnregisterHandler(EventHandlerCla
 
 template<class EventClass, class EventHandlerClass>
 void EventLoop<EventClass, EventHandlerClass>::Post(const Event &event) {
-    auto iter{idToSlotMap_.find(event.Type().id)};
+    auto iter = idToSlotMap_.find(event.Type().id);
     assert(iter != idToSlotMap_.end());
-    int slot{iter->second};
+    int slot { iter->second };
     (*postedEvents_) << slot;
+
+    int64_t  sizePosition { postedEvents_->StreamPosition() };
+    uint32_t size         { 0u };
+    (*postedEvents_) << size;
+
+    int64_t payloadPosition { postedEvents_->StreamPosition() };
     event.Serialize(postedEvents_.get());
+    int64_t finalPosition { postedEvents_->StreamPosition() };
+    size = static_cast<uint32_t>(finalPosition - payloadPosition);
+    
+    postedEvents_->Seek(sizePosition);
+    (*postedEvents_) << size;
+    postedEvents_->Seek(finalPosition);
 }
 
 template<class EventClass, class EventHandlerClass>
@@ -253,8 +265,10 @@ bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
 
 template<class EventClass, class EventHandlerClass>
 EventClass *EventLoop<EventClass, EventHandlerClass>::DispatchOne() {
-    int slot;
+    int      slot;
+    uint32_t size;
     reader_ >> slot;
+    reader_ >> size;
     if (!reader_.ErrorState()) {
         EventInfo  &info  = events_[slot];
         EventClass &event = *(info.prototype);

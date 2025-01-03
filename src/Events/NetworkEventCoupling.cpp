@@ -21,6 +21,7 @@
 #include <K/Events/EventNotifier.h>
 
 using std::make_unique;
+using std::memcpy;
 using std::move;
 using std::shared_ptr;
 using std::string;
@@ -31,6 +32,7 @@ using K::Core::Buffer;
 using K::Core::IoBufferInterface;
 using K::Core::IoBuffers;
 using K::Core::Log;
+using K::Core::BlockingInStreamInterface;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
@@ -95,8 +97,6 @@ NetworkEventCoupling::~NetworkEventCoupling() {
     timer_.reset();
     tcpConnection_.reset();
     hub_->UnregisterEventLoop(hubClientId_);
-
-    // TODO: Check deconstruction.
 }
 
 void NetworkEventCoupling::Register(NetworkEventCoupling::HandlerInterface *handler) {
@@ -115,15 +115,17 @@ bool NetworkEventCoupling::ErrorState() const {
     return error_;
 }
 
+// ---
+
 void NetworkEventCoupling::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
-    readBuffer_.AppendFromMemory(buffer->Content(), buffer->Size());
-    uint8_t *bufferU8 = static_cast<uint8_t *>(readBuffer_.Data());
+    readBuffer_.Append(buffer->Content(), buffer->Size());
+    uint8_t *bufferU8 { static_cast<uint8_t *>(readBuffer_.Data()) };
 
     uint32_t  chunkSizeU32;
-    const int sizeFieldSize = static_cast<int>(sizeof(chunkSizeU32));
-    bool      done          = false;
+    const int sizeFieldSize { static_cast<int>(sizeof(chunkSizeU32)) };
+    bool      done          { false };
     while (!done && !error_) {
-        int numToProcess = readBuffer_.DataSize() - readCursor_;
+        int numToProcess { readBuffer_.DataSize() - readCursor_ };
         switch (state_) {
             case State::AcceptingChunkSize:
                 if (numToProcess >= sizeFieldSize) {
@@ -132,12 +134,10 @@ void NetworkEventCoupling::OnRawStreamData(UniqueHandle<IoBufferInterface> buffe
                     if (readChunkSize_ >= static_cast<int>(sizeof(ChunkType))) {
                         readCursor_ += sizeFieldSize;
                         state_       = State::AcceptingChunkData;
-                    }
-                    else {
+                    } else {
                         EnterErrorState();
                     }
-                }
-                else {
+                } else {
                     CopyDown();
                     done = true;
                 }
@@ -153,9 +153,9 @@ void NetworkEventCoupling::OnRawStreamData(UniqueHandle<IoBufferInterface> buffe
                         case ChunkType::Events:
                             {
                                 if (protocolVersionMatch_) {
-                                    int offset = static_cast<int>(sizeof(chunkType));
+                                    int offset { static_cast<int>(sizeof(chunkType)) };
                                     if (readChunkSize_ > offset) {
-                                        int eventDataSize = readChunkSize_ - offset;
+                                        int eventDataSize { readChunkSize_ - offset };
                                         hub_->Submit(hubClientId_, &bufferU8[readCursor_ + offset], eventDataSize,
                                                      true);
                                     } else {
@@ -171,9 +171,9 @@ void NetworkEventCoupling::OnRawStreamData(UniqueHandle<IoBufferInterface> buffe
                             break;
                         case ChunkType::Version:
                             {
-                                int offset = static_cast<int>(sizeof(chunkType));
+                                int offset { static_cast<int>(sizeof(chunkType)) };
                                 if (readChunkSize_ > offset) {
-                                    int length = readChunkSize_ - offset;
+                                    int length { readChunkSize_ - offset };
                                     string remoteProtocolVersion;
                                     if (StringTools::Deserialize(&remoteProtocolVersion,
                                                                  &bufferU8[readCursor_ + offset], length)) {
@@ -249,7 +249,9 @@ void NetworkEventCoupling::OnEventsAvailable() {
     if (!error_) {    // Defensive.
         eventBuffer_->Clear();
         if (hub_->Sync(hubClientId_, &eventBuffer_)) {
-            if (eventBuffer_->DataSize()) {
+            if (!eventBuffer_->Empty()) {
+                auto reader = eventBuffer_->GetReader(); 
+                FilterEvents(reader);
                 SendEventsChunk(eventBuffer_->Data(), eventBuffer_->DataSize());
             }
         } else {
@@ -259,7 +261,7 @@ void NetworkEventCoupling::OnEventsAvailable() {
 }
 
 void NetworkEventCoupling::Activate(bool deepActivation) {
-    (void)deepActivation;
+    (void) deepActivation;
     if (signalErrorState_) {
         signalErrorState_ = false;
         if (handler_) {
@@ -270,37 +272,45 @@ void NetworkEventCoupling::Activate(bool deepActivation) {
 
 void NetworkEventCoupling::CopyDown() {
     if (readCursor_ >= 4096) {
-        int numRemaining = readBuffer_.DataSize() - readCursor_;
+        int numRemaining { readBuffer_.DataSize() - readCursor_ };
         if (numRemaining) {
-            std::memcpy(readBuffer_.Data(), &static_cast<uint8_t *>(readBuffer_.Data())[readCursor_], numRemaining);
+            memcpy(readBuffer_.Data(), &static_cast<uint8_t *>(readBuffer_.Data())[readCursor_], numRemaining);
         }
         readBuffer_.Shrink(numRemaining);
         readCursor_ = 0;
     }
 }
 
+void NetworkEventCoupling::FilterEvents(BlockingInStreamInterface &stream) {
+    while (!stream.ErrorState()) {
+
+    }
+
+    assert(stream.StreamError() == StreamInterface::Error::Eof);
+}
+
 void NetworkEventCoupling::SendVersionChunk() {
     vector<uint8_t> versionBinary;
     StringTools::Serialize(protocolVersion_, &versionBinary);
 
-    ChunkType chunkType = ChunkType::Version;
-    uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType) + versionBinary.size());
+    ChunkType chunkType { ChunkType::Version };
+    uint32_t  chunkSize { static_cast<uint32_t>(sizeof(chunkType) + versionBinary.size()) };
     (*tcpConnection_) << chunkSize;
     (*tcpConnection_) << chunkType;
     WriteItem(tcpConnection_.get(), &versionBinary[0], static_cast<int>(versionBinary.size()));
 }
 
 void NetworkEventCoupling::SendEventsChunk(const void *data, int dataSize) {
-    ChunkType chunkType = ChunkType::Events;
-    uint32_t  chunkSize = static_cast<uint32_t>(dataSize) + static_cast<uint32_t>(sizeof(chunkType));
+    ChunkType chunkType { ChunkType::Events };
+    uint32_t  chunkSize { static_cast<uint32_t>(dataSize) + static_cast<uint32_t>(sizeof(chunkType)) };
     (*tcpConnection_) << chunkSize;
     (*tcpConnection_) << chunkType;
     WriteItem(tcpConnection_.get(), data, dataSize);
 }
 
 void NetworkEventCoupling::SendKeepAliveChunk() {
-    ChunkType chunkType = ChunkType::KeepAlive;
-    uint32_t  chunkSize = static_cast<uint32_t>(sizeof(chunkType));
+    ChunkType chunkType { ChunkType::KeepAlive };
+    uint32_t  chunkSize { static_cast<uint32_t>(sizeof(chunkType)) };
     (*tcpConnection_) << chunkSize;
     (*tcpConnection_) << chunkType;
 }

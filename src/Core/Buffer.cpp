@@ -10,11 +10,13 @@
 
 #include <cassert>
 #include <cstring>
+
 #include <K/Core/IoBufferInterface.h>
 #include <K/Core/NonBlockingInStreamInterface.h>
 #include <K/Core/NumberTools.h>
 #include <K/Core/ResultAcceptor.h>
 
+using std::memcpy;
 using std::min;
 using std::nullopt;
 using std::optional;
@@ -24,16 +26,24 @@ namespace K {
 namespace Core {
 
 Buffer::Buffer()
-	    : buffer_(256),
-		  bufferFill_(0) {}
+	    : buffer_(256),                                      // Round brackets, want to set size.
+		  bufferFill_{0},
+          writeCursor_{0},
+          error_{false} {}
 
 Buffer::Buffer(int initialSize)
-	    : buffer_(initialSize > 0 ? initialSize : 1),
-		  bufferFill_((int)buffer_.size()) {}
+	    : buffer_(initialSize > 0 ? initialSize : 1),        // Round brackets, want to set size.
+		  bufferFill_{initialSize > 0 ? initialSize : 0},
+          writeCursor_{0},
+          error_{false} {}
 
 Buffer::~Buffer() {
     if (closeResultAcceptor_) {
-        closeResultAcceptor_->OnSuccess();
+        if (error_) {
+            closeResultAcceptor_->OnFailure();
+        } else {
+            closeResultAcceptor_->OnSuccess();
+        }
     }
 }
 
@@ -54,51 +64,69 @@ bool Buffer::Empty() const {
 }
 
 void Buffer::Clear() {
-    bufferFill_ = 0;
+    bufferFill_  = 0;
+    writeCursor_ = 0;
+    error_       = false;
 }
 
 void Buffer::Shrink(int size) {
-    NumberTools::Clamp(&size, 0, (int)buffer_.size());
-    bufferFill_ = size;
-}
-
-void Buffer::AppendFromMemory(const void *data, int dataSize) {
-    if (dataSize > 0) {
-        int newFill = bufferFill_ + dataSize;
-        while (newFill > static_cast<int>(buffer_.size())) {
-           Grow();
-        }
-        if (data) {
-            memcpy(&buffer_.front() + bufferFill_, data, dataSize);
-        }
-        bufferFill_ += dataSize;
+    if (!error_) {
+        NumberTools::Clamp(&size, 0, (int)buffer_.size());
+        bufferFill_ = size;
+        NumberTools::Clamp(&writeCursor_, 0, bufferFill_);
     }
 }
 
-int Buffer::AppendFromStream(NonBlockingInStreamInterface *stream) {
-    auto buffer = stream->ReadNonBlocking();
-    if (buffer) {
-        AppendFromMemory(buffer->Content(), buffer->Size());
-        return buffer->Size();
-    } else {
-        return 0;
+void Buffer::Append(const void *data, int dataSize) {
+    if (!error_) {
+        if (dataSize > 0) {
+            int newFill { bufferFill_ + dataSize };
+            while (newFill > static_cast<int>(buffer_.size())) {
+                Grow();
+            }
+            if (data) {
+                memcpy(&buffer_.front() + bufferFill_, data, dataSize);
+            }
+            bufferFill_  += dataSize;
+            writeCursor_  = bufferFill_;
+        }
     }
+}
+
+int Buffer::Append(NonBlockingInStreamInterface *stream) {
+    if (!error_) {
+        auto buffer = stream->ReadNonBlocking();
+        if (buffer) {
+            Append(buffer->Content(), buffer->Size());
+            return buffer->Size();
+        }
+    }
+    
+    return 0;
 }
 
 void Buffer::RestoreToCurrentCapacity() {
-    bufferFill_ = (int)buffer_.size();
+    if (!error_) {
+        bufferFill_ = (int)buffer_.size();
+    }
 }
 
 void Buffer::Grow() {
-    buffer_.resize(2u * buffer_.size());
+    if (!error_) {
+        buffer_.resize(2u * buffer_.size());
+    }
 }
 
 bool Buffer::ErrorState() const {
-    return false;
+    return error_;
 }
 
 optional<StreamInterface::Error> Buffer::StreamError() const {
-    return nullopt;
+    if (error_) {
+        return Error::User;
+     } else {
+        return nullopt;
+     }
 }
 
 void Buffer::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcceptor) {
@@ -106,18 +134,66 @@ void Buffer::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &resultAcce
 }
 
 int Buffer::WriteBlocking(const void *data, int dataSize) {
-    assert (dataSize > 0);
-    AppendFromMemory(data, dataSize);
-    return dataSize;
+    if (!error_) {
+        if (dataSize > 0) {
+            assert(writeCursor_ <= bufferFill_);
+            int numFree { bufferFill_ - writeCursor_ };                    // >= 0.
+
+            int numFitting { dataSize > numFree ? numFree : dataSize };    // >= 0.
+            if (numFitting > 0) {
+                memcpy(&buffer_[writeCursor_], data, numFitting);
+                writeCursor_ += numFitting;
+            }
+
+            int numRemaining { dataSize - numFitting };                    // >= 0.
+            if (numRemaining > 0) {
+                const uint8_t *remainder { &static_cast<const uint8_t *>(data)[numFitting] };
+                Append(remainder, numRemaining);
+            }
+
+            return dataSize;
+        } else {
+            Clear();
+            error_ = true;
+        }
+    }
+
+    return 0;
+}
+
+void Buffer::Seek(int64_t position) {
+    if (!error_) {
+        if ((position < 0) || (position > bufferFill_)) {
+            Clear();
+            error_ = true;
+        }  else {
+            writeCursor_ = static_cast<int>(position);
+        }
+    }
+}
+
+void Buffer::RecoverAndSeek(int64_t position) {
+    Seek(position);
+}
+
+int64_t Buffer::StreamPosition() const {
+    return static_cast<int64_t>(writeCursor_);
 }
 
 Buffer::Reader Buffer::GetReader() const {
-    return Reader(this);
+    optional<Error> error { nullopt };
+    if (error_) {
+        error = Error::User;
+    }
+    return Reader{this, error};
 }
 
-Buffer::Reader::Reader(const Buffer *buffer)
+// ---
+
+Buffer::Reader::Reader(const Buffer *buffer, optional<Error> error)
 	: buffer_(buffer),
-      cursor_(0) {
+      cursor_(0),
+      error_{error} {
 }
 
 bool Buffer::Reader::ErrorState() const {
@@ -129,17 +205,19 @@ optional<StreamInterface::Error> Buffer::Reader::StreamError() const {
 }
 
 int Buffer::Reader::ReadBlocking(void *buffer, int bufferSize) {
-    int numRead = 0;
+    assert(bufferSize > 0);
+    
+    int numRead { 0 };
 
     if (!ErrorState()) {
-        int numToDeliver = buffer_->bufferFill_ - cursor_;
+        int numToDeliver { buffer_->bufferFill_ - cursor_ };
         if (numToDeliver >= 1) {
             if (numToDeliver > bufferSize) {
                 numToDeliver = bufferSize;
             }
             memcpy(buffer, &buffer_->buffer_[cursor_], numToDeliver);
             cursor_ += numToDeliver;
-            numRead = numToDeliver;
+            numRead  = numToDeliver;
         }
 
         if (!numRead) {
@@ -152,10 +230,10 @@ int Buffer::Reader::ReadBlocking(void *buffer, int bufferSize) {
 
 void Buffer::Reader::Seek(int64_t position) {
     if (!ErrorState()) {
-        if ((position >= 0) && (position < buffer_->bufferFill_)) {
+        if ((position >= 0) && (position <= buffer_->bufferFill_)) {
             cursor_ = static_cast<int>(position);
         } else {
-            error_ = Error::IO;
+            error_ = Error::User;
         }
     }
 }

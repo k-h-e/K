@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 #include <vector>
-#include <K/Core/BlockingOutStreamInterface.h>
+#include <K/Core/SeekableBlockingOutStreamInterface.h>
 #include <K/Core/SeekableBlockingInStreamInterface.h>
 
 namespace K {
@@ -20,7 +20,7 @@ namespace Core {
 class NonBlockingInStreamInterface;
 
 //! Binary buffer, allowing iterative composition and readout.
-class Buffer : public virtual BlockingOutStreamInterface {
+class Buffer : public virtual SeekableBlockingOutStreamInterface {
   public:
     //! Allows for iterative buffer readout.
     /*!
@@ -30,7 +30,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
 
     class Reader : public virtual SeekableBlockingInStreamInterface {
       public:
-        Reader()                               = default;
+        Reader()                               = delete;
         Reader(const Reader &other)            = default;
         Reader &operator=(const Reader &other) = default;
         Reader(Reader &&other)                 = default;
@@ -47,7 +47,7 @@ class Buffer : public virtual BlockingOutStreamInterface {
       private:
         friend class Buffer;
 
-        Reader(const Buffer *buffer);
+        Reader(const Buffer *buffer, std::optional<Error> error);
 
         const Buffer                          *buffer_;
         int                                   cursor_;
@@ -96,14 +96,14 @@ class Buffer : public virtual BlockingOutStreamInterface {
      *
      *  If <c>dataSize</c> is <c>0</c>, nothing will happen.
      */
-    void AppendFromMemory(const void *data, int dataSize);
+    void Append(const void *data, int dataSize);
     //! Appends data to the buffer by reading from the specified stream, potentially invalidating the memory location
     //! handed out earlier via \ref Data().
     /*!
      *  \return
      *  The number of bytes read and appended.
      */
-    int AppendFromStream(NonBlockingInStreamInterface *stream);
+    int Append(NonBlockingInStreamInterface *stream);
     //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
     /*!
      *  The bytes potentially "appended" are undefined.
@@ -121,12 +121,17 @@ class Buffer : public virtual BlockingOutStreamInterface {
     std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     int WriteBlocking(const void *data, int dataSize) override;
+    void Seek(int64_t position) override;
+    void RecoverAndSeek(int64_t position) override;
+    virtual int64_t StreamPosition() const override;
 
   private:
     void Grow();
 
     std::vector<uint8_t>                  buffer_;
     int                                   bufferFill_;
+    int                                   writeCursor_;
+    bool                                  error_;
     std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
 };
 

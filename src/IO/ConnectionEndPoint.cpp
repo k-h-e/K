@@ -71,7 +71,7 @@ int ConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
     int numWritten { 0 };
     if (!error_) { 
-        writeBuffer_.AppendFromMemory(data, dataSize);
+        writeBuffer_.Append(data, dataSize);
         RequestActivation();
         numWritten = dataSize;
 
