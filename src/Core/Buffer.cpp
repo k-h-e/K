@@ -50,7 +50,7 @@ int Buffer::DataSize() const {
 }
 
 bool Buffer::Empty() const {
-    return (bufferFill_ > 0);
+    return (bufferFill_ == 0);
 }
 
 void Buffer::Clear() {
