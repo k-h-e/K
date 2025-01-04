@@ -69,18 +69,24 @@ void ConnectionEndPoint::Register(RawStreamHandlerInterface *handler) {
 
 int ConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
     assert (dataSize > 0);
-    int numWritten { 0 };
-    if (!error_) { 
-        writeBuffer_.Append(data, dataSize);
-        RequestActivation();
-        numWritten = dataSize;
-
-        if (writeBuffer_.DataSize() > pushThreshold) {
+    if (!error_) {
+        if (dataSize < accumulationThreshold) {
+             accumulationBuffer_.Append(data, dataSize);
+             if (accumulationBuffer_.DataSize() < accumulationThreshold) {
+                 RequestActivation();
+             } else {
+                 PushOutgoing();
+             }
+        } else {
             PushOutgoing();
+            if (!error_) {
+                Put(data, dataSize, writeQueue_, *ioBuffers_);
+                PushOutgoing();
+            }
         }
     }
 
-    return numWritten;
+    return error_ ? 0 : dataSize;
 }
 
 bool ConnectionEndPoint::ErrorState() const {
@@ -155,9 +161,9 @@ void ConnectionEndPoint::DispatchIncoming() {
 }
 
 void ConnectionEndPoint::PushOutgoing() {
-    if (!writeBuffer_.Empty()) {
-        Put(writeBuffer_.Data(), writeBuffer_.DataSize(), writeQueue_, *ioBuffers_);
-        writeBuffer_.Clear();
+    if (!accumulationBuffer_.Empty()) {
+        Put(accumulationBuffer_.Data(), accumulationBuffer_.DataSize(), writeQueue_, *ioBuffers_);
+        accumulationBuffer_.Clear();
     }
 
     if (readyWrite_ && !writeQueue_.Empty()) {

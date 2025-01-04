@@ -52,6 +52,11 @@ NetworkEventCouplingClient::~NetworkEventCouplingClient() {
     Disconnect();
 }
 
+void NetworkEventCouplingClient::ConfigureOutgoingEventFilter(
+        const shared_ptr<EventFilterConfiguration> &configuration) {
+    eventFilterConfiguration_ = configuration;
+}
+
 void NetworkEventCouplingClient::Connect(const string &hostAndPort) {
     Disconnect();
     hostAndPort_ = hostAndPort;
@@ -66,6 +71,8 @@ void NetworkEventCouplingClient::Disconnect() {
     hostAndPort_.clear();
     Log::Print(Log::Level::Debug, this, [&]{ return "disconnected"; });
 }
+
+// ---
 
 void NetworkEventCouplingClient::OnTcpConnectionEstablished(int fd) {
     connector_.reset();
@@ -109,6 +116,7 @@ void NetworkEventCouplingClient::InstallCoupling(int fd) {
     auto connection = make_unique<TcpConnection>(fd, runLoop_, connectionIO_);
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
                                                   connectedEvent_, disconnectedEvent_, runLoop_, ioBuffers_, timers_);
+    coupling_->ConfigureOutgoingEventFilter(eventFilterConfiguration_);
     coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, host=" + hostAndPort_; });
 }

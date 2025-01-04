@@ -14,6 +14,12 @@
 #include <K/Events/EventReceiverInterface.h>
 
 namespace K {
+    namespace Events {
+        class EventFilterConfiguration;
+    }
+}
+
+namespace K {
 namespace Events {
 
 //! Interface to event bus variants.
@@ -28,15 +34,18 @@ class EventBusInterface : public virtual EventReceiverInterface {
      *
      *  May get called from event handlers invoked by the bus.
      */
-    virtual void RegisterHandler(const Event::EventType &eventType, EventHandlerClass *handler) = 0;
+    virtual void RegisterHandler(const Event::EventType &eventType, EventHandlerClass &handler) = 0;
     //! Unregisters the specified event handler.
     /*!
      *  When this method returns, it is guaranteed that the bus will not call the handler again.
      *
      *  May get called from event handlers invoked by the bus.
      */
-    virtual void UnregisterHandler(EventHandlerClass *handler) = 0;
-
+    virtual void UnregisterHandler(EventHandlerClass &handler) = 0;
+    //! Configures the specified event type in the specified filter configuration to either be filtered out or let
+    //! through. 
+    virtual void ConfigureEventFilter(EventFilterConfiguration &configuration, const Event::EventType &eventType,
+                                      bool filterOut) = 0;
     //! Posts the specified event to the bus.
     /*!
      *  May get called from event handlers invoked by the bus.

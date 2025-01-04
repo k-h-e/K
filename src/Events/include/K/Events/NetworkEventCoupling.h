@@ -30,6 +30,7 @@ namespace K {
     }
     namespace Events {
         class Event;
+        class EventFilterConfiguration;
         class EventHub;
     }
 }
@@ -74,6 +75,14 @@ class NetworkEventCoupling : public virtual Core::ErrorStateInterface,
      *  The handler is expected to outlive the network event coupling.
      */
     void Register(HandlerInterface *handler);
+    //! Configures outgoing event filtering.
+    /*!
+     *  /param configuration
+     *  Pass <c>nullptr</c> to disable filtering. 
+     */
+    void ConfigureOutgoingEventFilter(const std::shared_ptr<EventFilterConfiguration> &configuration);
+    
+    // ErrorStateInterface...
     bool ErrorState() const override;
 
   private:
@@ -93,37 +102,39 @@ class NetworkEventCoupling : public virtual Core::ErrorStateInterface,
     void Activate(bool deepActivation) override;
 
     void CopyDown();
-    void FilterEvents(Core::SeekableBlockingInStreamInterface &stream);
+    bool FilterEvents();
     void SendVersionChunk();
     void SendEventsChunk(const void *data, int dataSize);
     void SendKeepAliveChunk();
     void EnterErrorState();
     void EnsureDisconnectedEventPosted();
 
-    const std::shared_ptr<EventHub>         hub_;              // Thread safe.
+    const std::shared_ptr<EventHub> hub_;    // Thread safe.
 
-    std::unique_ptr<IO::ConnectionEndPoint> tcpConnection_;    // Present <=> not in error state.
-    std::unique_ptr<Core::Timer>            timer_;            // Present <=> not in error state.
-    std::unique_ptr<EventNotifier>          eventNotifier_;    // Present <=> not in error state.
-    const std::shared_ptr<Core::RunLoop>    runLoop_;
-    int                                     runLoopClientId_;
-    std::string                             protocolVersion_;
-    int                                     numSendsBetweenKeepAliveChecks_;
-    int                                     hubClientId_;
-    NetworkEventCoupling::HandlerInterface  *handler_;
-    std::shared_ptr<Event>                  connectedEvent_;
-    std::shared_ptr<Event>                  disconnectedEvent_;
-    State                                   state_;
-    Core::Buffer                            readBuffer_;
-    int                                     readCursor_;
-    int                                     readChunkSize_;
-    std::unique_ptr<Core::Buffer>           eventBuffer_;
-    bool                                    protocolVersionMatch_;
-    int                                     numKeepAliveSendsUntilCheck_;
-    bool                                    keepAliveReceived_;
-    bool                                    error_;
-    bool                                    signalErrorState_;
-    bool                                    disconnectedEventPosted_;
+    std::unique_ptr<IO::ConnectionEndPoint>   tcpConnection_;    // Present <=> not in error state.
+    std::unique_ptr<Core::Timer>              timer_;            // Present <=> not in error state.
+    std::unique_ptr<EventNotifier>            eventNotifier_;    // Present <=> not in error state.
+    const std::shared_ptr<Core::RunLoop>      runLoop_;
+    int                                       runLoopClientId_;
+    std::string                               protocolVersion_;
+    int                                       numSendsBetweenKeepAliveChecks_;
+    int                                       hubClientId_;
+    NetworkEventCoupling::HandlerInterface    *handler_;
+    std::shared_ptr<Event>                    connectedEvent_;
+    std::shared_ptr<Event>                    disconnectedEvent_;
+    std::shared_ptr<EventFilterConfiguration> eventFilterConfiguration_;
+    State                                     state_;
+    Core::Buffer                              readBuffer_;
+    int                                       readCursor_;
+    int                                       readChunkSize_;
+    std::unique_ptr<Core::Buffer>             eventBuffer_;
+    Core::Buffer                              filteredEventBuffer_;
+    bool                                      protocolVersionMatch_;
+    int                                       numKeepAliveSendsUntilCheck_;
+    bool                                      keepAliveReceived_;
+    bool                                      error_;
+    bool                                      signalErrorState_;
+    bool                                      disconnectedEventPosted_;
 };
 
 }    // Namespace Events.

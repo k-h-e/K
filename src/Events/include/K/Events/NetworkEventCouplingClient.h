@@ -27,6 +27,7 @@ namespace K {
         class ConnectionIO;
     }
     namespace Events {
+        class EventFilterConfiguration;
         class EventHub;
     }
 }
@@ -57,6 +58,14 @@ class NetworkEventCouplingClient : public virtual Core::Interface,
     NetworkEventCouplingClient &operator=(NetworkEventCouplingClient &&other)      = delete;
     ~NetworkEventCouplingClient();
 
+    //! Configures outgoing event filtering.
+    /*!
+     *  The setting will take effect with the next event coupling that gets installed.
+     *
+     *  /param configuration
+     *  Pass <c>nullptr</c> to disable filtering. 
+     */
+    void ConfigureOutgoingEventFilter(const std::shared_ptr<EventFilterConfiguration> &configuration);
     //! Establishes - and tries to maintain - a network event coupling via TCP connection to the specified host.
     void Connect(const std::string &hostAndPort);
     //! Switches into disconnected mode, where no network event coupling is installed.
@@ -79,15 +88,16 @@ class NetworkEventCouplingClient : public virtual Core::Interface,
     const std::shared_ptr<K::Core::ThreadPool> threadPool_;      // Thread-safe.
     const std::shared_ptr<K::Core::Timers>     timers_;          // Thread-safe.
 
-    const std::shared_ptr<K::Core::RunLoop>  runLoop_;
-    const std::string                        protocolVersion_;
-    const IO::KeepAliveParameters            keepAliveParameters_;
-    std::string                              hostAndPort_;
-    std::shared_ptr<Event>                   connectedEvent_;
-    std::shared_ptr<Event>                   disconnectedEvent_;
-    std::unique_ptr<IO::TcpConnector>        connector_;
-    std::unique_ptr<NetworkEventCoupling>    coupling_;
-    std::unique_ptr<Core::Timer>             timer_;
+    const std::shared_ptr<K::Core::RunLoop>   runLoop_;
+    const std::string                         protocolVersion_;
+    const IO::KeepAliveParameters             keepAliveParameters_;
+    std::string                               hostAndPort_;
+    std::shared_ptr<Event>                    connectedEvent_;
+    std::shared_ptr<Event>                    disconnectedEvent_;
+    std::shared_ptr<EventFilterConfiguration> eventFilterConfiguration_;
+    std::unique_ptr<IO::TcpConnector>         connector_;
+    std::unique_ptr<NetworkEventCoupling>     coupling_;
+    std::unique_ptr<Core::Timer>              timer_;
 };
 
 }    // Namespace Events.

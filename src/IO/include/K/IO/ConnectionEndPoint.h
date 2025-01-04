@@ -50,7 +50,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
 
   private:
-    static const int pushThreshold { 4096 };
+    static const int accumulationThreshold { 192 };
 
     void Activate(bool deepActivation) override;
     void OnStreamReadyRead() override;
@@ -66,7 +66,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     const std::shared_ptr<Core::RunLoop>  runLoop_;
     int                                   runLoopClientId_;
     Core::RawStreamHandlerInterface       *handler_;
-    Core::Buffer                          writeBuffer_;
+    Core::Buffer                          accumulationBuffer_;
     Core::IoBufferQueue                   writeQueue_;
     bool                                  readyRead_;
     bool                                  readyWrite_;

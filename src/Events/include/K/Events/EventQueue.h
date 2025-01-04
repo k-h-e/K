@@ -31,9 +31,12 @@ class EventQueue : public virtual Events::EventBusInterface<EventClass, EventHan
     EventQueue &operator=(EventQueue &&other)      = delete;
     ~EventQueue();
 
+    // EventBusInterface...
     void RegisterEvent(std::unique_ptr<EventClass> protoType) override;
-    void RegisterHandler(const Event::EventType &eventType, EventHandlerClass *handler) override;
-    void UnregisterHandler(EventHandlerClass *handler) override;
+    void RegisterHandler(const Event::EventType &eventType, EventHandlerClass &handler) override;
+    void UnregisterHandler(EventHandlerClass &handler) override;
+    void ConfigureEventFilter(EventFilterConfiguration &configuration, const Event::EventType &eventType,
+                              bool filterOut) override;
     void Post(const Event &event) override;
 
   private:
@@ -81,13 +84,19 @@ void EventQueue<EventClass, EventHandlerClass>::RegisterEvent(std::unique_ptr<Ev
 
 template<class EventClass, class EventHandlerClass>
 void EventQueue<EventClass, EventHandlerClass>::RegisterHandler(const Event::EventType &eventType,
-                                                                EventHandlerClass *handler) {
+                                                                EventHandlerClass &handler) {
     eventLoop_.RegisterHandler(eventType, handler);
 }
 
 template<class EventClass, class EventHandlerClass>
-void EventQueue<EventClass, EventHandlerClass>::UnregisterHandler(EventHandlerClass *handler) {
+void EventQueue<EventClass, EventHandlerClass>::UnregisterHandler(EventHandlerClass &handler) {
     eventLoop_.UnregisterHandler(handler);
+}
+
+template<class EventClass, class EventHandlerClass>
+void EventQueue<EventClass, EventHandlerClass>::ConfigureEventFilter(
+        EventFilterConfiguration &configuration, const Event::EventType &eventType, bool filterOut) {
+    eventLoop_.ConfigureEventFilter(configuration, eventType, filterOut);
 }
 
 template<class EventClass, class EventHandlerClass>

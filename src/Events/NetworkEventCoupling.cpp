@@ -17,6 +17,7 @@
 #include <K/IO/ConnectionEndPoint.h>
 #include <K/IO/KeepAliveParameters.h>
 #include <K/IO/TcpConnection.h>
+#include <K/Events/EventFilterConfiguration.h>
 #include <K/Events/EventHub.h>
 #include <K/Events/EventNotifier.h>
 
@@ -109,6 +110,10 @@ void NetworkEventCoupling::Register(NetworkEventCoupling::HandlerInterface *hand
     } else {
         handler_ = nullptr;;
     }
+}
+
+void NetworkEventCoupling::ConfigureOutgoingEventFilter(const shared_ptr<EventFilterConfiguration> &configuration) {
+    eventFilterConfiguration_ = configuration;
 }
 
 bool NetworkEventCoupling::ErrorState() const {
@@ -250,9 +255,13 @@ void NetworkEventCoupling::OnEventsAvailable() {
         eventBuffer_->Clear();
         if (hub_->Sync(hubClientId_, &eventBuffer_)) {
             if (!eventBuffer_->Empty()) {
-                auto reader = eventBuffer_->GetReader(); 
-                FilterEvents(reader);
-                SendEventsChunk(eventBuffer_->Data(), eventBuffer_->DataSize());
+                if (FilterEvents()) {
+                    if (!filteredEventBuffer_.Empty()) {
+                        SendEventsChunk(filteredEventBuffer_.Data(), filteredEventBuffer_.DataSize());
+                    }
+                } else {
+                    SendEventsChunk(eventBuffer_->Data(), eventBuffer_->DataSize());
+                }
             }
         } else {
             EnterErrorState();
@@ -281,19 +290,48 @@ void NetworkEventCoupling::CopyDown() {
     }
 }
 
-void NetworkEventCoupling::FilterEvents(SeekableBlockingInStreamInterface &stream) {
-    int      slot;
-    uint32_t size;
-    while (!stream.ErrorState()) {    
-        stream >> slot;
-        stream >> size;
-        if (!stream.ErrorState()) {
-            Log::Print(Log::Level::Debug, this, [&]{ return "event found, type_slot=" + to_string(slot); });
-            stream.Seek(stream.StreamPosition() + static_cast<int64_t>(size));
-        }
-    }
+bool NetworkEventCoupling::FilterEvents() {
+    if (eventFilterConfiguration_) {
+        filteredEventBuffer_.Clear();
+        int  numLeft { eventBuffer_->DataSize() };
+        auto stream  = eventBuffer_->GetReader(); 
+        
+        int      slot;
+        uint32_t size;
+        int      headerSize { static_cast<int>(sizeof(slot) + sizeof(size)) };
+        while ((numLeft >= headerSize) && !stream.ErrorState()) {    
+            stream >> slot;
+            stream >> size;
+            if (!stream.ErrorState()) {
+                numLeft -= headerSize;
+                int sizeInt { static_cast<int>(size) };
+                assert((sizeInt >= 0) && (sizeInt <= numLeft));
+                if (eventFilterConfiguration_->FilteredOut(slot)) {
+                    if (sizeInt) {
+                        stream.Seek(stream.StreamPosition() + static_cast<int64_t>(sizeInt));
+                    }
+                    Log::Print(Log::Level::Debug, this, [&]{
+                            return "filtered out event, type_slot=" + to_string(slot);
+                    });
+                } else {
+                    filteredEventBuffer_.Append(&slot, sizeof(slot));
+                    filteredEventBuffer_.Append(&slot, sizeof(size));
+                    if (sizeInt) {
+                        int position { filteredEventBuffer_.DataSize() };
+                        filteredEventBuffer_.Append(nullptr, sizeInt);
+                        ReadItem(&stream, &static_cast<uint8_t *>(filteredEventBuffer_.Data())[position], sizeInt);
+                    }
+                }
 
-    assert(stream.StreamError() == StreamInterface::Error::Eof);
+                numLeft -= sizeInt;
+            }
+        }
+
+        assert((numLeft == 0) && !stream.ErrorState());
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void NetworkEventCoupling::SendVersionChunk() {

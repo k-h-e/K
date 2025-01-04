@@ -13,10 +13,13 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+
 #include <K/Core/Log.h>
 #include <K/Core/Buffer.h>
+#include <K/Core/StringTools.h>
 #include <K/Events/Event.h>
 #include <K/Events/EventBusInterface.h>
+#include <K/Events/EventFilterConfiguration.h>
 #include <K/Events/EventHub.h>
 
 namespace K {
@@ -40,9 +43,12 @@ class EventLoop : public virtual EventBusInterface<EventClass, EventHandlerClass
     EventLoop &operator=(EventLoop &&other)      = delete;
     ~EventLoop();
 
+    // EventBusInterface...
     void RegisterEvent(std::unique_ptr<EventClass> protoType) override;
-    void RegisterHandler(const Event::EventType &eventType, EventHandlerClass *handler) override;
-    void UnregisterHandler(EventHandlerClass *handler) override;
+    void RegisterHandler(const Event::EventType &eventType, EventHandlerClass &handler) override;
+    void UnregisterHandler(EventHandlerClass &handler) override;
+    void ConfigureEventFilter(EventFilterConfiguration &configuration, const Event::EventType &eventType,
+                              bool filterOut) override;
     void Post(const Event &event) override;
 
     //! Tells the ID under which the loop is registered as client with the hub.
@@ -77,16 +83,16 @@ class EventLoop : public virtual EventBusInterface<EventClass, EventHandlerClass
     
     EventClass *DispatchOne();
 
-    std::vector<EventInfo>                events_;
-    std::unordered_map<size_t, int>       idToSlotMap_;
-    std::unique_ptr<Core::Buffer>         postedEvents_;
-    std::unique_ptr<Core::Buffer>         eventsToDispatch_;
-    Core::Buffer::Reader                  reader_;
-    std::vector<EventHandlerClass *>      pendingHandlers_;
-    int                                   pendingHandlerCursor_;
-    std::shared_ptr<EventHub>             hub_;
-    int                                   hubClientId_;
-    bool                                  running_;
+    std::vector<EventInfo>           events_;
+    std::unordered_map<size_t, int>  idToSlotMap_;
+    std::unique_ptr<Core::Buffer>    postedEvents_;
+    std::unique_ptr<Core::Buffer>    eventsToDispatch_;
+    Core::Buffer::Reader             reader_;
+    std::vector<EventHandlerClass *> pendingHandlers_;
+    int                              pendingHandlerCursor_;
+    std::shared_ptr<EventHub>        hub_;
+    int                              hubClientId_;
+    bool                             running_;
 };
 
 template<class EventClass, class EventHandlerClass>
@@ -109,38 +115,38 @@ template<class EventClass, class EventHandlerClass>
 void EventLoop<EventClass, EventHandlerClass>::RegisterEvent(std::unique_ptr<EventClass> protoType) {
     assert(!running_);
     assert(protoType.get() != nullptr);
-    size_t id{protoType->Type().id};
-    bool   alreadyPresent = (idToSlotMap_.find(id) != idToSlotMap_.end());
+    size_t id             { protoType->Type().id };
+    bool   alreadyPresent { (idToSlotMap_.find(id) != idToSlotMap_.end()) };
     if (alreadyPresent) {
-        K::Core::Log::Print(K::Core::Log::Level::Warning, this, [&]{
+        Core::Log::Print(Core::Log::Level::Warning, this, [&]{
             return std::string("hash collision while registering event \"") + protoType->Type().name + "\""; });
     }
     assert(!alreadyPresent);
-    int slot{(int)events_.size()};
-    events_.push_back(EventInfo(std::move(protoType)));
+    int slot { static_cast<int>(events_.size()) };
+    events_.push_back(EventInfo{std::move(protoType)});
     idToSlotMap_[id] = slot;
-    bool mappingRegistered = hub_->RegisterEventIdToSlotMapping(id, slot);
+    bool mappingRegistered { hub_->RegisterEventIdToSlotMapping(id, slot) };
     assert(mappingRegistered);
 }
 
 template<class EventClass, class EventHandlerClass>
 void EventLoop<EventClass, EventHandlerClass>::RegisterHandler(const Event::EventType &eventType,
-                                                               EventHandlerClass *handler) {
-    auto infoIter{idToSlotMap_.find(eventType.id)};
+                                                               EventHandlerClass &handler) {
+    auto infoIter = idToSlotMap_.find(eventType.id);
     assert(infoIter != idToSlotMap_.end());
     for (EventHandlerClass *aHandler : events_[infoIter->second].handlers) {
-        assert(aHandler != handler);
+        assert(aHandler != &handler);
     }
-    events_[infoIter->second].handlers.push_back(handler);
+    events_[infoIter->second].handlers.push_back(&handler);
 }
 
 template<class EventClass, class EventHandlerClass>
-void EventLoop<EventClass, EventHandlerClass>::UnregisterHandler(EventHandlerClass *handler) {
+void EventLoop<EventClass, EventHandlerClass>::UnregisterHandler(EventHandlerClass &handler) {
     for (EventInfo &info : events_) {
         std::vector<EventHandlerClass *> oldHandlers{info.handlers};
         info.handlers.clear();
         for (EventHandlerClass *aHandler : oldHandlers) {
-            if (aHandler != handler) {
+            if (aHandler != &handler) {
                 info.handlers.push_back(aHandler);
             }
         }
@@ -153,11 +159,20 @@ void EventLoop<EventClass, EventHandlerClass>::UnregisterHandler(EventHandlerCla
         pendingHandlers_.clear();
         for (int i = 0; i < static_cast<int>(oldPendingHandlers.size()); ++i) {
             EventHandlerClass *aHandler{oldPendingHandlers[i]};
-            if ((i <= pendingHandlerCursor_) || (aHandler != handler)) {
+            if ((i <= pendingHandlerCursor_) || (aHandler != &handler)) {
                 pendingHandlers_.push_back(aHandler);
             }
         }
     }
+}
+
+template<class EventClass, class EventHandlerClass>
+void EventLoop<EventClass, EventHandlerClass>::ConfigureEventFilter(
+        EventFilterConfiguration &configuration, const Event::EventType &eventType, bool filterOut) {
+    auto iter = idToSlotMap_.find(eventType.id);
+    assert(iter != idToSlotMap_.end());
+    int slot { iter->second };
+    configuration.SetFilteredOut(slot, filterOut);
 }
 
 template<class EventClass, class EventHandlerClass>
@@ -174,8 +189,8 @@ void EventLoop<EventClass, EventHandlerClass>::Post(const Event &event) {
     int64_t payloadPosition { postedEvents_->StreamPosition() };
     event.Serialize(postedEvents_.get());
     int64_t finalPosition { postedEvents_->StreamPosition() };
-    size = static_cast<uint32_t>(finalPosition - payloadPosition);
     
+    size = static_cast<uint32_t>(finalPosition - payloadPosition);
     postedEvents_->Seek(sizePosition);
     (*postedEvents_) << size;
     postedEvents_->Seek(finalPosition);
@@ -196,11 +211,11 @@ bool EventLoop<EventClass, EventHandlerClass>::RunUntilEventOfType(const Event::
     assert(!running_);
     running_ = true;
     
-    bool done{false};
+    bool done { false };
     while (!done) {
-        bool haveEvents{true};
+        bool haveEvents { true };
         while (haveEvents) {
-            EventClass *event{DispatchOne()};
+            EventClass *event { DispatchOne() };
             if (event) {
                 if (eventType && (event->Type().id == eventType->id)) {
                     running_ = false;
@@ -231,8 +246,8 @@ bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
     assert(!running_);
     running_ = true;
 
-    bool shutDownRequested = false;
-    bool didSync           = false;
+    bool shutDownRequested { false };
+    bool didSync           { false };
     while (!shutDownRequested) {
         while (DispatchOne()) {
             // Nop.
@@ -270,8 +285,8 @@ EventClass *EventLoop<EventClass, EventHandlerClass>::DispatchOne() {
     reader_ >> slot;
     reader_ >> size;
     if (!reader_.ErrorState()) {
-        EventInfo  &info  = events_[slot];
-        EventClass &event = *(info.prototype);
+        EventInfo  &info  { events_[slot] };
+        EventClass &event { *(info.prototype) };
         event.Deserialize(&reader_);
 
         // We allow handlers to be registered and deregistered from event handlers, so we copy the list of handlers for
@@ -283,15 +298,14 @@ EventClass *EventLoop<EventClass, EventHandlerClass>::DispatchOne() {
         }
         pendingHandlerCursor_ = 0;
         while (pendingHandlerCursor_ < static_cast<int>(pendingHandlers_.size())) {
-            EventHandlerClass *handler = pendingHandlers_[pendingHandlerCursor_];
+            EventHandlerClass *handler { pendingHandlers_[pendingHandlerCursor_] };
             event.Dispatch(handler);
             ++pendingHandlerCursor_;
         }
         pendingHandlers_.clear();
 
         return &event;
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
