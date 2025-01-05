@@ -194,6 +194,7 @@ Buffer::Reader::Reader(const Buffer *buffer, optional<Error> error)
 	: buffer_(buffer),
       cursor_(0),
       error_{error} {
+    // Nop.
 }
 
 bool Buffer::Reader::ErrorState() const {

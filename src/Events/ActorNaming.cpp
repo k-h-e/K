@@ -26,13 +26,12 @@ ActorName ActorNaming::Get() {
         id = *freeIds_.begin();
         freeIds_.erase(id);
         ++incarnations_[id];
-    }
-    else {
+    } else {
         id = (int)incarnations_.size();
         assert(id < INT_MAX);
         incarnations_.push_back(0u);
     }
-    //printf("handing out id (%d, %u)\n", id, (unsigned int)incarnations_[id]);
+ 
     return ActorName(id, incarnations_[id]);
 }
 

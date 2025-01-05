@@ -252,6 +252,7 @@ bool EventLoop<EventClass, EventHandlerClass>::Dispatch(bool doFinalSubmit) {
         }
 
         reader_ = eventsToDispatch_->GetReader();
+
         postedEvents_->Clear();
         didSync = true;
     }

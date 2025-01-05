@@ -37,7 +37,6 @@ EventInfo<EventClass, EventHandlerClass> *DeserializeIfNotEof(
 //! Deserializes the next event header from the specified event bus transmission data stream.
 void DeserializeHeader(Core::BlockingInStreamInterface &stream, int &outTypeSlot, int &outSize, bool &outEofDetected);
 
-
 template<typename EventClass, typename EventHandlerClass>
 EventInfo<EventClass, EventHandlerClass> *DeserializeIfNotEof(
         Core::BlockingInStreamInterface &stream, std::vector<EventInfo<EventClass, EventHandlerClass>> &events) {
@@ -48,6 +47,7 @@ EventInfo<EventClass, EventHandlerClass> *DeserializeIfNotEof(
     if (eofDetected) {
         return nullptr;
     }
+
     assert(!stream.ErrorState());
     assert((typeSlot >= 0) && (typeSlot < static_cast<int>(events.size())));
     // Ignoring size.

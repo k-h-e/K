@@ -36,9 +36,8 @@ void Serialize(const Event &event, int typeSlot, SeekableBlockingOutStreamInterf
 }
 
 void DeserializeHeader(BlockingInStreamInterface &stream, int &outTypeSlot, int &outSize, bool &outEofDetected) {
-    bool noErrorAtStart = !stream.ErrorState();
     stream >> outTypeSlot;
-    outEofDetected = !noErrorAtStart && (stream.StreamError() == StreamInterface::Error::Eof);
+    outEofDetected = (stream.StreamError() == StreamInterface::Error::Eof);
 
     uint32_t sizeU32;
     stream >> sizeU32;
