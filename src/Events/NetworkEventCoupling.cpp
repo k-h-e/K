@@ -295,11 +295,10 @@ bool NetworkEventCoupling::FilterEvents() {
     if (eventFilterConfiguration_) {
         filteredEventBuffer_.Clear();
         auto stream = eventBuffer_->GetReader(); 
-        bool eof    { false };
+        bool eof { false };
         while (!eof) {
             int  typeSlot;
             int  size;
-            bool eof;
             DeserializeHeader(stream, typeSlot, size, eof);
             if (!eof) {
                 assert(!stream.ErrorState());
