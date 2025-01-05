@@ -58,10 +58,7 @@ NetworkEventCouplingServer::~NetworkEventCouplingServer() {
     UninstallCoupling();
     UninstallTimer();
     UninstallListenSocket();
-
     runLoop_->RemoveClient(runLoopClientId_);
-
-    // TODO: Check deconstruction.
 }
 
 void NetworkEventCouplingServer::Register(HandlerInterface *handler) {
@@ -76,8 +73,15 @@ void NetworkEventCouplingServer::Register(HandlerInterface *handler) {
     }
 }
 
+void NetworkEventCouplingServer::ConfigureOutgoingEventFilter(
+        const shared_ptr<EventFilterConfiguration> &configuration) {
+    eventFilterConfiguration_ = configuration;
+}
+
+// ---
+
 void NetworkEventCouplingServer::Activate(bool deepActivation) {
-    (void)deepActivation;
+    (void) deepActivation;
     if (signalCouplingInstallation_) {
         if (handler_) {
             handler_->OnNetworkEventCouplingInstalled();
@@ -131,6 +135,7 @@ void NetworkEventCouplingServer::InstallCoupling(unique_ptr<TcpConnection> conne
     UninstallCoupling();
     coupling_ = make_unique<NetworkEventCoupling>(std::move(connection), protocolVersion_, keepAliveParameters_, hub_,
                                                   connectedEvent_, disconnectedEvent_, runLoop_, ioBuffers_, timers_);
+    coupling_->ConfigureOutgoingEventFilter(eventFilterConfiguration_);
     coupling_->Register(this);
     Log::Print(Log::Level::Debug, this, [&]{ return "network event coupling installed, port=" + to_string(port_); });
 }

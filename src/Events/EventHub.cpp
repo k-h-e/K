@@ -13,6 +13,7 @@
 #include <K/Core/Buffer.h>
 #include <K/Core/Log.h>
 #include <K/Events/Event.h>
+#include <K/Events/Serialization.h>
 
 using std::make_shared;
 using std::mutex;
@@ -145,8 +146,7 @@ void EventHub::Post(int clientLoopId, const Event &event, bool onlyDeliverToOthe
     auto iter = eventIdToSlotMap_.find(event.Type().id);
     assert(iter != eventIdToSlotMap_.end());
     int slot {iter->second };
-    eventsToSchedule_ << slot;
-    event.Serialize(&eventsToSchedule_);
+    Serialize(event, slot, eventsToSchedule_);    
     DoSubmit(critical, clientLoopId, eventsToSchedule_.Data(), eventsToSchedule_.DataSize(), onlyDeliverToOthers);
     eventsToSchedule_.Clear();
 }    // ......................................................................................... critical section, end.

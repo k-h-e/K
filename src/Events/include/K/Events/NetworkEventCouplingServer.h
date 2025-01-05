@@ -27,6 +27,7 @@ namespace K {
         class ConnectionIO;
     }
     namespace Events {
+        class EventFilterConfiguration;
         class EventHub;
     }
 }
@@ -81,6 +82,14 @@ class NetworkEventCouplingServer : public virtual K::Core::Interface,
      *  destruction of the network event coupling server.
      */
     void Register(HandlerInterface *handler);
+    //! Configures outgoing event filtering.
+    /*!
+     *  The setting will take effect with the next event coupling that gets installed.
+     *
+     *  /param configuration
+     *  Pass <c>nullptr</c> to disable filtering. 
+     */
+    void ConfigureOutgoingEventFilter(const std::shared_ptr<EventFilterConfiguration> &configuration);
 
   private:
     void Activate(bool deepActivation) override;
@@ -103,18 +112,19 @@ class NetworkEventCouplingServer : public virtual K::Core::Interface,
     const std::shared_ptr<Core::Timers>     timers_;          // Thread-safe.
     const std::shared_ptr<Core::ThreadPool> threadPool_;      // Thread-safe.
 
-    const std::shared_ptr<Core::RunLoop>  runLoop_;
-    int                                   runLoopClientId_;
-    HandlerInterface                      *handler_;
-    int                                   port_;
-    std::string                           protocolVersion_;
-    IO::KeepAliveParameters               keepAliveParameters_;
-    std::shared_ptr<Event>                connectedEvent_;
-    std::shared_ptr<Event>                disconnectedEvent_;
-    std::unique_ptr<IO::ListenSocket>     listenSocket_;
-    std::unique_ptr<NetworkEventCoupling> coupling_;
-    std::unique_ptr<Core::Timer>          timer_;
-    bool                                  signalCouplingInstallation_;
+    const std::shared_ptr<Core::RunLoop>      runLoop_;
+    int                                       runLoopClientId_;
+    HandlerInterface                          *handler_;
+    int                                       port_;
+    std::string                               protocolVersion_;
+    IO::KeepAliveParameters                   keepAliveParameters_;
+    std::shared_ptr<Event>                    connectedEvent_;
+    std::shared_ptr<Event>                    disconnectedEvent_;
+    std::shared_ptr<EventFilterConfiguration> eventFilterConfiguration_;
+    std::unique_ptr<IO::ListenSocket>         listenSocket_;
+    std::unique_ptr<NetworkEventCoupling>     coupling_;
+    std::unique_ptr<Core::Timer>              timer_;
+    bool                                      signalCouplingInstallation_;
 };
 
 }    // Namespace Events.

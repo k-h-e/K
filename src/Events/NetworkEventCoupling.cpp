@@ -20,6 +20,7 @@
 #include <K/Events/EventFilterConfiguration.h>
 #include <K/Events/EventHub.h>
 #include <K/Events/EventNotifier.h>
+#include <K/Events/Serialization.h>
 
 using std::make_unique;
 using std::memcpy;
@@ -293,41 +294,37 @@ void NetworkEventCoupling::CopyDown() {
 bool NetworkEventCoupling::FilterEvents() {
     if (eventFilterConfiguration_) {
         filteredEventBuffer_.Clear();
-        int  numLeft { eventBuffer_->DataSize() };
-        auto stream  = eventBuffer_->GetReader(); 
-        
-        int      slot;
-        uint32_t size;
-        int      headerSize { static_cast<int>(sizeof(slot) + sizeof(size)) };
-        while ((numLeft >= headerSize) && !stream.ErrorState()) {    
-            stream >> slot;
-            stream >> size;
-            if (!stream.ErrorState()) {
-                numLeft -= headerSize;
-                int sizeInt { static_cast<int>(size) };
-                assert((sizeInt >= 0) && (sizeInt <= numLeft));
-                if (eventFilterConfiguration_->FilteredOut(slot)) {
-                    if (sizeInt) {
-                        stream.Seek(stream.StreamPosition() + static_cast<int64_t>(sizeInt));
+        auto stream = eventBuffer_->GetReader(); 
+        bool eof    { false };
+        while (!eof) {
+            int  typeSlot;
+            int  size;
+            bool eof;
+            DeserializeHeader(stream, typeSlot, size, eof);
+            if (!eof) {
+                assert(!stream.ErrorState());
+                assert(typeSlot >= 0);
+                assert(size >= 0);
+                if (eventFilterConfiguration_->FilteredOut(typeSlot)) {
+                    if (size) {
+                        stream.Seek(stream.StreamPosition() + static_cast<int64_t>(size));
                     }
                     Log::Print(Log::Level::Debug, this, [&]{
-                            return "filtered out event, type_slot=" + to_string(slot);
+                            return "filtered out event, type_slot=" + to_string(typeSlot);
                     });
                 } else {
-                    filteredEventBuffer_.Append(&slot, sizeof(slot));
-                    filteredEventBuffer_.Append(&slot, sizeof(size));
-                    if (sizeInt) {
+                    uint32_t sizeU32 = static_cast<uint32_t>(size);
+                    filteredEventBuffer_.Append(&typeSlot, sizeof(typeSlot));
+                    filteredEventBuffer_.Append(&sizeU32, sizeof(sizeU32));
+                    if (size) {
                         int position { filteredEventBuffer_.DataSize() };
-                        filteredEventBuffer_.Append(nullptr, sizeInt);
-                        ReadItem(&stream, &static_cast<uint8_t *>(filteredEventBuffer_.Data())[position], sizeInt);
+                        filteredEventBuffer_.Append(nullptr, size);
+                        ReadItem(&stream, &static_cast<uint8_t *>(filteredEventBuffer_.Data())[position], size);
                     }
                 }
-
-                numLeft -= sizeInt;
             }
         }
-
-        assert((numLeft == 0) && !stream.ErrorState());
+        
         return true;
     } else {
         return false;
