@@ -29,11 +29,11 @@ void StopWatch::Restart() {
 }
 
 int StopWatch::ElapsedMs() {
-    steady_clock::time_point now = steady_clock::now();
+    steady_clock::time_point now { steady_clock::now() };
     if (now >= startTime_) {
         auto counts = duration_cast<milliseconds>(now - startTime_).count();
         if (counts >= 0) {
-            int timeMs = static_cast<int>(counts);
+            int timeMs { static_cast<int>(counts) };
             if (timeMs >= 0) {
                 return timeMs;
             }
@@ -46,9 +46,9 @@ int StopWatch::ElapsedMs() {
 }
 
 int StopWatch::DeltaMs() {
-    int elapsedMs = ElapsedMs();
+    int elapsedMs { ElapsedMs() };
     if (elapsedMs > deltaLastElapsedMs_) {
-        int deltaMs = elapsedMs - deltaLastElapsedMs_;
+        int deltaMs { elapsedMs - deltaLastElapsedMs_ };
         deltaLastElapsedMs_ = elapsedMs;
         return deltaMs;
     } else {
