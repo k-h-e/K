@@ -9,6 +9,7 @@
 #include <K/GeoPositioning/NtripDgnssClient.h>
 
 #include <sstream>
+
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/GeoPositioning/RtcmParser.h>
@@ -56,8 +57,8 @@ NtripDgnssClient::NtripDgnssClient(
     request << "Authorization: Basic " << StringTools::ToBase64(user + ":" + passWord) << "\r\n";
     request << "\r\n";
 
-    auto requestText{request.str()};
-    WriteItem(&connection_, requestText.c_str(), static_cast<int>(requestText.length()));
+    auto requestText = request.str();
+    WriteItem(connection_, requestText.c_str(), static_cast<int>(requestText.length()));
 
     SendGga(positionGga);
 }
@@ -69,8 +70,8 @@ NtripDgnssClient::~NtripDgnssClient() {
 void NtripDgnssClient::SendGga(const std::string &gga) {
     //Log::Print(Log::Level::Debug, this, [&]{ return "sending position: \"" + gga + "\""; });
     string lineBreak = "\r\n";
-    WriteItem(&connection_, &gga[0], static_cast<int>(gga.size()));
-    WriteItem(&connection_, &lineBreak[0], static_cast<int>(lineBreak.size()));
+    WriteItem(connection_, &gga[0], static_cast<int>(gga.size()));
+    WriteItem(connection_, &lineBreak[0], static_cast<int>(lineBreak.size()));
 }
 
 NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler)

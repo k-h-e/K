@@ -31,7 +31,7 @@ RawStreamSaver::RawStreamSaver(const Path &fileName)
 
 void RawStreamSaver::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
     if (fileStream_) {
-        WriteItem(fileStream_.get(), buffer->Content(), buffer->Size());
+        WriteItem(*fileStream_, buffer->Content(), buffer->Size());
     }
 }
 
