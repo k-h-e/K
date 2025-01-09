@@ -74,10 +74,10 @@ HandleBase &HandleBase::operator=(HandleBase &&other) {
 }
 
 HandleBase::~HandleBase() {
-    reset();
+    Reset();
 }
 
-void HandleBase::reset() {
+void HandleBase::Reset() {
     if (handlee_ != nullptr) {
         referenceCountTracker_->OnReferenceRemoved();
         handlee_               = nullptr;
@@ -86,7 +86,7 @@ void HandleBase::reset() {
     }
 }
 
-bool HandleBase::isNull() const {
+bool HandleBase::Null() const {
     return (handlee_ == nullptr);
 }
 

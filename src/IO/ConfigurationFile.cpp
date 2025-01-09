@@ -34,8 +34,8 @@ namespace K {
 namespace IO {
 
 ConfigurationFile::ConfigurationFile() :
-        validCharacters_("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_:/()\" "),
-        errorState_(false) {
+        validCharacters_{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,-_:/()\" "},
+        errorState_{false} {
     // Nop.
 }
 
@@ -90,13 +90,13 @@ void ConfigurationFile::SetValue(const string &section, const string &key, bool 
     SetValue(section, key, string(value ? "true" : "false"));
 }
 
-void ConfigurationFile::GetValue(const string &section, const string &key, string *outValue) {
+void ConfigurationFile::GetValue(const string &section, const string &key, string &outValue) {
     if (!errorState_) {
         auto sectionIter = sections_.find(section);
         if (sectionIter != sections_.end()) {
             auto keyIter = sectionIter->second.find(key);
             if (keyIter != sectionIter->second.end()) {
-                *outValue = keyIter->second;
+                outValue = keyIter->second;
                 return;
             }
         }
@@ -105,10 +105,10 @@ void ConfigurationFile::GetValue(const string &section, const string &key, strin
     errorState_ = true;
 }
 
-void ConfigurationFile::GetValue(const string &section, const string &key, int *outValue) {
+void ConfigurationFile::GetValue(const string &section, const string &key, int &outValue) {
     if (!errorState_) {
         string value;
-        GetValue(section, key, &value);
+        GetValue(section, key, value);
         if (!errorState_) {
             if (StringTools::Parse(value, outValue)) {
                 return;
@@ -119,10 +119,10 @@ void ConfigurationFile::GetValue(const string &section, const string &key, int *
     errorState_ = true;
 }
 
-void ConfigurationFile::GetValue(const string &section, const string &key, float *outValue) {
+void ConfigurationFile::GetValue(const string &section, const string &key, float &outValue) {
     if (!errorState_) {
         string value;
-        GetValue(section, key, &value);
+        GetValue(section, key, value);
         if (!errorState_) {
             if (StringTools::Parse(value, outValue)) {
                 return;
@@ -133,10 +133,10 @@ void ConfigurationFile::GetValue(const string &section, const string &key, float
     errorState_ = true;
 }
 
-void ConfigurationFile::GetValue(const string &section, const string &key, double *outValue) {
+void ConfigurationFile::GetValue(const string &section, const string &key, double &outValue) {
     if (!errorState_) {
         string value;
-        GetValue(section, key, &value);
+        GetValue(section, key, value);
         if (!errorState_) {
             if (StringTools::Parse(value, outValue)) {
                 return;
@@ -147,16 +147,16 @@ void ConfigurationFile::GetValue(const string &section, const string &key, doubl
     errorState_ = true;
 }
 
-void ConfigurationFile::GetValue(const string &section, const string &key, bool *outValue) {
+void ConfigurationFile::GetValue(const string &section, const string &key, bool &outValue) {
     if (!errorState_) {
         string value;
-        GetValue(section, key, &value);
+        GetValue(section, key, value);
         if (!errorState_) {
             if (value == "true") {
-                *outValue = true;
+                outValue = true;
                 return;
             } else if (value == "false") {
-                *outValue = false;
+                outValue = false;
                 return;
             }
         }
@@ -169,10 +169,10 @@ void ConfigurationFile::Save(const Path &fileName) {
     if (!errorState_) {
         auto result = make_shared<ResultAcceptor>();
         {
-            TextWriter writer(make_shared<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
-                                                        File::AccessMode::WriteOnly, 4 * 1024));
+            TextWriter writer{make_shared<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::WriteOnly, true),
+                                                        File::AccessMode::WriteOnly, 4 * 1024)};
             writer.SetCloseResultAcceptor(result);
-            bool firstSection = true;
+            bool firstSection { true };
             for (auto &pair : sections_) {
                 if (!firstSection) {
                     writer << "\n";
@@ -195,15 +195,15 @@ void ConfigurationFile::Load(const Path &fileName) {
     sections_.clear();
     errorState_ = false;
 
-    TextReader reader(make_shared<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::ReadOnly, false),
-                                                File::AccessMode::ReadOnly, 4 * 1024));
-    unordered_set<char> whiteSpace{ ' ', '\t' };
+    TextReader reader { make_shared<StreamBuffer>(make_shared<File>(fileName, File::AccessMode::ReadOnly, false),
+                                                  File::AccessMode::ReadOnly, 4 * 1024) };
+    unordered_set<char> whiteSpace { ' ', '\t' };
     string currentSection;
     string line;
     bool success = false;
     bool bad     = false;
     while (!success && !bad && !errorState_) {
-        reader.Read('\n', &line);
+        reader.Read('\n', line);
         if (reader.ErrorState()) {
             if (reader.StreamError() == StreamInterface::Error::Eof) {
                 success = true;
@@ -212,18 +212,16 @@ void ConfigurationFile::Load(const Path &fileName) {
             }
         } else {
             if ((line.length() > 0u) && (line[0] == '[')) {
-                StringTools::Trim(&line, unordered_set<char>{ ' ', '\t', '[', ']' });
+                StringTools::Trim(line, unordered_set<char>{ ' ', '\t', '[', ']' });
                 currentSection = line;
-            }
-            else {
-                vector<string> tokens = StringTools::Tokenize(line, "=", false);
+            } else {
+                vector<string> tokens { StringTools::Tokenize(line, "=", false) };
                 if (tokens.size() == 2u) {
-                    StringTools::Trim(&tokens[0], whiteSpace);
-                    StringTools::Trim(&tokens[1], whiteSpace);
+                    StringTools::Trim(tokens[0], whiteSpace);
+                    StringTools::Trim(tokens[1], whiteSpace);
                     SetValue(currentSection, tokens[0], tokens[1]);
-                }
-                else {
-                    StringTools::Trim(&line, whiteSpace);
+                } else {
+                    StringTools::Trim(line, whiteSpace);
                     if (!line.empty()) {
                         bad = true;
                     }

@@ -12,6 +12,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <cerrno>
+
 #include <K/Core/config.h>
 #include <K/Core/Interface.h>
 #include <K/Core/StringTools.h>
@@ -29,10 +30,10 @@ namespace K {
 namespace IO {
 
 optional<int> NetworkTools::ConnectTcp(const string &hostAndPort, Core::Interface *loggingObject) {
-    vector<string> tokens = StringTools::Tokenize(hostAndPort, ":", false);
+    vector<string> tokens { StringTools::Tokenize(hostAndPort, ":", false) };
     if (tokens.size() == 2) {
         int port;
-        if (StringTools::Parse(tokens[1], &port)) {
+        if (StringTools::Parse(tokens[1], port)) {
             return ConnectTcp(tokens[0], port, loggingObject);
         }
     }
@@ -42,7 +43,7 @@ optional<int> NetworkTools::ConnectTcp(const string &hostAndPort, Core::Interfac
 
 optional<int> NetworkTools::ConnectTcp(const string &host, int port, Core::Interface *loggingObject) {
     uint32_t ip4Address;
-    if (ResolveHostName(host, &ip4Address, loggingObject)) {
+    if (ResolveHostName(host, ip4Address, loggingObject)) {
         return ConnectTcp(ip4Address, port, loggingObject);
     }
 
@@ -50,7 +51,7 @@ optional<int> NetworkTools::ConnectTcp(const string &host, int port, Core::Inter
 }
 
 optional<int> NetworkTools::ConnectTcp(uint32_t ip4Address, int port, Core::Interface *loggingObject) {
-    int fd = socket(PF_INET, SOCK_STREAM, 0);
+    int fd { socket(PF_INET, SOCK_STREAM, 0) };
     if (fd != -1) {
         if (PrepareSocket(fd, loggingObject)) {
             struct sockaddr_in address = {};
@@ -62,11 +63,9 @@ optional<int> NetworkTools::ConnectTcp(uint32_t ip4Address, int port, Core::Inte
                     Log::Print(Log::Level::Debug, loggingObject, [&]{ return "TCP socket " + to_string(fd)
                         + " connected to ip4=" + Ip4ToString(ip4Address) + ", port=" + to_string(port); });
                     return fd;
-                }
-                else if (errno == EINTR) {
+                } else if (errno == EINTR) {
                     continue;
-                }
-                else {
+                } else {
                     Log::Print(Log::Level::Warning, loggingObject, [&]{ return "failed to connect TCP socket "
                         + to_string(fd) + " to ip4=" + Ip4ToString(ip4Address) + ", port=" + to_string(port); });
                     break;
@@ -82,15 +81,15 @@ optional<int> NetworkTools::ConnectTcp(uint32_t ip4Address, int port, Core::Inte
     return nullopt;
 }
 
-bool NetworkTools::ResolveHostName(const string &hostName, uint32_t *outIp4Address, Core::Interface *loggingObject) {
+bool NetworkTools::ResolveHostName(const string &hostName, uint32_t &outIp4Address, Core::Interface *loggingObject) {
     Log::Print(Log::Level::Debug, loggingObject, [&]{ return "resolving host name \"" + hostName + "\"..."; });
 
-    struct addrinfo *result = nullptr;
+    struct addrinfo *result { nullptr };
     struct addrinfo hints   = { };
     hints.ai_family = PF_INET;
     if (!getaddrinfo(hostName.c_str(), nullptr, &hints, &result)) {
         uint32_t ip;
-        struct addrinfo *current = result;
+        struct addrinfo *current { result };
         while(current) {
             if(current->ai_family == PF_INET) {
               ip = ntohl(((struct sockaddr_in *)(current->ai_addr))->sin_addr.s_addr);
@@ -103,7 +102,7 @@ bool NetworkTools::ResolveHostName(const string &hostName, uint32_t *outIp4Addre
         if (current) {
             Log::Print(Log::Level::Debug, loggingObject, [&]{ return "resolved host name \"" + hostName + "\" to "
                 + Ip4ToString(ip); });
-            *outIp4Address = ip;
+            outIp4Address = ip;
             return true;
         }
     }
@@ -113,13 +112,13 @@ bool NetworkTools::ResolveHostName(const string &hostName, uint32_t *outIp4Addre
 }
 
 string NetworkTools::Ip4ToString(uint32_t ip4Address) {
-    uint8_t *ip = reinterpret_cast<uint8_t *>(&ip4Address);
+    uint8_t *ip { reinterpret_cast<uint8_t *>(&ip4Address) };
     return to_string(ip[3]) + "." + to_string(ip[2]) + "." + to_string(ip[1]) + "." + to_string(ip[0]);
 }
 
 bool NetworkTools::PrepareSocket(int fd, Core::Interface *loggingObject) {
 #if defined(K_PLATFORM_MAC) || defined(K_PLATFORM_IOS)
-    int enabled = 1;
+    int enabled { 1 };
     if (setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &enabled, sizeof(enabled))) {
         Log::Print(Log::Level::Warning, loggingObject, [&]{
             return "failed to disable SIGPIPE for socket " + to_string(fd); });

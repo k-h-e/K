@@ -18,7 +18,7 @@ namespace Core {
 class ActionInterface : public virtual Interface {
   public:
     //! Executes the action.
-    virtual void ExecuteAction() = 0;
+    virtual void Execute() = 0;
 };
 
 }    // Namespace Core.

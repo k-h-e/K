@@ -26,9 +26,9 @@ void Actions::Unregister(int id) {
 }
 
 void Actions::Execute() {
-    int num = 0;
+    int num { 0 };
     for (ActionInterface *action : actions_.Iterate(0)) {
-        action->ExecuteAction();
+        action->Execute();
         ++num;
     }
 }

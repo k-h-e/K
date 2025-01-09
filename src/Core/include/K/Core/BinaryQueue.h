@@ -52,7 +52,7 @@ class BinaryQueue {
     void PutBack(const void *data, int dataSize);
     //! Transfers data to the specified other queue, as long as the other queue's size does not exceed the size
     //! specified.
-    void TransferTo(BinaryQueue *other, int maxSize);
+    void TransferTo(BinaryQueue &other, int maxSize);
 
   private:
     void Grow();

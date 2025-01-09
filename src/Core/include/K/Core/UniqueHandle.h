@@ -44,23 +44,23 @@ class UniqueHandle : public HandleBase {
     //! Returns <c>false</c> in case the handle is a null-handle, i.e. in case it is not (or no longer) handling a
     //! handlee resource.
     explicit operator bool() const {
-        return !isNull();
+        return !Null();
     }
 
     //! Allows the handle to be dereferenced just like a regular pointer.
     T *operator->() const {
         assert(handlee_ != nullptr);
-        return get();
+        return Get();
     }
 
     //! Allows the handle to be dereferenced just like a regular pointer.
     T &operator*() const {
         assert(handlee_ != nullptr);
-        return *get();
+        return *Get();
     }
 
     //! Returns a dumb pointer to the handlee.
-    T *get() const {
+    T *Get() const {
         return static_cast<T *>(handlee_);
     }
 };

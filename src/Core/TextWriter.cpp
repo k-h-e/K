@@ -9,6 +9,7 @@
 #include <K/Core/TextWriter.h>
 
 #include <cassert>
+
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/Log.h>
 #include <K/Core/ResultAcceptor.h>
@@ -23,7 +24,7 @@ namespace K {
 namespace Core {
 
 TextWriter::TextWriter(const shared_ptr<BlockingOutStreamInterface> &stream)
-        : stream_(stream) {
+        : stream_{stream} {
     // Nop.
 }
 
@@ -44,12 +45,12 @@ TextWriter &TextWriter::operator<<(const std::string &text) {
 
 void TextWriter::Write(const string &text) {
     if (!ErrorState()) {
-        int size = static_cast<int>(text.size() * sizeof(string::value_type));
+        int size { static_cast<int>(text.size() * sizeof(string::value_type)) };
         if (size > 0) {
-            Core::WriteItem(stream_.get(), &text[0], size);
+            Core::WriteItem(*stream_, &text[0], size);
             if (stream_->ErrorState()) {
-                optional<Error> error = stream_->StreamError();
-                assert (error);
+                optional<Error> error { stream_->StreamError() };
+                assert(error);
                 error_ = error;
             }
         }
@@ -62,7 +63,7 @@ void TextWriter::WriteLine(const string &line) {
 }
 
 bool TextWriter::ErrorState() const {
-    return (error_.has_value());
+    return error_.has_value();
 }
 
 optional<StreamInterface::Error> TextWriter::StreamError() const {

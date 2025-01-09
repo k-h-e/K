@@ -59,24 +59,24 @@ int RtcmMessage::PayloadSize() const {
     return 0;
 }
 
-void RtcmMessage::WriteTo(BlockingOutStreamInterface *stream) const {
+void RtcmMessage::WriteTo(BlockingOutStreamInterface &stream) const {
     if (image_.size()) {
         WriteItem(stream, &image_[0], static_cast<int>(image_.size()));
     }
 }
 
-void RtcmMessage::Serialize(BlockingOutStreamInterface *stream) const {
+void RtcmMessage::Serialize(BlockingOutStreamInterface &stream) const {
     uint32_t size = static_cast<uint32_t>(image_.size());
-    (*stream) << size;
+    stream << size;
     if (size) {
         WriteItem(stream, &image_[0], static_cast<int>(size));
     }
 }
 
-void RtcmMessage::Deserialize(BlockingInStreamInterface *stream) {
+void RtcmMessage::Deserialize(BlockingInStreamInterface &stream) {
     uint32_t size;
-    (*stream) >> size;
-    if (!stream->ErrorState() && size) {
+    stream >> size;
+    if (!stream.ErrorState() && size) {
         image_.resize(size);
         ReadItem(stream, &image_[0], static_cast<int>(size));
     }

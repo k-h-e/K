@@ -30,8 +30,8 @@ struct Envelope : public virtual Core::SerializableInterface {
         // Default copy, ok.
 
         // SerializableInterface...
-        void Serialize(Core::BlockingOutStreamInterface *stream) const override;
-        void Deserialize(Core::BlockingInStreamInterface *stream) override;
+        void Serialize(Core::BlockingOutStreamInterface &stream) const override;
+        void Deserialize(Core::BlockingInStreamInterface &stream) override;
     };
 
     std::vector<uint8_t> samples;
@@ -44,8 +44,8 @@ struct Envelope : public virtual Core::SerializableInterface {
     void clear();
 
     // SerializableInterface...
-    void Serialize(Core::BlockingOutStreamInterface *stream) const override;
-    void Deserialize(Core::BlockingInStreamInterface *stream) override;
+    void Serialize(Core::BlockingOutStreamInterface &stream) const override;
+    void Deserialize(Core::BlockingInStreamInterface &stream) override;
 };
 
 }    // Namespace EchoSounding.

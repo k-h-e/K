@@ -17,13 +17,13 @@ namespace K {
 namespace Core {
 
 CompletionActionAdapter::CompletionActionAdapter(const shared_ptr<ActionInterface> &action)
-        : action_(action) {
+        : action_{action} {
     // Nop.
 }
 
 void CompletionActionAdapter::OnCompletion(int completionId) {
     (void)completionId;
-    action_->ExecuteAction();
+    action_->Execute();
 }
 
 }    // Namespace Core.

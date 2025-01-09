@@ -87,11 +87,11 @@ void BinaryQueue::PutBack(const void *data, int dataSize) {
     fill_ += dataSize;
 }
 
-void BinaryQueue::TransferTo(BinaryQueue *other, int maxSize) {
-    while (fill_ && (other->Size() < maxSize)) {
-        int numToTransfer = std::min(capacity_ - cursor_, fill_);                // >= 1.
-        numToTransfer     = std::min(numToTransfer, maxSize - other->Size());    // >= 1.
-        other->Put(&buffer_[cursor_], numToTransfer);
+void BinaryQueue::TransferTo(BinaryQueue &other, int maxSize) {
+    while (fill_ && (other.Size() < maxSize)) {
+        int numToTransfer = std::min(capacity_ - cursor_, fill_);               // >= 1.
+        numToTransfer     = std::min(numToTransfer, maxSize - other.Size());    // >= 1.
+        other.Put(&buffer_[cursor_], numToTransfer);
         cursor_ += numToTransfer;
         if (cursor_ == capacity_) {
             cursor_ = 0;

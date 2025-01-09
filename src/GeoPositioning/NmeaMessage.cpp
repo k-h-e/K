@@ -10,6 +10,7 @@
 
 #include <sstream>
 #include <iomanip>
+
 #include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/StringTools.h>
@@ -98,29 +99,29 @@ string NmeaMessage::ToString() const {
     return string("$") + type_ + "," + StringTools::Concatenate(fields_, ",") + "*" + CheckSum();
 }
 
-void NmeaMessage::WriteTo(BlockingOutStreamInterface *stream) const {
+void NmeaMessage::WriteTo(BlockingOutStreamInterface &stream) const {
     string text = ToString() + "\r\n";
     WriteItem(stream, text.c_str(), static_cast<int>(text.length()));
 }
 
-void NmeaMessage::Serialize(BlockingOutStreamInterface *stream) const {
+void NmeaMessage::Serialize(BlockingOutStreamInterface &stream) const {
     uint32_t numFields = static_cast<uint32_t>(fields_.size());
-    (*stream) << type_;
-    (*stream) << numFields;
+    stream << type_;
+    stream << numFields;
     for (uint32_t i = 0u; i < numFields; ++i) {
-        (*stream) << fields_[i];
+        stream << fields_[i];
     }
 }
 
-void NmeaMessage::Deserialize(BlockingInStreamInterface *stream) {
+void NmeaMessage::Deserialize(BlockingInStreamInterface &stream) {
     uint32_t numFields;
-    (*stream) >> type_;
-    (*stream) >> numFields;
-    if (!stream->ErrorState()) {
+    stream >> type_;
+    stream >> numFields;
+    if (!stream.ErrorState()) {
         fields_.clear();
         for (uint32_t i = 0u; i < numFields; ++i) {
             string field;
-            (*stream) >> field;
+            stream >> field;
             fields_.push_back(field);
         }
     }

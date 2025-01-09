@@ -9,19 +9,20 @@
 #include <K/Core/FloatModN.h>
 
 #include <cassert>
+
 #include <K/Core/NumberTools.h>
 
 namespace K {
 namespace Core {
 
 FloatModN::FloatModN(int modulus)
-    : value_(0.0f),
-      modulus_(modulus) {
+    : value_{0.0f},
+      modulus_{modulus} {
     assert(modulus >= 2);
 }
 
 void FloatModN::SetValue(float number) {
-    NumberTools::Clamp(&number, 0.0f, static_cast<float>(modulus_));
+    NumberTools::Clamp(number, 0.0f, static_cast<float>(modulus_));
     value_ = (number < modulus_) ? number : 0.0f;
 }
 
@@ -42,8 +43,8 @@ void FloatModN::Add(float number) {
 float FloatModN::DistanceTo(const FloatModN &other) const {
     assert(modulus_ == other.modulus_);
     
-    bool distanceIsNegative = false;
-    float distance = other.value_ - value_;
+    bool  distanceIsNegative { false };
+    float distance           { other.value_ - value_ };
     if (distance < 0.0f) {
         distance = -distance;
         distanceIsNegative = true;
@@ -56,14 +57,14 @@ float FloatModN::DistanceTo(const FloatModN &other) const {
 }
 
 void FloatModN::MoveTo(const FloatModN &other, float maxStepSize) {
-    bool distanceIsNegative = false;
-    float distance = DistanceTo(other);
+    bool  distanceIsNegative { false };
+    float distance           { DistanceTo(other) };
     if (distance < 0.0f) {
         distance           = -distance;
         distanceIsNegative = true;
     }
-    float stepSize = distance;
-    NumberTools::Clamp(&stepSize, 0.0f, maxStepSize);
+    float stepSize { distance };
+    NumberTools::Clamp(stepSize, 0.0f, maxStepSize);
     Add(distanceIsNegative ? -stepSize : stepSize);
 }
 

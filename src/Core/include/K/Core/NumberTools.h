@@ -20,38 +20,37 @@ class NumberTools {
     static const double pi;
 
     template<typename T>
-    static void Clamp(T *numba, T min, T max) {
-        if (*numba < min) {
-            *numba = min;
-        }
-        else if (*numba > max) {
-            *numba = max;
-        }
-    }
-
-    template<typename T>
-    static void ClampMin(T *numba, T min) {
-        if (*numba < min) {
-            *numba = min;
+    static void Clamp(T &numba, T min, T max) {
+        if (numba < min) {
+            numba = min;
+        } else if (numba > max) {
+            numba = max;
         }
     }
 
     template<typename T>
-    static void ClampMax(T *numba, T max) {
-        if (*numba > max) {
-            *numba = max;
+    static void ClampMin(T &numba, T min) {
+        if (numba < min) {
+            numba = min;
         }
     }
 
     template<typename T>
-    static void Swap(T *number, T *otherNumber) {
-        T temporary = *number;
-        *number = *otherNumber;
-        *otherNumber = temporary;
+    static void ClampMax(T &numba, T max) {
+        if (numba > max) {
+            numba = max;
+        }
     }
 
-    static void ToggleEndian(uint16_t *number) {
-        uint8_t *ptr = reinterpret_cast<uint8_t *>(number);
+    template<typename T>
+    static void Swap(T &number, T &otherNumber) {
+        T temporary { number };
+        number      = otherNumber;
+        otherNumber = temporary;
+    }
+
+    static void ToggleEndian(uint16_t &number) {
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(&number);
         uint8_t temp = ptr[0];
         ptr[0] = ptr[1];
         ptr[1] = temp;

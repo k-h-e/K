@@ -54,7 +54,7 @@ void ListenSocket::Acceptor::SetErrorState() {
     Close();
 }
 
-void ListenSocket::Acceptor::ExecuteAction() {
+void ListenSocket::Acceptor::Execute() {
     Log::Print(Log::Level::Debug, this, []{ return "spawning..."; });
 
     if (!error_) {

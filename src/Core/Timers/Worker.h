@@ -24,7 +24,8 @@ class Timers::Worker : public virtual ActionInterface {
     Worker(Worker &&other)                 = delete;
     Worker &operator=(Worker &&other)      = delete;
 
-    void ExecuteAction() override;
+    // ActionInterface...
+    void Execute() override;
 
   private:
     std::shared_ptr<SharedState> shared_;

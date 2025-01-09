@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+
 #include <K/Core/SerializableInterface.h>
 
 namespace K {
@@ -55,10 +56,10 @@ class NmeaMessage : public virtual Core::SerializableInterface {
     //! Returns a string representation of the message.
     std::string ToString() const;
     //! Writes the NMEA message to the specified stream.
-    void WriteTo(Core::BlockingOutStreamInterface *stream) const;
+    void WriteTo(Core::BlockingOutStreamInterface &stream) const;
 
-    void Serialize(Core::BlockingOutStreamInterface *stream) const override;
-    void Deserialize(Core::BlockingInStreamInterface *stream) override;
+    void Serialize(Core::BlockingOutStreamInterface &stream) const override;
+    void Deserialize(Core::BlockingInStreamInterface &stream) override;
 
   private:
     std::string              type_;

@@ -28,7 +28,7 @@ void BitStream::AppendBytes(const void *data, int dataSize) {
     }
 }
 
-bool BitStream::ReadBits(int numBits, uint32_t *outBits) {
+bool BitStream::ReadBits(int numBits, uint32_t &outBits) {
     if ((numBits >= 0) && (numBits <= 24)) {
         while (free_ >= 8) {
             if (buffer_.empty()) {
@@ -47,7 +47,7 @@ bool BitStream::ReadBits(int numBits, uint32_t *outBits) {
         }
 
         if (32 - free_ >= numBits) {
-            *outBits     = accumulator_ >> (32 - numBits);
+            outBits      = accumulator_ >> (32 - numBits);
             accumulator_ = accumulator_ << numBits;
             free_ += numBits;
             Log::Print(Log::Level::Debug, this, [&]{ return "delivered " + to_string(numBits) + " bits"; });

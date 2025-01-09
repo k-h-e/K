@@ -27,11 +27,11 @@ class BlockingOutStreamInterface : public virtual OutStreamInterface {
 };
 
 //! Writes a binary item of specified size (in bytes).
-void WriteItem(BlockingOutStreamInterface *stream, const void *item, int itemSize);
+void WriteItem(BlockingOutStreamInterface &stream, const void *item, int itemSize);
 
 template<typename T>
 BlockingOutStreamInterface &operator<<(BlockingOutStreamInterface &stream, const T &value) {
-    WriteItem(&stream, &value, sizeof(T));
+    WriteItem(stream, &value, sizeof(T));
     return stream;
 }
 

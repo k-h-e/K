@@ -43,10 +43,10 @@ class RtcmMessage : public virtual K::Core::SerializableInterface {
     //! Tells the payload size.
     int PayloadSize() const;
     //! Writes the RTCM message to the specified stream.
-    void WriteTo(Core::BlockingOutStreamInterface *stream) const;
+    void WriteTo(Core::BlockingOutStreamInterface &stream) const;
 
-    void Serialize(Core::BlockingOutStreamInterface *stream) const override;
-    void Deserialize(Core::BlockingInStreamInterface *stream) override;
+    void Serialize(Core::BlockingOutStreamInterface &stream) const override;
+    void Deserialize(Core::BlockingInStreamInterface &stream) override;
 
   private:
     std::vector<uint8_t> image_;

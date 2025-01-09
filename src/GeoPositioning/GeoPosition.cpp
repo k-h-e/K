@@ -9,11 +9,13 @@
 #include <K/GeoPositioning/GeoPosition.h>
 
 #include <cmath>
+
 #include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/NumberTools.h>
 
 using std::isfinite;
+using std::snprintf;
 using std::string;
 using K::Core::BlockingInStreamInterface;
 using K::Core::BlockingOutStreamInterface;
@@ -23,14 +25,14 @@ namespace K {
 namespace GeoPositioning {
 
 GeoPosition::GeoPosition()
-        : latitude_(0.0),
-          longitude_(0.0) {
+        : latitude_{0.0},
+          longitude_{0.0} {
     // Nop.
 }
 
 GeoPosition::GeoPosition(double latitude, double longitude)
-        : latitude_(latitude),
-          longitude_(longitude) {
+        : latitude_{latitude},
+          longitude_{longitude} {
     if (!isfinite(latitude_)) {
         latitude_ = 0.0;
     }
@@ -38,7 +40,7 @@ GeoPosition::GeoPosition(double latitude, double longitude)
         longitude_ = 0.0;
     }
 
-    NumberTools::Clamp(&latitude_, -90.0, 90.0);
+    NumberTools::Clamp(latitude_, -90.0, 90.0);
 
     while (longitude_ < -180.0) {
         longitude_ += 360.0;
@@ -63,19 +65,19 @@ double GeoPosition::Longitude() const {
 string GeoPosition::ToString() const {
     char latitudeText[40];
     char longitudeText[40];
-    std::snprintf(latitudeText, 40, "%.8f", latitude_);
-    std::snprintf(longitudeText, 40, "%.8f", longitude_);
+    snprintf(latitudeText, 40, "%.8f", latitude_);
+    snprintf(longitudeText, 40, "%.8f", longitude_);
     return string("(lat=") + latitudeText + ", lng=" + longitudeText + ")";
 }
 
-void GeoPosition::Serialize(BlockingOutStreamInterface *stream) const {
-    (*stream) << latitude_;
-    (*stream) << longitude_;
+void GeoPosition::Serialize(BlockingOutStreamInterface &stream) const {
+    stream << latitude_;
+    stream << longitude_;
 }
 
-void GeoPosition::Deserialize(BlockingInStreamInterface *stream) {
-    (*stream) >> latitude_;
-    (*stream) >> longitude_;
+void GeoPosition::Deserialize(BlockingInStreamInterface &stream) {
+    stream >> latitude_;
+    stream >> longitude_;
 }
 
 }    // Namespace GeoPositioning.

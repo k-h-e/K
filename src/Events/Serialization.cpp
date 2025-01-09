@@ -26,7 +26,7 @@ void Serialize(const Event &event, int typeSlot, SeekableBlockingOutStreamInterf
     stream << size;
 
     int64_t payloadPosition { stream.StreamPosition() };
-    event.Serialize(&stream);
+    event.Serialize(stream);
     int64_t finalPosition { stream.StreamPosition() };
     
     size = static_cast<uint32_t>(finalPosition - payloadPosition);

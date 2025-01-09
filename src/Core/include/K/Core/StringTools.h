@@ -26,24 +26,24 @@ class StringTools {
     static std::vector<std::string> Tokenize(const std::string &text, const std::string &separators,
                                              bool suppressEmptyTokens);
     static std::string Concatenate(const std::vector<std::string> &tokens, const std::string &separatorString);
-    static void Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters, bool trimLeft,
+    static void Trim(std::string &inOutText, const std::unordered_set<char> &invalidCharacters, bool trimLeft,
                      bool trimRight);
-    static void Trim(std::string *inOutText, const std::unordered_set<char> &invalidCharacters);
-    static bool Parse(const std::string &text, int *outValue);
-    static bool Parse(const std::string &text, float *outValue);
-    static bool Parse(const std::string &text, double *outValue);
-    static bool Parse(const char *text, unsigned int *outValue);
-    static bool ParseHex(const char *text, unsigned int *outValue);
+    static void Trim(std::string &inOutText, const std::unordered_set<char> &invalidCharacters);
+    static bool Parse(const std::string &text, int &outValue);
+    static bool Parse(const std::string &text, float &outValue);
+    static bool Parse(const std::string &text, double &outValue);
+    static bool Parse(const char *text, unsigned int &outValue);
+    static bool ParseHex(const char *text, unsigned int &outValue);
     static std::string ToLower(const std::string &text);
     static std::string ToBase64(const std::string &text);
     static std::string ToHex(const void *data, int dataSize);
     static std::string AddressToHex(const void *data);
     static std::string GetCleanClassName(const Interface *instance);
     static std::string GetCleanClassName(const Interface *instance, int maxNumSegments);
-    static void Serialize(const std::string &text, BlockingOutStreamInterface *stream);
-    static void Deserialize(std::string *text, BlockingInStreamInterface *stream);
-    static void Serialize(const std::string &text, std::vector<uint8_t> *outBinary);
-    static bool Deserialize(std::string *text, const void *binary, int binarySize);
+    static void Serialize(const std::string &text, BlockingOutStreamInterface &stream);
+    static void Deserialize(std::string &text, BlockingInStreamInterface &stream);
+    static void Serialize(const std::string &text, std::vector<uint8_t> &outBinary);
+    static bool Deserialize(std::string &text, const void *binary, int binarySize);
 
   private:
     static const char * const base64EncodeTable;

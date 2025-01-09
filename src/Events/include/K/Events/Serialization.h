@@ -54,7 +54,7 @@ EventInfo<EventClass, EventHandlerClass> *DeserializeIfNotEof(
 
     EventInfo<EventClass, EventHandlerClass> &info  { events[typeSlot] };
     Event                                    &event { *(info.protoType) };
-    event.Deserialize(&stream);
+    event.Deserialize(stream);
     return &info;
 }
 

@@ -25,7 +25,8 @@ class FunctionAction : public virtual ActionInterface {
     FunctionAction(FunctionAction &&other)                 = delete;
     FunctionAction &operator=(FunctionAction &&other)      = delete;
 
-    virtual void ExecuteAction();
+    // ActionInterface...
+    void Execute() override;
 
   private:
     std::function<void()> function_;

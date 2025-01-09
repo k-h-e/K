@@ -23,7 +23,7 @@ Timers::Worker::Worker(const shared_ptr<SharedState> &shared)
     // Nop.
 }
 
-void Timers::Worker::ExecuteAction() {
+void Timers::Worker::Execute() {
     Log::Print(Log::Level::Debug, this, [&]{ return "spawning..."; });
 
     shared_->RunTimers();

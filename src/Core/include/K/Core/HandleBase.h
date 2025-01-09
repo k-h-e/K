@@ -26,10 +26,10 @@ namespace Core {
 class HandleBase : public virtual Interface {
   public:
     //! If the handle is still pointing to a handlee resource, it unregisters from it and becomes a null-handle.
-    void reset();
+    void Reset();
 
     //! Tells whether the handle is currently a null-handle.
-    bool isNull() const;
+    bool Null() const;
 
   protected:
     HandleBase(void *handlee, ReferenceCountTrackerInterface *referenceCountTracker,

@@ -31,7 +31,7 @@ class BitStream : public virtual Interface {
      *  \return <c>false</c> in case there are currently not enough bits left in the stream. The stream will then be
      *          left unchanged, and the output parameter will be undefined.
      */
-    bool ReadBits(int numBits, uint32_t *outBits);
+    bool ReadBits(int numBits, uint32_t &outBits);
 
   private:
     std::deque<uint8_t> buffer_;

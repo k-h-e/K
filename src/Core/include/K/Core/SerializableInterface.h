@@ -24,12 +24,12 @@ class SerializableInterface : public virtual Interface {
     /*!
      *  The operation was successful only if the stream is not in error state afterwards.
      */
-    virtual void Serialize(BlockingOutStreamInterface *stream) const = 0;
+    virtual void Serialize(BlockingOutStreamInterface &stream) const = 0;
     //! Deserializes the object from the specified stream.
     /*!
      *  The operation was successful only if the stream is not in error state afterwards.
      */
-    virtual void Deserialize(BlockingInStreamInterface *stream) = 0;
+    virtual void Deserialize(BlockingInStreamInterface &stream) = 0;
 };
 
 }    // Namespace Core.

@@ -26,7 +26,8 @@ class TcpConnector::Connector : public virtual Core::ActionInterface {
     Connector(const Connector &&other)            = delete;
     Connector &operator=(const Connector &&other) = delete;
 
-    void ExecuteAction() override;
+    // ActionInterface...
+    void Execute() override;
 
   private:
     std::string      hostAndPort_;

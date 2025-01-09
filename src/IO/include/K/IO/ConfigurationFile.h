@@ -44,15 +44,15 @@ class ConfigurationFile : public virtual Core::ErrorStateInterface {
     //! Sets the value for the specified key.
     void SetValue(const std::string &section, const std::string &key, bool value);
     //! Gets the value of the specified key.
-    void GetValue(const std::string &section, const std::string &key, std::string *outValue);
+    void GetValue(const std::string &section, const std::string &key, std::string &outValue);
     //! Gets the value of the specified key.
-    void GetValue(const std::string &section, const std::string &key, int *outValue);
+    void GetValue(const std::string &section, const std::string &key, int &outValue);
     //! Gets the value of the specified key.
-    void GetValue(const std::string &section, const std::string &key, float *outValue);
+    void GetValue(const std::string &section, const std::string &key, float &outValue);
     //! Gets the value of the specified key.
-    void GetValue(const std::string &section, const std::string &key, double *outValue);
+    void GetValue(const std::string &section, const std::string &key, double &outValue);
     //! Gets the value of the specified key.
-    void GetValue(const std::string &section, const std::string &key, bool *outValue);
+    void GetValue(const std::string &section, const std::string &key, bool &outValue);
     //! Saves the configuration file to the file system.
     void Save(const Path &fileName);
     //! Loads the configuration file from the file system.

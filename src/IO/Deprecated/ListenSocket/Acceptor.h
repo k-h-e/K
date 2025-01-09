@@ -27,7 +27,9 @@ class ListenSocket::Acceptor : public virtual Core::ActionInterface {
     ~Acceptor();
 
     void SetErrorState();
-    void ExecuteAction() override;
+
+    // ActionInterface...
+    void Execute() override;
 
   private:
     void Close();

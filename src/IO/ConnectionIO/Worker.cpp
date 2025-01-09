@@ -44,7 +44,7 @@ ConnectionIO::Worker::~Worker() {
     }
 }
 
-void ConnectionIO::Worker::ExecuteAction() {
+void ConnectionIO::Worker::Execute() {
     Log::Print(Log::Level::Debug, this, [&]{ return "spawning, pipe=" + to_string(pipe_) + "..."; });
 
     if (pipe_ != -1) {

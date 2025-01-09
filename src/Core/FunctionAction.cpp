@@ -18,7 +18,7 @@ FunctionAction::FunctionAction(const function<void()> &aFunction)
     // Nop.
 }
 
-void FunctionAction::ExecuteAction() {
+void FunctionAction::Execute() {
     function_();
 }
 

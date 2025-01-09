@@ -31,8 +31,8 @@ class GeoPosition : public K::Core::SerializableInterface {
     double Longitude() const;
     std::string ToString() const;
 
-    void Serialize(K::Core::BlockingOutStreamInterface *stream) const override;
-    void Deserialize(K::Core::BlockingInStreamInterface *stream) override;
+    void Serialize(K::Core::BlockingOutStreamInterface &stream) const override;
+    void Deserialize(K::Core::BlockingInStreamInterface &stream) override;
 
   private:
     double latitude_;

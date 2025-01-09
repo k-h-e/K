@@ -34,7 +34,7 @@ class TextReader : public virtual InStreamInterface {
      *  Encountering the specified delimiter or EOF will properly terminate reading. The next read will happen after the
      *  delimiter, or at EOF respectively.
      */
-    void Read(char delimiter, std::string *outString);
+    void Read(char delimiter, std::string &outString);
     //! Reads a string.
     /*!
      *  Encountering a character not in the specified valid set or EOF will properly terminate reading. The next read
@@ -43,7 +43,7 @@ class TextReader : public virtual InStreamInterface {
      *  \param readOther
      *  If set, the complement of the specified set will be treated as the valid characters.
      */
-    void Read(const std::string &validCharacters, bool readOther, std::string *outString);
+    void Read(const std::string &validCharacters, bool readOther, std::string &outString);
     //! Skips the specified characters.
     /*!
      *  Encountering a character not in the specified skip set or EOF will properly terminate skipping. The next read

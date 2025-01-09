@@ -13,9 +13,9 @@
 #include <string>
 
 namespace K {
-namespace Core {
-    class Interface;
-}
+    namespace Core {
+        class Interface;
+    }
 }
 
 namespace K {
@@ -46,7 +46,7 @@ class NetworkTools {
      *  \return
      *  <c>false</c> in case of failure. The output parameter will then be undefined.
      */
-    static bool ResolveHostName(const std::string &hostName, uint32_t *outIp4Address,
+    static bool ResolveHostName(const std::string &hostName, uint32_t &outIp4Address,
                                 K::Core::Interface *loggingObject);
     //! Returns a string representation for the specified IP4 address.
     static std::string Ip4ToString(uint32_t ip4Address);

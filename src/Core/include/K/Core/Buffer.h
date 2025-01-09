@@ -103,7 +103,7 @@ class Buffer : public virtual SeekableBlockingOutStreamInterface {
      *  \return
      *  The number of bytes read and appended.
      */
-    int Append(NonBlockingInStreamInterface *stream);
+    int Append(NonBlockingInStreamInterface &stream);
     //! Makes the current content (as reported by \ref DataSize()) cover the whole of the buffer's underlying capacity.
     /*!
      *  The bytes potentially "appended" are undefined.

@@ -38,7 +38,9 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
     Worker(Worker &&other)                 = delete;
     Worker &operator=(Worker &&other)      = delete;
     ~Worker();
-    void ExecuteAction();
+
+    // ActionInterface...
+    void Execute();
 
   private:
     static const int bufferSize = 8192;

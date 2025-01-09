@@ -19,7 +19,6 @@
 using std::optional;
 using std::shared_ptr;
 using std::to_string;
-
 using K::Core::Log;
 using K::Core::StreamInterface;
 using K::Core::Deprecated::ConnectionStreamInterface;
@@ -71,7 +70,7 @@ void NmeaDevice::Unregister(const std::shared_ptr<NmeaMessageHandlerInterface> &
 
 bool NmeaDevice::Write(const NmeaMessage &message) {
     if (!error_) {
-        message.WriteTo(connection_.get());
+        message.WriteTo(*connection_);
         if (!connection_->ErrorState()) {
             return true;
         }

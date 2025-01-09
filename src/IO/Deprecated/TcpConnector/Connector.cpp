@@ -24,7 +24,7 @@ TcpConnector::Connector::Connector(const std::string &hostAndPort, HandlerInterf
     // Nop.
 }
 
-void TcpConnector::Connector::ExecuteAction() {
+void TcpConnector::Connector::Execute() {
     optional<int> fd{NetworkTools::ConnectTcp(hostAndPort_, this)};
     if (fd) {
         handler_->OnTcpConnectionEstablished(*fd);

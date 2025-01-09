@@ -10,6 +10,7 @@
 #define K_CORE_BLOCKINGINSTREAMINTERFACE_H_
 
 #include <string>
+
 #include <K/Core/InStreamInterface.h>
 
 namespace K {
@@ -29,14 +30,14 @@ class BlockingInStreamInterface : public virtual InStreamInterface {
 };
 
 //! Reads a binary item of specified size (in bytes).
-void ReadItem(BlockingInStreamInterface *stream, void *item, int itemSize);
+void ReadItem(BlockingInStreamInterface &stream, void *item, int itemSize);
 
 //! Skips the next <c>numBytes</c> bytes.
-void Skip(BlockingInStreamInterface *stream, int numBytes);
+void Skip(BlockingInStreamInterface &stream, int numBytes);
 
 template<typename T>
 BlockingInStreamInterface &operator>>(BlockingInStreamInterface &stream, T &outValue) {
-    ReadItem(&stream, &outValue, sizeof(T));
+    ReadItem(stream, &outValue, sizeof(T));
     return stream;
 }
 

@@ -181,7 +181,7 @@ void NetworkEventCoupling::OnRawStreamData(UniqueHandle<IoBufferInterface> buffe
                                 if (readChunkSize_ > offset) {
                                     int length { readChunkSize_ - offset };
                                     string remoteProtocolVersion;
-                                    if (StringTools::Deserialize(&remoteProtocolVersion,
+                                    if (StringTools::Deserialize(remoteProtocolVersion,
                                                                  &bufferU8[readCursor_ + offset], length)) {
                                         if (protocolVersion_ == remoteProtocolVersion) {
                                             protocolVersionMatch_ = true;
@@ -318,7 +318,7 @@ bool NetworkEventCoupling::FilterEvents() {
                     if (size) {
                         int position { filteredEventBuffer_.DataSize() };
                         filteredEventBuffer_.Append(nullptr, size);
-                        ReadItem(&stream, &static_cast<uint8_t *>(filteredEventBuffer_.Data())[position], size);
+                        ReadItem(stream, &static_cast<uint8_t *>(filteredEventBuffer_.Data())[position], size);
                     }
                 }
             }
@@ -332,13 +332,13 @@ bool NetworkEventCoupling::FilterEvents() {
 
 void NetworkEventCoupling::SendVersionChunk() {
     vector<uint8_t> versionBinary;
-    StringTools::Serialize(protocolVersion_, &versionBinary);
+    StringTools::Serialize(protocolVersion_, versionBinary);
 
     ChunkType chunkType { ChunkType::Version };
     uint32_t  chunkSize { static_cast<uint32_t>(sizeof(chunkType) + versionBinary.size()) };
     (*tcpConnection_) << chunkSize;
     (*tcpConnection_) << chunkType;
-    WriteItem(tcpConnection_.get(), &versionBinary[0], static_cast<int>(versionBinary.size()));
+    WriteItem(*tcpConnection_, &versionBinary[0], static_cast<int>(versionBinary.size()));
 }
 
 void NetworkEventCoupling::SendEventsChunk(const void *data, int dataSize) {
@@ -346,7 +346,7 @@ void NetworkEventCoupling::SendEventsChunk(const void *data, int dataSize) {
     uint32_t  chunkSize { static_cast<uint32_t>(dataSize) + static_cast<uint32_t>(sizeof(chunkType)) };
     (*tcpConnection_) << chunkSize;
     (*tcpConnection_) << chunkType;
-    WriteItem(tcpConnection_.get(), data, dataSize);
+    WriteItem(*tcpConnection_, data, dataSize);
 }
 
 void NetworkEventCoupling::SendKeepAliveChunk() {

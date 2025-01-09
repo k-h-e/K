@@ -285,7 +285,7 @@ bool StreamBuffer::Flush() {
 
 bool StreamBuffer::FlushDirtyRange(int cursor, int numBytes) {
     stream_->RecoverAndSeek(bufferPosition_ + cursor);
-    Core::WriteItem(stream_.get(), &buffer_[cursor], numBytes);
+    Core::WriteItem(*stream_, &buffer_[cursor], numBytes);
     if (!stream_->ErrorState()) {
         return true;
     } else {

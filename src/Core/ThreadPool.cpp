@@ -140,7 +140,7 @@ void ThreadPool::ThreadMain(int thread, ThreadPool *threadPool) {
     while (!done) {
         optional<const ThreadPool::ActionInfo> actionInfo = threadPool->WaitForAction(thread);
         if (actionInfo) {
-            actionInfo->action->ExecuteAction();
+            actionInfo->action->Execute();
             actionInfo->completionHandler->OnCompletion(actionInfo->completionId);
         } else {
             done = true;

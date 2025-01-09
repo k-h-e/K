@@ -12,6 +12,7 @@
 #include <limits>
 #include <sstream>
 #include <typeinfo>
+
 #include <K/Core/BlockingInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/NumberTools.h>
@@ -30,21 +31,21 @@ using K::Core::NumberTools;
 namespace K {
 namespace Core {
 
-const char * const StringTools::base64EncodeTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const char * const StringTools::hexEncodeTable    = "0123456789abcdef";
+const char * const StringTools::base64EncodeTable { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                                                        "0123456789+/" };
+const char * const StringTools::hexEncodeTable    { "0123456789abcdef" };
 
 vector<string> StringTools::Tokenize(const string &text, const string &separators, bool suppressEmptyTokens) {
     vector<string> tokens;
-    string         remainder = text;
+    string         remainder { text };
     while (true) {
-        size_t position = remainder.find_first_of(separators);
+        size_t position { remainder.find_first_of(separators) };
         if (position == string::npos) {
             if (!suppressEmptyTokens || remainder.length()) {
                 tokens.push_back(remainder);
             }
             return tokens;
-        }
-        else {
+        } else {
             if (!suppressEmptyTokens || position) {
                 tokens.push_back(remainder.substr(0, position));
             }
@@ -55,7 +56,7 @@ vector<string> StringTools::Tokenize(const string &text, const string &separator
 
 string StringTools::Concatenate(const vector<string> &tokens, const string &separatorString) {
     ostringstream stream;
-    bool first = true;
+    bool          first { true };
     for (const string &token : tokens) {
         if (!first) {
             stream << separatorString;
@@ -67,36 +68,36 @@ string StringTools::Concatenate(const vector<string> &tokens, const string &sepa
     return stream.str();
 }
 
-void StringTools::Trim(string *inOutText, const unordered_set<char> &invalidCharacters, bool trimLeft, bool trimRight) {
-    if (inOutText->length() > 0u) {
-        int left  = 0;
-        int right = static_cast<int>(inOutText->length()) - 1;
+void StringTools::Trim(string &inOutText, const unordered_set<char> &invalidCharacters, bool trimLeft, bool trimRight) {
+    if (inOutText.length() > 0u) {
+        int left  { 0 };
+        int right { static_cast<int>(inOutText.length()) - 1 };
         if (trimLeft) {
-            while ((left <= right) && (invalidCharacters.find((*inOutText)[left]) != invalidCharacters.end())) {
+            while ((left <= right) && (invalidCharacters.find(inOutText[left]) != invalidCharacters.end())) {
                 ++left;
             }
         }
         if (trimRight) {
-            while ((left <= right) && (invalidCharacters.find((*inOutText)[right]) != invalidCharacters.end())) {
+            while ((left <= right) && (invalidCharacters.find(inOutText[right]) != invalidCharacters.end())) {
                 --right;
             }
         }
 
         string result;
         for (int i = left; i <= right; ++i) {
-            result.push_back((*inOutText)[i]);
+            result.push_back(inOutText[i]);
         }
-        *inOutText = result;
+        inOutText = result;
     }
 }
 
-void StringTools::Trim(string *inOutText, const unordered_set<char> &invalidCharacters) {
+void StringTools::Trim(string &inOutText, const unordered_set<char> &invalidCharacters) {
     Trim(inOutText, invalidCharacters, true, true);
 }
 
-bool StringTools::Parse(const string &text, int *outValue) {
+bool StringTools::Parse(const string &text, int &outValue) {
     try {
-        *outValue = stoi(text);
+        outValue = stoi(text);
         return true;
     }
     catch (const invalid_argument &) {}
@@ -105,9 +106,9 @@ bool StringTools::Parse(const string &text, int *outValue) {
     return false;
 }
 
-bool StringTools::Parse(const string &text, float *outValue) {
+bool StringTools::Parse(const string &text, float &outValue) {
     try {
-        *outValue = stof(text);
+        outValue = stof(text);
         return true;
     }
     catch (const invalid_argument &) {}
@@ -116,9 +117,9 @@ bool StringTools::Parse(const string &text, float *outValue) {
     return false;
 }
 
-bool StringTools::Parse(const string &text, double *outValue) {
+bool StringTools::Parse(const string &text, double &outValue) {
     try {
-        *outValue = stod(text);
+        outValue = stod(text);
         return true;
     }
     catch (const invalid_argument &) {}
@@ -127,15 +128,15 @@ bool StringTools::Parse(const string &text, double *outValue) {
     return false;
 }
 
-bool StringTools::Parse(const char *text, unsigned int *outValue) {
-    unsigned int value = 0u;
+bool StringTools::Parse(const char *text, unsigned int &outValue) {
+    unsigned int value { 0u };
     while (true) {
-        char character = *text;
+        char character { *text };
 
-        unsigned int digitValue = 0u;
+        unsigned int digitValue { 0u };
         switch (character) {
             case '\0':
-                *outValue = value;
+                outValue = value;
                 return true;
             case '0':
             case '1':
@@ -162,15 +163,15 @@ bool StringTools::Parse(const char *text, unsigned int *outValue) {
     return false;
 }
 
-bool StringTools::ParseHex(const char *text, unsigned int *outValue) {
-    unsigned int value = 0u;
+bool StringTools::ParseHex(const char *text, unsigned int &outValue) {
+    unsigned int value { 0u };
     while (true) {
-        char character = *text;
+        char character { *text };
 
-        unsigned int digitValue = 0u;
+        unsigned int digitValue { 0u };
         switch (character) {
             case '\0':
-                *outValue = value;
+                outValue = value;
                 return true;
             case '0':
             case '1':
@@ -227,11 +228,11 @@ string StringTools::ToBase64(const string &text) {
     uint8_t in[3];
     char    out[4];
 
-    int cursor  = 0;
-    int numLeft = static_cast<int>(text.length());
+    int cursor  { 0 };
+    int numLeft { static_cast<int>(text.length()) };
     while (numLeft) {
         // Get next 3-byte block of binary input data...
-        int numBytes = 0;
+        int numBytes { 0 };
         for (int i = 0; i < 3; ++i) {
             if (numLeft) {
                 in[i] = static_cast<uint8_t>(text[cursor++]);
@@ -258,9 +259,9 @@ string StringTools::ToBase64(const string &text) {
 string StringTools::ToHex(const void *data, int dataSize) {
     string result;
 
-    const uint8_t *dataPtr = static_cast<const uint8_t *>(data);
+    const uint8_t *dataPtr { static_cast<const uint8_t *>(data) };
     for (int i = 0; i < dataSize; ++i) {
-        uint8_t byte = *dataPtr++;
+        uint8_t byte { *dataPtr++ };
         result.push_back(hexEncodeTable[byte >> 4]);
         result.push_back(hexEncodeTable[byte & 0xfu]);
     }
@@ -274,7 +275,7 @@ string StringTools::AddressToHex(const void *data) {
     string hexText { ToHex(&address, sizeof(address)) };
     unordered_set<char> invalid;
     invalid.insert('0');
-    Trim(&hexText, invalid, true, false);
+    Trim(hexText, invalid, true, false);
     return hexText;
 }
 
@@ -283,17 +284,17 @@ string StringTools::GetCleanClassName(const Interface *instance) {
 }
 
 string StringTools::GetCleanClassName(const Interface *instance, int maxNumSegments) {
-    NumberTools::ClampMin(&maxNumSegments, 1);
+    NumberTools::ClampMin(maxNumSegments, 1);
 
-    string className = instance ? typeid(*instance).name() : "";
+    string className { instance ? typeid(*instance).name() : "" };
     if (className.length() && (className[0] == 'N')) {
         className.erase(0, 1);
     }
     if (className.length() && (className[className.length() - 1u] == 'E')) {
         className.erase(className.length() - 1u, 1);
     }
-    vector<string> tokens = StringTools::Tokenize(className, "1234567890", true);
-    int numTokens = static_cast<int>(tokens.size());
+    vector<string> tokens    { StringTools::Tokenize(className, "1234567890", true) };
+    int            numTokens { static_cast<int>(tokens.size()) };
     if (numTokens > maxNumSegments) {
         vector<string> newTokens;
         for (int i = numTokens - maxNumSegments; i < numTokens; ++i) {
@@ -305,50 +306,50 @@ string StringTools::GetCleanClassName(const Interface *instance, int maxNumSegme
     return StringTools::Concatenate(tokens, "::");
 }
 
-void StringTools::Serialize(const string &text, BlockingOutStreamInterface *stream) {
-    uint32_t size = static_cast<uint32_t>(text.size());
-    (*stream) << size;
+void StringTools::Serialize(const string &text, BlockingOutStreamInterface &stream) {
+    uint32_t size { static_cast<uint32_t>(text.size()) };
+    stream << size;
     if (size) {
         WriteItem(stream, &text[0], size * sizeof(string::value_type));
     }
 }
 
-void StringTools::Deserialize(string *text, BlockingInStreamInterface *stream) {
+void StringTools::Deserialize(string &text, BlockingInStreamInterface &stream) {
     uint32_t size;
-    (*stream) >> size;
-    if (!stream->ErrorState()) {
-        text->clear();
+    stream >> size;
+    if (!stream.ErrorState()) {
+        text.clear();
         if (size) {
-            text->resize(size);
-            ReadItem(stream, &(*text)[0], size * sizeof(string::value_type));
+            text.resize(size);
+            ReadItem(stream, &text[0], size * sizeof(string::value_type));
         }
     }
 }
 
-void StringTools::Serialize(const string &text, vector<uint8_t> *outBinary) {
-    uint32_t size = static_cast<uint32_t>(text.size());
-    outBinary->resize(sizeof(size) + size*sizeof(string::value_type));
-    memcpy(&(*outBinary)[0], &size, sizeof(size));
+void StringTools::Serialize(const string &text, vector<uint8_t> &outBinary) {
+    uint32_t size { static_cast<uint32_t>(text.size()) };
+    outBinary.resize(sizeof(size) + size*sizeof(string::value_type));
+    memcpy(&outBinary[0], &size, sizeof(size));
     if (size) {
-        memcpy(&(*outBinary)[sizeof(size)], &text[0], size*sizeof(string::value_type));
+        memcpy(&outBinary[sizeof(size)], &text[0], size*sizeof(string::value_type));
     }
 }
 
-bool StringTools::Deserialize(string *text, const void *binary, int binarySize) {
+bool StringTools::Deserialize(string &text, const void *binary, int binarySize) {
     uint32_t size;
     if (binarySize >= static_cast<int>(sizeof(size))) {
         memcpy(&size, binary, sizeof(size));
         if (static_cast<int>(sizeof(size) + size*sizeof(string::value_type)) >= binarySize) {
-            text->resize(size);
+            text.resize(size);
             if (size) {
-                const uint8_t *binaryBytes = static_cast<const uint8_t *>(binary);
-                memcpy(&(*text)[0], &binaryBytes[sizeof(size)], size*sizeof(string::value_type));
+                const uint8_t *binaryBytes { static_cast<const uint8_t *>(binary) };
+                memcpy(&text[0], &binaryBytes[sizeof(size)], size*sizeof(string::value_type));
             }
             return true;
         }
     }
 
-    text->clear();
+    text.clear();
     return false;
 }
 

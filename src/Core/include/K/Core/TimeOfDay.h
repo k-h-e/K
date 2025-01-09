@@ -10,6 +10,7 @@
 #define K_CORE_TIMEOFDAY_H_
 
 #include <string>
+
 #include <K/Core/SerializableInterface.h>
 
 namespace K {
@@ -28,8 +29,8 @@ class TimeOfDay : public virtual SerializableInterface {
 
     std::string ToString() const;
 
-    void Serialize(BlockingOutStreamInterface *stream) const override;
-    void Deserialize(BlockingInStreamInterface *stream) override;
+    void Serialize(BlockingOutStreamInterface &stream) const override;
+    void Deserialize(BlockingInStreamInterface &stream) override;
 
     //! Returns the current time of day in UTC.
     static TimeOfDay NowUtc();

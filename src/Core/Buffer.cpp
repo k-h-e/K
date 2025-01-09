@@ -71,9 +71,9 @@ void Buffer::Clear() {
 
 void Buffer::Shrink(int size) {
     if (!error_) {
-        NumberTools::Clamp(&size, 0, (int)buffer_.size());
+        NumberTools::Clamp(size, 0, (int)buffer_.size());
         bufferFill_ = size;
-        NumberTools::Clamp(&writeCursor_, 0, bufferFill_);
+        NumberTools::Clamp(writeCursor_, 0, bufferFill_);
     }
 }
 
@@ -93,9 +93,9 @@ void Buffer::Append(const void *data, int dataSize) {
     }
 }
 
-int Buffer::Append(NonBlockingInStreamInterface *stream) {
+int Buffer::Append(NonBlockingInStreamInterface &stream) {
     if (!error_) {
-        auto buffer = stream->ReadNonBlocking();
+        auto buffer = stream.ReadNonBlocking();
         if (buffer) {
             Append(buffer->Content(), buffer->Size());
             return buffer->Size();

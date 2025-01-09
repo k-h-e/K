@@ -73,7 +73,7 @@ GeoPosition LocalCoordinateSystem::ToEarthPolar(const Vector<float> &position) c
     double radiusXZ = pointXZ.Length();
 
     double arg = point.y;
-    NumberTools::Clamp(&arg, -1.0, 1.0);
+    NumberTools::Clamp(arg, -1.0, 1.0);
     double latitude = std::asin(arg) / NumberTools::pi * 180.0;
 
     double longitude;
