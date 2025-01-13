@@ -28,7 +28,6 @@ using std::optional;
 using std::shared_ptr;
 using std::size_t;
 using std::to_string;
-
 using K::Core::IoBufferInterface;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
@@ -42,9 +41,9 @@ namespace IO {
 
 Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_ptr<RunLoop> &runLoop,
                        const shared_ptr<ConnectionIO> &connectionIO)
-        : loopThreadState_(make_unique<LoopThreadState>(
+        : loopThreadState_{make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop, ValidateBufferSizeConstraint(bufferSizeConstraint)),
-              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO)) {
+              ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO)} {
     loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 
@@ -53,7 +52,7 @@ Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_
             fd_ = fd;
         } else {
             if (*fd >= 0) {
-                (void)IOTools::CloseFileDescriptor(*fd, this);
+                (void) IOTools::CloseFileDescriptor(*fd, this);
             }
         }
     }
@@ -72,14 +71,14 @@ Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_
 }
 
 Connection::~Connection() {
-    bool success = false;
+    bool success { false };
 
     // Note: We're currently not waiting for all remaining buffered write data to be written!
 
     if (fd_) {
         bool finalStreamError;
         loopThreadState_->connectionIO->Unregister(loopThreadState_->synchronizedState, &finalStreamError);
-        bool closeError = !IOTools::CloseFileDescriptor(*fd_, this);
+        bool closeError { !IOTools::CloseFileDescriptor(*fd_, this) };
         if (!finalStreamError && !closeError) {
             success = true;
         }
@@ -119,7 +118,7 @@ void Connection::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &result
 
 UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
     UniqueHandle<IoBufferInterface> buffer;
-    int numRead = 0;
+    int                             numRead { 0 };
     if (!ErrorState()) {
         buffer = loopThreadState_->readQueue.Get();
         if (buffer) {
@@ -139,16 +138,20 @@ UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
 }
 
 UniqueHandle<IoBufferInterface> Connection::WriteNonBlocking(UniqueHandle<IoBufferInterface> buffer) {
-    UniqueHandle<IoBufferInterface> unaccepted;
-    int numWritten = 0;  
+    UniqueHandle<IoBufferInterface> unaccepted;                       // Preset results for success.
+    int                             numWritten { buffer->Size() };    // Preset results for success.
     if (!ErrorState()) {
         if (loopThreadState_->writeQueue.PayloadSize() < static_cast<size_t>(loopThreadState_->bufferSizeConstraint)) {
-            numWritten = buffer->Size();
             loopThreadState_->writeQueue.Put(std::move(buffer));
             loopThreadState_->RequestActivation(true);
         } else {
             loopThreadState_->clientWritePaused = true;
+            unaccepted = std::move(buffer);
+            numWritten = 0;
         }
+    } else {
+        unaccepted = std::move(buffer);
+        numWritten = 0;
     }
 
     Log::Print(Log::Level::DebugDebug, this, [&]{ return "WriteNonBlocking(), num_written=" + to_string(numWritten); });
