@@ -10,6 +10,7 @@
 #define K_CORE_IOBUFFERS_H_
 
 #include <vector>
+#include <mutex>
 
 #include <K/Core/IoBufferInterface.h>
 #include <K/Core/ReferenceCountTrackerInterface.h>
