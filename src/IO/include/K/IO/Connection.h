@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <optional>
+
 #include <K/Core/NonBlockingIOStreamInterface.h>
 #include <K/Core/RunLoop.h>
 
@@ -65,6 +66,7 @@ class Connection : public virtual Core::NonBlockingIOStreamInterface {
      */
     void Register(HandlerInterface *handler);
 
+    // NonBlockingIOStreamInterface...
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
     Core::UniqueHandle<Core::IoBufferInterface> ReadNonBlocking() override;
     Core::UniqueHandle<Core::IoBufferInterface> WriteNonBlocking(Core::UniqueHandle<Core::IoBufferInterface> buffer)
