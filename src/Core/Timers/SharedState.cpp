@@ -23,20 +23,20 @@ namespace K {
 namespace Core {
 
 Timers::SharedState::SharedState()
-        : timers_(2),
-          shutDownRequested_(false),
-          workerFinished_(false) {
+        : timers_{2},
+          shutDownRequested_{false},
+          workerFinished_{false} {
     // Nop.
 }
 
 void Timers::SharedState::RequestShutDown() {
-    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // critical section..........................................................
     shutDownRequested_ = true;
     stateChanged_.notify_all();
 }    // ......................................................................................... critical section, end.
 
 void Timers::SharedState::WaitForWorkerFinished() {
-    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // critical section..........................................................
     while (!workerFinished_) {
         stateChanged_.wait(critical);
     }
@@ -46,10 +46,10 @@ int Timers::SharedState::AddTimer(milliseconds interval, HandlerInterface *handl
     if (interval <= milliseconds(0)) {
         interval = milliseconds(1000);
     }
-    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // critical section..........................................................
     int       id;
-    TimerInfo &info = timers_.Get(activeTimers, &id);
-    info = TimerInfo(interval, handler, id);
+    TimerInfo &info { timers_.Get(activeTimers, id) };
+    info = TimerInfo{interval, handler, id};
 
     if (paused) {
         timers_.Move(id, pausedTimers);
@@ -68,7 +68,7 @@ int Timers::SharedState::AddTimer(milliseconds interval, HandlerInterface *handl
 }    // ......................................................................................... critical section, end.
 
 void Timers::SharedState::RemoveTimer(int timer) {
-    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // critical section..........................................................
     timers_.Put(timer);
     stateChanged_.notify_all();
     Log::Print(Log::Level::Debug, this, [&]{
@@ -78,7 +78,7 @@ void Timers::SharedState::RemoveTimer(int timer) {
 }    // ......................................................................................... critical section, end.
 
 void Timers::SharedState::PauseTimer(int timer, bool paused) {
-    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // critical section..........................................................
     if (paused) {
         timers_.Move(timer, pausedTimers);
         Log::Print(Log::Level::Debug, this, [&]{ return "timer " + to_string(timer) + " paused"; });
@@ -91,22 +91,22 @@ void Timers::SharedState::PauseTimer(int timer, bool paused) {
 }    // ......................................................................................... critical section, end.
 
 void Timers::SharedState::RunTimers() {
-    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // critical section..........................................................
     vector<int> timersToPause;
     while (!shutDownRequested_) {
         if (!timers_.Empty(activeTimers)) {
-            steady_clock::time_point now           = steady_clock::now();
-            milliseconds             timeUntilNext = milliseconds::max();
+            steady_clock::time_point now           { steady_clock::now() };
+            milliseconds             timeUntilNext { milliseconds::max() };
 
             timersToPause.clear();
             for (TimerInfo &info : timers_.Iterate(activeTimers)) {
                 if (info.trigger.Check(now)) {
-                    bool handlerDidRequestPause = !info.handler->OnTimer(info.timerId);
+                    bool handlerDidRequestPause { !info.handler->OnTimer(info.timerId) };
                     if (handlerDidRequestPause) {
                         timersToPause.push_back(info.timerId);
                     }
                 }
-                milliseconds remaining = info.trigger.Remaining();
+                milliseconds remaining { info.trigger.Remaining() };
                 if (remaining < timeUntilNext) {
                     timeUntilNext = remaining;
                 }
@@ -119,12 +119,12 @@ void Timers::SharedState::RunTimers() {
                 });
             }
 
-            milliseconds toWait(0);
+            milliseconds toWait { 0 };
             if (!timers_.Empty(activeTimers)) {
-                steady_clock::time_point afterTimers = steady_clock::now();
-                milliseconds handlerTime(0);
+                steady_clock::time_point afterTimers { steady_clock::now() };
+                milliseconds             handlerTime { 0 };
                 if (afterTimers > now) {
-                    milliseconds deltaTime = duration_cast<milliseconds>(afterTimers - now);
+                    milliseconds deltaTime { duration_cast<milliseconds>(afterTimers - now) };
                     if (deltaTime > milliseconds(0)) {
                         handlerTime = deltaTime;
                     }
@@ -135,7 +135,7 @@ void Timers::SharedState::RunTimers() {
                 }
             }
 
-            milliseconds newToWait = toWait + milliseconds(2);
+            milliseconds newToWait { toWait + milliseconds(2) };
             if (newToWait > toWait) {
                 toWait = newToWait;
             }
@@ -150,23 +150,23 @@ void Timers::SharedState::RunTimers() {
 }    // ......................................................................................... critical section, end.
 
 void Timers::SharedState::OnCompletion(int completionId) {
-    (void)completionId;
-    unique_lock<mutex> critical(lock_);    // critical section..........................................................
+    (void) completionId;
+    unique_lock<mutex> critical{lock_};    // critical section..........................................................
     workerFinished_ = true;
     stateChanged_.notify_all();
 }    // ......................................................................................... critical section, end.
 
 Timers::SharedState::TimerInfo::TimerInfo()
-        : trigger(milliseconds(1000)),
-          handler(nullptr),
-          timerId(0) {
+        : trigger{milliseconds{1000}},
+          handler{nullptr},
+          timerId{0} {
     // Nop.
 }
 
 Timers::SharedState::TimerInfo::TimerInfo(milliseconds anInterval, HandlerInterface *aHandler, int aTimerId)
-        : trigger(anInterval),
-          handler(aHandler),
-          timerId(aTimerId) {
+        : trigger{anInterval},
+          handler{aHandler},
+          timerId{aTimerId} {
     // Nop.
 }
 

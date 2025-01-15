@@ -54,7 +54,7 @@ int IoBuffers::Group::BufferSize() const {
     return bufferSize_;
 }
 
-IoBuffers::Group::IoBuffer *IoBuffers::Group::Get() {
+IoBuffers::Group::IoBuffer &IoBuffers::Group::Get() {
     auto iterator { bufferInfos_.Iterate(idleBuffers).begin() };
     if (iterator.AtEnd()) {
         AddBucket();
@@ -65,8 +65,8 @@ IoBuffers::Group::IoBuffer *IoBuffers::Group::Get() {
     bufferInfos_.Move(id, inUseBuffers);
     
     BufferInfo &info { bufferInfos_.Item(id) };
-
-    return info.buffer;
+    assert(info.buffer != nullptr);
+    return *info.buffer;
 }
 
 // ---
@@ -92,7 +92,7 @@ void IoBuffers::Group::AddBucket() {
     IoBuffer *buffers { new IoBuffer[buffersPerBucket_] };
     for (int i = 0; i < buffersPerBucket_; ++i) {
         int infoId;
-        BufferInfo &info { bufferInfos_.Get(idleBuffers, &infoId) };
+        BufferInfo &info { bufferInfos_.Get(idleBuffers, infoId) };
         buffers[i] = IoBuffer{memory + offset, this, infoId};
         info.buffer = &buffers[i];
         offset += spacing_;

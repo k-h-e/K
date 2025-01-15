@@ -10,6 +10,7 @@
 #define K_CORE_POLLEDCYCLICTRIGGER_H_
 
 #include <chrono>
+
 #include <K/Core/Interface.h>
 
 namespace K {
@@ -24,6 +25,7 @@ class PolledCyclicTrigger : public virtual Interface {
     PolledCyclicTrigger &operator=(const PolledCyclicTrigger &other) = default;
     PolledCyclicTrigger(PolledCyclicTrigger &&other)                 = default;
     PolledCyclicTrigger &operator=(PolledCyclicTrigger &&other)      = default;
+    ~PolledCyclicTrigger()                                           = default;
 
     //! Checks and tells whether the next triggering of the cyclic action is due.
     bool Check();

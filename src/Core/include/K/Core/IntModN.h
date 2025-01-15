@@ -35,7 +35,8 @@ class IntModN {
     IntModN &operator=(const IntModN &other) = default;
     IntModN(IntModN &&other)                 = default;
     IntModN &operator=(IntModN &&other)      = default;
-    
+    ~IntModN()                               = default;
+
     //! Well...
     bool operator==(const IntModN &other) const;
     //! Well...

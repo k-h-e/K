@@ -10,7 +10,6 @@
 #define K_CORE_NONBLOCKINGOUTSTREAMINTERFACE_H_
 
 #include <K/Core/OutStreamInterface.h>
-
 #include <K/Core/UniqueHandle.h>
 
 namespace K {

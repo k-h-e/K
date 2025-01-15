@@ -13,9 +13,13 @@
 #include <functional>
 
 namespace K {
-namespace Core {
+    namespace Core {
+        class Interface;
+    }
+}
 
-class Interface;
+namespace K {
+namespace Core {
 
 //! Logging mechanism.
 class Log {

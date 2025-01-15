@@ -26,7 +26,8 @@ class FloatModN {
     FloatModN &operator=(const FloatModN &other) = default;
     FloatModN(FloatModN &&other)                 = default;
     FloatModN &operator=(FloatModN &&other)      = default;
-    
+    ~FloatModN()                                 = default;
+
     //! Returns the (always positive) distance to the specified other FloatModN, along the shorter way "around the
     //! ring".
     float Distance(const FloatModN &other) {

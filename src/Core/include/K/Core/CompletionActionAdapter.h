@@ -10,6 +10,7 @@
 #define K_CORE_COMPLETIONACTIONADAPTER_H_
 
 #include <memory>
+
 #include <K/Core/CompletionHandlerInterface.h>
 
 namespace K {
@@ -26,8 +27,10 @@ class CompletionActionAdapter : public virtual CompletionHandlerInterface {
     CompletionActionAdapter &operator=(const CompletionActionAdapter &other) = delete;
     CompletionActionAdapter(CompletionActionAdapter &&other)                 = delete;
     CompletionActionAdapter &operator=(CompletionActionAdapter &&other)      = delete;
+    ~CompletionActionAdapter()                                               = default;
 
-    virtual void OnCompletion(int completionId);
+    // CompletionHandlerInterface...
+    void OnCompletion(int completionId) override;
 
   private:
     std::shared_ptr<ActionInterface> action_;

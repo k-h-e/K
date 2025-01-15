@@ -70,7 +70,7 @@ class IoBuffers : public virtual Interface {
         ~Group();
         
         int BufferSize() const;
-        IoBuffer *Get();
+        IoBuffer &Get();
         
       private:
         void AddBucket();
@@ -101,7 +101,7 @@ class IoBuffers : public virtual Interface {
         ~State()                             = default;
     };
 
-    Group *SelectGroup(int size);
+    Group &SelectGroup(int size);
 
     std::shared_ptr<State> state_;
 };

@@ -23,6 +23,7 @@ class BitStream : public virtual Interface {
     BitStream &operator=(const BitStream &other) = delete;
     BitStream(BitStream &&other)                 = delete;
     BitStream &operator=(BitStream &&other)      = delete;
+    ~BitStream()                                 = default;
 
     //! Appends the specified bytes to the stream's buffer.
     void AppendBytes(const void *data, int dataSize);

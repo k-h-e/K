@@ -21,7 +21,7 @@ namespace K {
 namespace Core {
 
 //! Interface to <c>RunLoop</c>-enabled input streams providing asynchronous reading.
-class AsyncInStreamInterface : public virtual Core::InStreamInterface {
+class AsyncInStreamInterface : public virtual InStreamInterface {
   public:
     //! Registers the specified handler.
     /*!
@@ -31,7 +31,7 @@ class AsyncInStreamInterface : public virtual Core::InStreamInterface {
      *
      *  The handler is expected to outlive the stream. It will not get called upon stream destruction.
      */
-    virtual void Register(Core::RawStreamHandlerInterface *handler) = 0;
+    virtual void Register(RawStreamHandlerInterface *handler) = 0;
 };
 
 }    // Namespace Core.

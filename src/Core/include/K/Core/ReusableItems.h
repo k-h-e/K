@@ -55,7 +55,7 @@ class ReusableItems {
      */
     inline T &Get(int groupId);
     //! Same as \ref Get(), but also provides the id of the item returned. Item ids are never negative.
-    T &Get(int groupId, int *itemId);
+    T &Get(int groupId, int &outItemId);
     //! Puts back the specified item into the idle pool for future re-use.
     /*!
      *  The item \ref Put() back last will be the first item that \ref Get() returns to use.
@@ -90,6 +90,7 @@ class ReusableItems {
         ItemInfo &operator=(const ItemInfo &other) = default;
         ItemInfo(ItemInfo &&other)                 = default;
         ItemInfo &operator=(ItemInfo &&other)      = default;
+        ~ItemInfo()                                = default;
     };
 
     void AddIdleItem();
@@ -104,6 +105,13 @@ class ReusableItems {
 template<class T>
 class ReusableItems<T>::Iterator {
   public:
+    Iterator() = delete;
+    Iterator(const Iterator &other)            = default;
+    Iterator &operator=(const Iterator &other) = default;
+    Iterator(Iterator &&other)                 = default;
+    Iterator &operator=(Iterator &&other)      = default;
+    ~Iterator()                                = default;
+
     Iterator &operator++();
     bool operator!=(const Iterator &other) const;
     //! Returns the item the iterator is currently pointing at.
@@ -124,10 +132,13 @@ class ReusableItems<T>::Iterator {
     
   private:
     friend class ReusableItems;
+    
     Iterator(std::vector<ItemInfo> *items, int groupAnchor, bool isAtEnd);
+
     std::vector<ItemInfo> *items_;
-    int                    currentItem_, nextItem_,
-                           groupAnchor_;
+    int                   currentItem_;
+    int                   nextItem_;
+    int                   groupAnchor_;
 };
 
 //! Supports standard iteration over a given item group.
@@ -141,9 +152,11 @@ class ReusableItems<T>::IteratorProvider {
     
   private:
     friend class ReusableItems;
+    
     IteratorProvider(const Iterator &begin, const Iterator &end) : begin_(begin), end_(end) {}
-    Iterator begin_,
-             end_;
+    
+    Iterator begin_;
+    Iterator end_;
 };
 
 template<class T>
@@ -178,7 +191,7 @@ void ReusableItems<T>::Reset(int numGroups) {
 }
 
 template<class T>
-T &ReusableItems<T>::Get(int groupId, int *itemId) {
+T &ReusableItems<T>::Get(int groupId, int &outItemId) {
     assert((groupId >= 0) && (groupId < static_cast<int>(groupAnchors_.size())));
     
     if (!idleCount_)
@@ -200,7 +213,7 @@ T &ReusableItems<T>::Get(int groupId, int *itemId) {
     inUseAnchorInfo.prev       = item;
     
     --idleCount_;
-    *itemId = item;
+    outItemId = item;
     return itemInfo.item;
 }
 
