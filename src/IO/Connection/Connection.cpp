@@ -44,7 +44,7 @@ Connection::Connection(optional<int> fd, int bufferSizeConstraint, const shared_
         : loopThreadState_{make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop, ValidateBufferSizeConstraint(bufferSizeConstraint)),
               ValidateBufferSizeConstraint(bufferSizeConstraint), connectionIO)} {
-    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
+    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(*loopThreadState_);
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 
     if (fd) {

@@ -25,7 +25,7 @@ TcpConnector::TcpConnector(const string &hostAndPort, IO::Deprecated::TcpConnect
         : runLoop_{runLoop},
           handler_{handler},
           finished_{false} {
-    runLoopClientId_   = runLoop_->AddClient(this);
+    runLoopClientId_   = runLoop_->AddClient(*this);
     synchronizedState_ = make_unique<SynchronizedState>(runLoop_, runLoopClientId_);
     connector_         = make_unique<IO::Deprecated::TcpConnector>(hostAndPort, synchronizedState_.get(), threadPool);
 }

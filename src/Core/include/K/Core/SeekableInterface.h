@@ -10,6 +10,7 @@
 #define K_CORE_SEEKABLEINTERFACE_H_
 
 #include <cstdint>
+
 #include <K/Core/Interface.h>
 
 namespace K {

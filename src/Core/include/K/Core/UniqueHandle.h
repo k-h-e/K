@@ -31,9 +31,9 @@ class UniqueHandle : public HandleBase {
     UniqueHandle() : HandleBase(nullptr, nullptr, nullptr) {}
 
     //! Constructs a handle handling the specified resource.
-    UniqueHandle(T *handlee, ReferenceCountTrackerInterface *referenceCountTracker,
+    UniqueHandle(T &handlee, ReferenceCountTrackerInterface &referenceCountTracker,
                  const std::shared_ptr<Interface> &keepAlive)
-        : HandleBase{handlee, referenceCountTracker, keepAlive} {}
+        : HandleBase{&handlee, &referenceCountTracker, keepAlive} {}
     
     UniqueHandle(const UniqueHandle &other)            = delete;
     UniqueHandle &operator=(const UniqueHandle &other) = delete;

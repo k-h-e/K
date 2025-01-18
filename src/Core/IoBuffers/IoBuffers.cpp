@@ -44,7 +44,7 @@ UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
         buffer->SetSize(size <= group.BufferSize() ? size : group.BufferSize());
     }    // ............................................................................................................
 
-    return UniqueHandle<IoBufferInterface>{buffer, buffer, state_};
+    return UniqueHandle<IoBufferInterface>{*buffer, *buffer, state_};
 }
 
 // ---

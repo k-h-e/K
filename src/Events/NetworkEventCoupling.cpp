@@ -86,7 +86,7 @@ NetworkEventCoupling::NetworkEventCoupling(
     eventNotifier_ = make_unique<EventNotifier>(hub_, hubClientId_, runLoop_);
     eventNotifier_->Register(this);
 
-    runLoopClientId_ = runLoop_->AddClient(this);
+    runLoopClientId_ = runLoop_->AddClient(*this);
 
     SendVersionChunk();
 }
