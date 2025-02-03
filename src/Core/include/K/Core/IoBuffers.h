@@ -9,6 +9,7 @@
 #ifndef K_CORE_IOBUFFERS_H_
 #define K_CORE_IOBUFFERS_H_
 
+#include <mutex>
 #include <vector>
 
 #include <K/Core/IoBufferInterface.h>

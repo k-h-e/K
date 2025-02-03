@@ -9,6 +9,7 @@
 #include <K/Core/IoBufferQueue.h>
 
 #include <cstring>
+#include <mutex>
 
 #include <K/Core/IoBufferInterface.h>
 #include <K/Core/IoBuffers.h>
