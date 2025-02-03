@@ -60,7 +60,7 @@ template<class EventClass, class EventHandlerClass>
 EventQueue<EventClass, EventHandlerClass>::EventQueue(const std::shared_ptr<EventHub> &hub,
                                                       const std::shared_ptr<K::Core::RunLoop> &runLoop)
         : runLoop_{runLoop},
-          runLoopClientId_ { runLoop->AddClient(this) },
+          runLoopClientId_ { runLoop->AddClient(*this) },
           eventLoop_{hub},
           dispatching_{false},
           activationRequested_{false}  {

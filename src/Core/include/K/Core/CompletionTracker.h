@@ -9,9 +9,10 @@
 #ifndef K_CORE_COMPLETIONTRACKER_H_
 #define K_CORE_COMPLETIONTRACKER_H_
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 #include <unordered_set>
+
 #include <K/Core/CompletionHandlerInterface.h>
 
 namespace K {
@@ -28,9 +29,12 @@ class CompletionTracker : public virtual CompletionHandlerInterface {
     CompletionTracker &operator=(const CompletionTracker &other) = delete;
     CompletionTracker(CompletionTracker &&other)                 = delete;
     CompletionTracker &operator=(CompletionTracker &&other)      = delete;
+    ~CompletionTracker()                                         = default;
 
     //! Blocks until the specified completion state has been set.
     void WaitForCompletion(int completionId);
+    
+    // CompletionHandlerInterface...
     void OnCompletion(int completionId) override;
 
   private:

@@ -279,14 +279,14 @@ string StringTools::AddressToHex(const void *data) {
     return hexText;
 }
 
-string StringTools::GetCleanClassName(const Interface *instance) {
+string StringTools::GetCleanClassName(const Interface &instance) {
     return GetCleanClassName(instance, numeric_limits<int>::max());
 }
 
-string StringTools::GetCleanClassName(const Interface *instance, int maxNumSegments) {
+string StringTools::GetCleanClassName(const Interface &instance, int maxNumSegments) {
     NumberTools::ClampMin(maxNumSegments, 1);
 
-    string className { instance ? typeid(*instance).name() : "" };
+    string className { typeid(instance).name() };
     if (className.length() && (className[0] == 'N')) {
         className.erase(0, 1);
     }

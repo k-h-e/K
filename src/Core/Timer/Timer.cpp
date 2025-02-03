@@ -20,7 +20,7 @@ namespace Core {
 
 Timer::Timer(milliseconds interval, const shared_ptr<RunLoop> &runLoop, const shared_ptr<Timers> &timers)
         : loopThreadState_(make_unique<LoopThreadState>(runLoop, timers)) {
-    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
+    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(*loopThreadState_);
     adapter_ = make_unique<Adapter>(loopThreadState_->runLoop, loopThreadState_->runLoopClientId);
     loopThreadState_->timer = loopThreadState_->timers->AddTimer(interval, adapter_.get(), false);
 }

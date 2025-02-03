@@ -10,12 +10,17 @@
 #define K_CORE_OUTSTREAMINTERFACE_H_
 
 #include <memory>
+
 #include <K/Core/StreamInterface.h>
 
 namespace K {
-namespace Core {
+    namespace Core {
+        class ResultAcceptor;
+    }
+}
 
-class ResultAcceptor;
+namespace K {
+namespace Core {
 
 //! Base interface to entities providing an output stream.
 class OutStreamInterface : public virtual StreamInterface {

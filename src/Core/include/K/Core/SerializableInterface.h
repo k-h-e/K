@@ -12,10 +12,14 @@
 #include <K/Core/Interface.h>
 
 namespace K {
-namespace Core {
+    namespace Core {
+        class BlockingInStreamInterface;
+        class BlockingOutStreamInterface;
+    }
+}
 
-class BlockingInStreamInterface;
-class BlockingOutStreamInterface;
+namespace K {
+namespace Core {
 
 //! Interface to entities capable of serialization and deserialization.
 class SerializableInterface : public virtual Interface {

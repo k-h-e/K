@@ -38,6 +38,8 @@ class ConfigurationFile : public virtual Core::ErrorStateInterface {
     //! Sets the value for the specified key.
     void SetValue(const std::string &section, const std::string &key, const std::string &value);
     //! Sets the value for the specified key.
+    void SetValue(const std::string &section, const std::string &key, int value);
+    //! Sets the value for the specified key.
     void SetValue(const std::string &section, const std::string &key, float value);
     //! Sets the value for the specified key.
     void SetValue(const std::string &section, const std::string &key, double value);

@@ -20,7 +20,7 @@ namespace Events {
 
 EventNotifier::EventNotifier(const shared_ptr<EventHub> &hub, int clientLoopId, const shared_ptr<RunLoop> &runLoop)
         : loopThreadState_(make_unique<LoopThreadState>(hub, clientLoopId, runLoop)) {
-    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
+    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(*loopThreadState_);
     adapter_ = make_unique<Adapter>(loopThreadState_->runLoop, loopThreadState_->runLoopClientId);
     loopThreadState_->hub->RegisterHandler(loopThreadState_->clientLoopId, adapter_.get());
 }

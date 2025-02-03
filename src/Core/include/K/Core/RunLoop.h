@@ -14,6 +14,7 @@
 #include <mutex>
 #include <unordered_set>
 #include <vector>
+
 #include <K/Core/Interface.h>
 
 namespace K {
@@ -58,7 +59,7 @@ class RunLoop : public virtual Core::Interface {
      *  The client will exclusively get activated (called) on the run loop thread. The client may call back into the run
      *  loop object.
      */
-    int AddClient(ClientInterface *client);
+    int AddClient(ClientInterface &client);
     //! Removes the specified client.
     /*!
      *  When the method returns, it is guaranteed that the client will not be called again.

@@ -39,7 +39,7 @@ ConnectionEndPoint::ConnectionEndPoint(const shared_ptr<Connection> &connection,
           readyWrite_{false},
           activationRequested_{false},
           signalError_{false} {
-    runLoopClientId_ = runLoop_->AddClient(this);
+    runLoopClientId_ = runLoop_->AddClient(*this);
     connection_->Register(this);
 }
 

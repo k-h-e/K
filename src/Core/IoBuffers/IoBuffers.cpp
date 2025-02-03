@@ -39,24 +39,24 @@ UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
     Group::IoBuffer *buffer;
     {
         unique_lock<mutex> critical(state_->mutex);    // ..............................................................
-        Group *group { SelectGroup(size) };
-        buffer = group->Get();
-        buffer->SetSize(size <= group->BufferSize() ? size : group->BufferSize());
+        Group &group { SelectGroup(size) };
+        buffer = &group.Get();
+        buffer->SetSize(size <= group.BufferSize() ? size : group.BufferSize());
     }    // ............................................................................................................
 
-    return UniqueHandle<IoBufferInterface>{buffer, buffer, state_};
+    return UniqueHandle<IoBufferInterface>{*buffer, *buffer, state_};
 }
 
 // ---
 
-IoBuffers::Group *IoBuffers::SelectGroup(int size) {
+IoBuffers::Group &IoBuffers::SelectGroup(int size) {
     for (auto &group : state_->groups) {
         if (group->BufferSize() >= size) {
-            return group.get();
+            return *group;
         }
     }
 
-    return state_->groups.back().get();
+    return *(state_->groups.back());
 }
 
 }    // Namespace Core.

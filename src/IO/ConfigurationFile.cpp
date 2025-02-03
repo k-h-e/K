@@ -74,6 +74,12 @@ void ConfigurationFile::SetValue(const string &section, const string &key, const
     }
 }
 
+void ConfigurationFile::SetValue(const string &section, const string &key, int value) {
+    char buffer[100];
+    snprintf(buffer, 100, "%d", value);
+    SetValue(section, key, string(buffer));
+}
+
 void ConfigurationFile::SetValue(const string &section, const string &key, float value) {
     char buffer[100];
     snprintf(buffer, 100, "%f", value);
@@ -200,8 +206,8 @@ void ConfigurationFile::Load(const Path &fileName) {
     unordered_set<char> whiteSpace { ' ', '\t' };
     string currentSection;
     string line;
-    bool success = false;
-    bool bad     = false;
+    bool success { false };
+    bool bad     { false };
     while (!success && !bad && !errorState_) {
         reader.Read('\n', line);
         if (reader.ErrorState()) {

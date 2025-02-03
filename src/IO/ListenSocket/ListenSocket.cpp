@@ -29,7 +29,7 @@ ListenSocket::ListenSocket(
         : loopThreadState_(make_unique<LoopThreadState>(
               runLoop, make_shared<SynchronizedState>(runLoop),
               make_shared<Deprecated::ListenSocket>(port, connectionIO, ioBuffers, threadPool), connectionIO)) {
-    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
+    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(*loopThreadState_);
     loopThreadState_->synchronizedState->SetRunLoopClientId(loopThreadState_->runLoopClientId);
 
     loopThreadState_->listenSocket->Register(loopThreadState_->synchronizedState.get(), true);

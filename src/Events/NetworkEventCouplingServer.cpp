@@ -50,7 +50,7 @@ NetworkEventCouplingServer::NetworkEventCouplingServer(
           connectedEvent_{connectedEvent},
           disconnectedEvent_{disconnectedEvent},
           signalCouplingInstallation_{false} {
-    runLoopClientId_ = runLoop_->AddClient(this);
+    runLoopClientId_ = runLoop_->AddClient(*this);
     InstallListenSocket();
 }
 

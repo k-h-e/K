@@ -11,12 +11,17 @@
 
 #include <memory>
 #include <string>
+
 #include <K/Core/InStreamInterface.h>
 
 namespace K {
-namespace Core {
+    namespace Core {
+        class SeekableBlockingInStreamInterface;
+    }
+}
 
-class SeekableBlockingInStreamInterface;
+namespace K {
+namespace Core {
 
 //! Text reader.
 class TextReader : public virtual InStreamInterface {

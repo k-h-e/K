@@ -14,11 +14,15 @@
 #include <unordered_set>
 
 namespace K {
-namespace Core {
+    namespace Core {
+        class Interface;
+        class BlockingInStreamInterface;
+        class BlockingOutStreamInterface;
+    }
+}
 
-class Interface;
-class BlockingInStreamInterface;
-class BlockingOutStreamInterface;
+namespace K {
+namespace Core {
 
 //! Tool functions dealing with strings.
 class StringTools {
@@ -38,8 +42,8 @@ class StringTools {
     static std::string ToBase64(const std::string &text);
     static std::string ToHex(const void *data, int dataSize);
     static std::string AddressToHex(const void *data);
-    static std::string GetCleanClassName(const Interface *instance);
-    static std::string GetCleanClassName(const Interface *instance, int maxNumSegments);
+    static std::string GetCleanClassName(const Interface &instance);
+    static std::string GetCleanClassName(const Interface &instance, int maxNumSegments);
     static void Serialize(const std::string &text, BlockingOutStreamInterface &stream);
     static void Deserialize(std::string &text, BlockingInStreamInterface &stream);
     static void Serialize(const std::string &text, std::vector<uint8_t> &outBinary);

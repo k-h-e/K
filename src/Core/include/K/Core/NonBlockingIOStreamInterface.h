@@ -18,7 +18,6 @@ namespace Core {
 //! Interface to nonblocking input/output streams.
 class NonBlockingIOStreamInterface : public virtual NonBlockingInStreamInterface,
                                      public virtual NonBlockingOutStreamInterface {
-  public:
 };
 
 }    // Namespace Core.

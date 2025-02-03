@@ -29,9 +29,9 @@ class SharedHandle : public HandleBase {
     SharedHandle() : HandleBase(nullptr, nullptr) {}
 
     //! Constructs a handle handling the specified resource.
-    SharedHandle(T *handlee, ReferenceCountTrackerInterface *referenceCountTracker,
+    SharedHandle(T &handlee, ReferenceCountTrackerInterface &referenceCountTracker,
                  const std::shared_ptr<Interface> &keepAlive)
-        : HandleBase{handlee, referenceCountTracker, keepAlive} {}
+        : HandleBase{&handlee, &referenceCountTracker, keepAlive} {}
     
     SharedHandle(const SharedHandle &other)            = default;
     SharedHandle &operator=(const SharedHandle &other) = default;

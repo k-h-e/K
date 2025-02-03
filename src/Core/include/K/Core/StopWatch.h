@@ -10,6 +10,7 @@
 #define K_CORE_STOPWATCH_H_
 
 #include <chrono>
+
 #include <K/Core/Interface.h>
 
 namespace K {

@@ -9,8 +9,9 @@
 #ifndef K_CORE_BUFFER_H_
 #define K_CORE_BUFFER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
+
 #include <K/Core/SeekableBlockingOutStreamInterface.h>
 #include <K/Core/SeekableBlockingInStreamInterface.h>
 
@@ -37,6 +38,7 @@ class Buffer : public virtual SeekableBlockingOutStreamInterface {
         Reader &operator=(Reader &&other)      = default;
         ~Reader()                              = default;
 
+        // SeekableBlockingInStreamInterface...
         bool ErrorState() const override;
         std::optional<Error> StreamError() const override;
         int ReadBlocking(void *buffer, int bufferSize) override;
@@ -49,9 +51,9 @@ class Buffer : public virtual SeekableBlockingOutStreamInterface {
 
         Reader(const Buffer *buffer, std::optional<Error> error);
 
-        const Buffer                          *buffer_;
-        int                                   cursor_;
-        std::optional<Error>                  error_;
+        const Buffer         *buffer_;
+        int                  cursor_;
+        std::optional<Error> error_;
     };
 
     //! Creates a buffer of the given initial size, but does not initialize its contents.
@@ -117,6 +119,7 @@ class Buffer : public virtual SeekableBlockingOutStreamInterface {
      */
     Reader GetReader() const;
 
+    //SeekableBlockingOutStreamInterface...
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
@@ -128,11 +131,11 @@ class Buffer : public virtual SeekableBlockingOutStreamInterface {
   private:
     void Grow();
 
-    std::vector<uint8_t>                  buffer_;
-    int                                   bufferFill_;
-    int                                   writeCursor_;
-    bool                                  error_;
-    std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
+    std::vector<uint8_t>            buffer_;
+    int                             bufferFill_;
+    int                             writeCursor_;
+    bool                            error_;
+    std::shared_ptr<ResultAcceptor> closeResultAcceptor_;
 };
 
 }    // Namespace Core.

@@ -10,6 +10,7 @@
 #define K_CORE_FUNCTIONACTION_H_
 
 #include <functional>
+
 #include <K/Core/ActionInterface.h>
 
 namespace K {
@@ -24,6 +25,7 @@ class FunctionAction : public virtual ActionInterface {
     FunctionAction &operator=(const FunctionAction &other) = delete;
     FunctionAction(FunctionAction &&other)                 = delete;
     FunctionAction &operator=(FunctionAction &&other)      = delete;
+    ~FunctionAction()                                      = default;
 
     // ActionInterface...
     void Execute() override;

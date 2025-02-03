@@ -10,6 +10,7 @@
 #define K_CORE_SIGNAL_H_
 
 #include <memory>
+
 #include <K/Core/Interface.h>
 
 namespace K {
