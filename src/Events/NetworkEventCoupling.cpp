@@ -308,9 +308,9 @@ bool NetworkEventCoupling::FilterEvents() {
                     if (size) {
                         stream.Seek(stream.StreamPosition() + static_cast<int64_t>(size));
                     }
-                    Log::Print(Log::Level::Debug, this, [&]{
-                            return "filtered out event, type_slot=" + to_string(typeSlot);
-                    });
+                    //Log::Print(Log::Level::Debug, this, [&]{
+                    //        return "filtered out event, type_slot=" + to_string(typeSlot);
+                    //});
                 } else {
                     uint32_t sizeU32 = static_cast<uint32_t>(size);
                     filteredEventBuffer_.Append(&typeSlot, sizeof(typeSlot));
