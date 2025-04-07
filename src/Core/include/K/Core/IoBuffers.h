@@ -44,6 +44,8 @@ class IoBuffers : public virtual Interface {
      *  \return I/O buffer.
      */ 
     UniqueHandle<IoBufferInterface> Get(int size);
+    //! Logs current statistics.
+    void LogStatistics();
 
   private:
     struct State;
@@ -72,6 +74,7 @@ class IoBuffers : public virtual Interface {
         
         int BufferSize() const;
         IoBuffer &Get();
+        void LogStatistics();
         
       private:
         void AddBucket();
@@ -84,6 +87,10 @@ class IoBuffers : public virtual Interface {
         ReusableItems<BufferInfo> bufferInfos_;
         std::vector<IoBuffer *>   bufferBuckets_;
         std::vector<uint8_t *>    memoryBuckets_;
+        int                       numBuffers_;
+        int                       numBuffersInUse_;
+        int                       numBytes_;
+        int                       numBytesInUse_;
     };
 
     struct State : public virtual Interface {

@@ -9,7 +9,6 @@
 #include <K/Core/IoBuffers.h>
 
 #include <cassert>
-#include <mutex>
 
 #include <K/Core/Log.h>
 
@@ -25,7 +24,11 @@ IoBuffers::Group::Group(int bufferSize, int buffersPerBucket, IoBuffers::State &
           bufferSize_{bufferSize},
           buffersPerBucket_{buffersPerBucket},
           alignment_{K_ALIGNMENT_BYTES},
-          bufferInfos_{2} {
+          bufferInfos_{2},
+          numBuffers_{0},
+          numBuffersInUse_{0},
+          numBytes_{0},
+          numBytesInUse_{0}  {
     assert(bufferSize_ > 0);
     assert(buffersPerBucket_ > 0);
     assert(alignment_ > 0);
@@ -70,6 +73,16 @@ IoBuffers::Group::IoBuffer &IoBuffers::Group::Get() {
     return *info.buffer;
 }
 
+void IoBuffers::Group::LogStatistics() {
+    if (numBuffers_) {
+        Log::Print(Log::Level::Info, this, [&]{
+            return "    size " + to_string(bufferSize_)
+                    + ": buffers_in_use=" + to_string(numBuffersInUse_) + "/" + to_string(numBuffers_)
+                    + ", bytes_in_use=" + to_string(numBytesInUse_) + "/"  + to_string(numBytes_);
+        });
+    }
+}
+
 // ---
 
 void IoBuffers::Group::AddBucket() {
@@ -100,6 +113,9 @@ void IoBuffers::Group::AddBucket() {
     }
 
     bufferBuckets_.push_back(buffers);
+
+    numBuffers_ += buffersPerBucket_;
+    numBytes_   += static_cast<uintptr_t>(buffersPerBucket_) * static_cast<uintptr_t>(bufferSize_); 
 
     state_.numBuffersTotal += buffersPerBucket_;
     state_.numBytesTotal   += static_cast<uintptr_t>(buffersPerBucket_) * static_cast<uintptr_t>(bufferSize_); 

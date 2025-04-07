@@ -11,7 +11,6 @@
 #include <cassert>
 #include <mutex>
 
-#include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 
 using std::mutex;
@@ -59,15 +58,11 @@ void IoBuffers::Group::IoBuffer::SetSize(int size) {
     assert(size <= group_->BufferSize());
     size_ = size;
 
+    group_->numBuffersInUse_++;
+    group_->numBytesInUse_ += static_cast<uintptr_t>(size_); 
+
     group_->state_.numBuffersInUse++;
     group_->state_.numBytesInUse += static_cast<uintptr_t>(size_); 
-
-    Log::Print(Log::Level::Debug, this, [&]{
-        return "buffer 0x" + StringTools::AddressToHex(memory_) + " now in use, size=" + to_string(size_) + "/"
-            + to_string(group_->BufferSize()) + ", buffers_in_use=" + to_string(group_->state_.numBuffersInUse) + "/"
-            + to_string(group_->state_.numBuffersTotal) + ", bytes_in_use=" + to_string(group_->state_.numBytesInUse)
-            + "/"  + to_string(group_->state_.numBytesTotal);
-    });
 }
 
 void *IoBuffers::Group::IoBuffer::Content()  {
@@ -92,14 +87,10 @@ void IoBuffers::Group::IoBuffer::OnReferenceRemoved() {
     --info.numReferences;
     if (info.numReferences == 0) {
         group_->bufferInfos_.Move(infoId_, idleBuffers);
+        group_->numBuffersInUse_--;
+        group_->numBytesInUse_ -= static_cast<uintptr_t>(size_); 
         group_->state_.numBuffersInUse--;
         group_->state_.numBytesInUse -= static_cast<uintptr_t>(size_); 
-        Log::Print(Log::Level::Debug, this, [&]{
-            return "buffer 0x" + StringTools::AddressToHex(memory_) + " now idle, size="
-                + to_string(group_->BufferSize()) + ", buffers_in_use=" + to_string(group_->state_.numBuffersInUse)
-                + "/" + to_string(group_->state_.numBuffersTotal) + ", bytes_in_use="
-                + to_string(group_->state_.numBytesInUse) + "/"  + to_string(group_->state_.numBytesTotal);
-        });
     }
 }    // ................................................................................................................
 

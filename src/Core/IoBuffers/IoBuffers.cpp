@@ -11,11 +11,14 @@
 #include <cassert>
 #include <mutex>
 
+#include <K/Core/Log.h>
+
 #include "IoBuffer.h"
 
 using std::make_shared;
 using std::make_unique;
 using std::mutex;
+using std::to_string;
 using std::unique_lock;
 
 namespace K {
@@ -46,6 +49,17 @@ UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
 
     return UniqueHandle<IoBufferInterface>{*buffer, *buffer, state_};
 }
+
+void IoBuffers::LogStatistics() {
+    unique_lock<mutex> critical(state_->mutex);    // ..................................................................
+    Log::Print(Log::Level::Info, this, [&]{
+        return "buffers_in_use=" + to_string(state_->numBuffersInUse) + "/" + to_string(state_->numBuffersTotal)
+            + ", bytes_in_use=" + to_string(state_->numBytesInUse) + "/"  + to_string(state_->numBytesTotal);
+    });
+    for (auto &group : state_->groups) {
+        group->LogStatistics();
+    }
+}    // ................................................................................................................
 
 // ---
 
