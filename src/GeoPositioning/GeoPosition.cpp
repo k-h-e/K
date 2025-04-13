@@ -70,6 +70,19 @@ string GeoPosition::ToString() const {
     return string("(lat=") + latitudeText + ", lng=" + longitudeText + ")";
 }
 
+bool GeoPosition::DeserializeAndValidate(BlockingInStreamInterface &stream) {
+    Deserialize(stream);
+    if (!stream.ErrorState()) {
+        if (isfinite(latitude_) && (latitude_ >= -90.0) && (latitude_ <= 90.0)
+                && isfinite(longitude_) && (longitude_ >= -180.0) && (longitude_ <= 180.0)) {
+            return true;
+        }
+    }
+
+    *this = GeoPosition();
+    return false;
+}
+
 void GeoPosition::Serialize(BlockingOutStreamInterface &stream) const {
     stream << latitude_;
     stream << longitude_;

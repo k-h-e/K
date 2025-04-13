@@ -25,11 +25,13 @@ class GeoPosition : public K::Core::SerializableInterface {
     GeoPosition &operator=(const GeoPosition &other) = default;
     GeoPosition(GeoPosition &&other)                 = default;
     GeoPosition &operator=(GeoPosition &&other)      = default;
+    ~GeoPosition()                                   = default;
 
     bool operator==(const GeoPosition &other) const;
     double Latitude() const;
     double Longitude() const;
     std::string ToString() const;
+    bool DeserializeAndValidate(K::Core::BlockingInStreamInterface &stream);
 
     void Serialize(K::Core::BlockingOutStreamInterface &stream) const override;
     void Deserialize(K::Core::BlockingInStreamInterface &stream) override;
