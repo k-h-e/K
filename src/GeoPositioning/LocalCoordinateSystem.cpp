@@ -40,7 +40,7 @@ bool LocalCoordinateSystem::operator==(const LocalCoordinateSystem &other) const
 
 void LocalCoordinateSystem::Reset(const GeoPosition &origin) {
     originPolar_ = origin;
-    ComputeAbsolute(originPolar_, &origin_);
+    ComputeAbsolute(originPolar_, origin_);
 
     y_ = origin_;
     y_.Normalize();
@@ -56,7 +56,7 @@ void LocalCoordinateSystem::Reset(const GeoPosition &origin) {
 
 Vector<float> LocalCoordinateSystem::ToLocal(const GeoPosition &position) const {
     Vector<double> pointAbsolute;
-    ComputeAbsolute(position, &pointAbsolute);
+    ComputeAbsolute(position, pointAbsolute);
     Vector<double> delta = pointAbsolute - origin_;
     return Vector<float>(static_cast<float>(DotProduct(delta, x_)),
                          static_cast<float>(DotProduct(delta, y_)),
@@ -101,8 +101,8 @@ GeoPosition LocalCoordinateSystem::Origin() const {
     return originPolar_;
 }
 
-void LocalCoordinateSystem::ComputeAbsolute(const GeoPosition &polar, Vector<double> *outAbsolute) {
-    outAbsolute->Set(0.0, 0.0, earthRadius);
+void LocalCoordinateSystem::ComputeAbsolute(const GeoPosition &polar, Vector<double> &outAbsolute) {
+    outAbsolute.Set(0.0, 0.0, earthRadius);
     Transform<double>(Axis::X, -polar.Latitude()).ApplyTo(outAbsolute);
     Transform<double>(Axis::Y, polar.Longitude()).ApplyTo(outAbsolute);
 }

@@ -43,7 +43,7 @@ class LocalCoordinateSystem : public virtual K::Core::Interface {
   private:
     static const double earthRadius;
 
-    static void ComputeAbsolute(const GeoPosition &polar, Vectoid::Core::Vector<double> *outAbsolute);
+    static void ComputeAbsolute(const GeoPosition &polar, Vectoid::Core::Vector<double> &outAbsolute);
 
     GeoPosition                   originPolar_;
     Vectoid::Core::Vector<double> origin_;
