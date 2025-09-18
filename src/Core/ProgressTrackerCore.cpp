@@ -6,8 +6,9 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include <K/Core/CompoundProgressTracker.h>
+#include <K/Core/ProgressTrackerCore.h>
 
+#include <K/Core/CompoundProgressTrackerInterface.h>
 #include <K/Core/NumberTools.h>
 
 using std::shared_ptr;
@@ -16,49 +17,37 @@ using K::Core::NumberTools;
 namespace K {
 namespace Core {
 
-CompoundProgressTracker::CompoundProgressTracker(
+ProgressTrackerCore::ProgressTrackerCore(
     const shared_ptr<HandlerInterface> &handler,
     const shared_ptr<CompoundProgressTrackerInterface> &superActivityProgressTracker)
-        : ProgressTrackerCore{handler, superActivityProgressTracker} {
-    // Nop.
-}
-
-int CompoundProgressTracker::RegisterSubActivity() {
-    int id { ids_.Get() };
-    subActivities_[id] = SubActivityInfo();
-    return id;
-}
-
-void CompoundProgressTracker::OnSubActivityProgress(int activity, int percent) {
-    auto iter { subActivities_.find(activity) };
-    if (iter != subActivities_.end()) {
-        SubActivityInfo &info { iter->second };
-        NumberTools::Clamp(percent, 0, 100);
-        info.percent = percent;
-        ComputePercent();
+        : handler_{handler},
+          superActivityProgressTracker_{superActivityProgressTracker},
+          subActivityId_{0},
+          percent_{-1} {
+    if (superActivityProgressTracker_) {
+        subActivityId_ = superActivityProgressTracker_->RegisterSubActivity();
     }
 }
 
-void CompoundProgressTracker::UnregisterSubActivity(int activity) {
-    subActivities_.erase(activity);
-    ids_.Put(activity);
+ProgressTrackerCore::~ProgressTrackerCore() {
+    if (superActivityProgressTracker_) {
+        superActivityProgressTracker_->UnregisterSubActivity(subActivityId_);
+    }
 }
 
 // ---
 
-void CompoundProgressTracker::ComputePercent() {
-    int total { 0 };
-    int num   { 0 };
-    for (auto &pair : subActivities_) {
-        total += pair.second.percent;
-        ++num;
+void ProgressTrackerCore::OnPercentComputed(int percent) {
+    NumberTools::Clamp(percent, 0, 100);
+    if (percent > percent_) {
+        percent_ = percent;
+        if (superActivityProgressTracker_) {
+            superActivityProgressTracker_->OnSubActivityProgress(subActivityId_, percent_);
+        }
+        if (handler_) {
+            handler_->OnProgress(percent_);
+        }
     }
-
-    int percent { 0 };
-    if (num > 0) {
-        percent = static_cast<int>(static_cast<float>(total)/static_cast<float>(num) + .5f);
-    }
-    OnPercentComputed(percent);
 }
 
 }    // Namespace Core.

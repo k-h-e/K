@@ -6,37 +6,26 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_EVENTS_ACTORNAMING_
-#define K_EVENTS_ACTORNAMING_
+#ifndef K_CORE_COMPOUNDPROGRESSTRACKERINTERFACE_H_
+#define K_CORE_COMPOUNDPROGRESSTRACKERINTERFACE_H_
 
-#include <vector>
-#include <unordered_set>
-
-#include <K/Events/ActorName.h>
+#include <K/Core/Interface.h>
 
 namespace K {
-namespace Events {
+namespace Core {
 
-//! Central authority for keeping track of and assigning new actor ids.
-class ActorNaming {
+//! Interface to compound progress trackers.
+class CompoundProgressTrackerInterface : public virtual Interface {
   public:
-    ActorNaming();
-    ActorNaming(const ActorNaming &other)            = delete;
-    ActorNaming &operator=(const ActorNaming &other) = delete;
-    ActorNaming(ActorNaming &&other)                 = delete;
-    ActorNaming &operator=(ActorNaming &&other)      = delete;
-    
-    //! Creates and hands out a new actor name.
-    ActorName Get();
-    //! Tells the naming authority that the specified name is no longer needed.
-    void Put(const ActorName &name);
-    
-  private:
-    std::vector<uint32_t>   incarnations_;
-    std::unordered_set<int> freeIds_;
+    //! Registers a new subactivity with the compound progress tracker, and returns an ID for it.
+    virtual int RegisterSubActivity() = 0;
+    //! Informs the compound progress tracker that the specified subactivity has made progress.
+    virtual void OnSubActivityProgress(int activity, int percent) = 0;
+    //! Unregisters the specified subactivity from the compound progress tracker.
+    virtual void UnregisterSubActivity(int activity) = 0;
 };
 
-}    // Namespace Events.
+}    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_EVENTS_ACTORNAMING_
+#endif    // K_CORE_COMPOUNDPROGRESSTRACKERINTERFACE_H_
