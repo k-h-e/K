@@ -8,58 +8,62 @@
 
 #include <K/Core/CompoundProgressTracker.h>
 
-#include <K/Core/NumberTools.h>
-
 using std::shared_ptr;
-using K::Core::NumberTools;
+using std::string;
 
 namespace K {
 namespace Core {
 
-CompoundProgressTracker::CompoundProgressTracker(
-    const shared_ptr<HandlerInterface> &handler,
-    const shared_ptr<CompoundProgressTrackerInterface> &superActivityProgressTracker)
-        : ProgressTrackerCore{handler, superActivityProgressTracker} {
+CompoundProgressTracker::CompoundProgressTracker(const shared_ptr<HandlerInterface> &handler, const string &activity)
+        : ProgressTracker{handler, activity} {
     // Nop.
 }
 
-int CompoundProgressTracker::RegisterSubActivity() {
-    int id { ids_.Get() };
-    subActivities_[id] = SubActivityInfo();
-    return id;
-}
-
-void CompoundProgressTracker::OnSubActivityProgress(int activity, int percent) {
-    auto iter { subActivities_.find(activity) };
-    if (iter != subActivities_.end()) {
-        SubActivityInfo &info { iter->second };
-        NumberTools::Clamp(percent, 0, 100);
-        info.percent = percent;
-        ComputePercent();
+CompoundProgressTracker::~CompoundProgressTracker() {
+    for (ChildInfo &info : children_) {
+        info.child->SetParent(nullptr, 0);
     }
+}  
+
+void CompoundProgressTracker::AddChild(const shared_ptr<ProgressTracker> &child) {
+    AddChild(child, 1.0f);
 }
 
-void CompoundProgressTracker::UnregisterSubActivity(int activity) {
-    subActivities_.erase(activity);
-    ids_.Put(activity);
+void CompoundProgressTracker::AddChild(const shared_ptr<ProgressTracker> &child, float weight) {
+    int id { static_cast<int>(children_.size()) };
+    child->SetParent(this, id);
+    children_.push_back(ChildInfo{child, weight});
 }
 
 // ---
 
-void CompoundProgressTracker::ComputePercent() {
-    int total { 0 };
-    int num   { 0 };
-    for (auto &pair : subActivities_) {
-        total += pair.second.percent;
-        ++num;
-    }
+void CompoundProgressTracker::OnProgressUpdate(int id, int progressPercent) {
+    if ((id >= 0) && (id < static_cast<int>(children_.size()))) {    // At least one iteration.
+        ChildInfo &info { children_[id] };
+        info.progress = progressPercent;
+        NumberTools::Clamp(info.progress, 0, 100);
 
-    int percent { 0 };
-    if (num > 0) {
-        percent = static_cast<int>(static_cast<float>(total)/static_cast<float>(num) + .5f);
+        float totalProgress { 0.0f };
+        float totalWeight   { 0.0f };
+        bool  allDone       { true };
+        for (ChildInfo &current : children_) {
+            if (current.progress < 100) {
+                allDone = false;
+            }
+            totalProgress += current.weight * static_cast<float>(current.progress);
+            totalWeight   += current.weight;
+        }
+        totalProgress /= totalWeight;
+
+        if (!allDone) {
+            int progress { static_cast<int>(totalProgress + .5f) };
+            NumberTools::Clamp(progress, 0, 99);
+            SetProgress(progress);
+        } else {
+            SetProgress(100);
+        }
     }
-    OnPercentComputed(percent);
-}
+}  
 
 }    // Namespace Core.
 }    // Namespace K.

@@ -11,39 +11,54 @@
 #include <K/Core/NumberTools.h>
 
 using std::shared_ptr;
-using K::Core::NumberTools;
+using std::string;
 
 namespace K {
 namespace Core {
 
-ProgressTracker::ProgressTracker(const shared_ptr<HandlerInterface> &handler,
-                                 const shared_ptr<CompoundProgressTrackerInterface> &superActivityProgressTracker)
-        : ProgressTrackerCore{handler, superActivityProgressTracker},
-          numSteps_{100},
-          numStepsCompleted_{0} {
+ProgressTracker::ProgressTracker(const shared_ptr<HandlerInterface> &handler, const string &activity)
+        : handler_{handler},
+          activity_{activity},
+          parent_{nullptr},
+          idForParent_{0},
+          progress_{-1},
+          oldProgress_{-1} {
     // Nop.
 }
 
-void ProgressTracker::SetNumSteps(int numSteps) {
-    if (numSteps > 0) {
-        numSteps_ = numSteps;
-        NumberTools::Clamp(numStepsCompleted_, 0, numSteps_);
-        ComputePercent();
-    }
+ProgressTracker::~ProgressTracker() {
+    progress_ = 100;
+    NotifyHandler();
 }
 
-void ProgressTracker::OnStepCompleted() {
-    if (numStepsCompleted_ < numSteps_) {
-        ++numStepsCompleted_;
-        ComputePercent();
-    }
+void ProgressTracker::SetParent(ParentInterface *parent, int idForParent) {
+    parent_      = parent;
+    idForParent_ = (parent_ != nullptr) ? idForParent : 0;
+    oldProgress_ = -1;
 }
 
 // ---
 
-void ProgressTracker::ComputePercent() {
-    int percent { static_cast<int>(100.0f*static_cast<float>(numStepsCompleted_)/static_cast<float>(numSteps_) + .5f) };
-    OnPercentComputed(percent);
+void ProgressTracker::SetProgress(int progressPercent) {
+    progress_ = progressPercent;
+    NumberTools::Clamp(progress_, 0, 100);
+    if (progress_ != oldProgress_) {
+        oldProgress_ = progress_;
+        NotifyParent();
+        NotifyHandler();
+    }
+}
+
+void ProgressTracker::NotifyParent() {
+    if (parent_ != nullptr) {
+        parent_->OnProgressUpdate(idForParent_, progress_);
+    }
+}
+
+void ProgressTracker::NotifyHandler() {
+    if (handler_) {
+        handler_->OnProgressUpdate(activity_, progress_);
+    }
 }
 
 }    // Namespace Core.

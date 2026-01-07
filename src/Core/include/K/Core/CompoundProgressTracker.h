@@ -9,44 +9,50 @@
 #ifndef K_CORE_COMPOUNDPROGRESSTRACKER_H_
 #define K_CORE_COMPOUNDPROGRESSTRACKER_H_
 
-#include <unordered_map>
+#include <vector>
 
-#include <K/Core/Ids.h>
-#include <K/Core/CompoundProgressTrackerInterface.h>
-#include <K/Core/ProgressTrackerCore.h>
+#include <K/Core/NumberTools.h>
+#include <K/Core/ProgressTracker.h>
 
 namespace K {
 namespace Core {
 
-//! Tracks progress of a compound activity, where the subactivities are tracked by child progress trackers.
-class CompoundProgressTracker : public ProgressTrackerCore,
-                                public virtual CompoundProgressTrackerInterface {
+//! Keeps track of a compound activity's progress in percent.
+class CompoundProgressTracker : public ProgressTracker,
+                                private virtual ProgressTracker::ParentInterface {
   public:
-    CompoundProgressTracker(const std::shared_ptr<HandlerInterface> &handler,
-                            const std::shared_ptr<CompoundProgressTrackerInterface> &superActivityProgressTracker);
-    CompoundProgressTracker(const CompoundProgressTracker &other)            = delete;
-    CompoundProgressTracker &operator=(const CompoundProgressTracker &other) = delete;
-    CompoundProgressTracker(CompoundProgressTracker &&other)                 = delete;
-    CompoundProgressTracker &operator=(CompoundProgressTracker &&other)      = delete;
-    ~CompoundProgressTracker()                                               = default;
+    CompoundProgressTracker(const std::shared_ptr<HandlerInterface> &handler, const std::string &activity);
+    CompoundProgressTracker()                                                    = delete;
+    CompoundProgressTracker(const CompoundProgressTracker &other)                = delete;
+    CompoundProgressTracker &operator=(const CompoundProgressTracker &other)     = delete;
+    CompoundProgressTracker(CompoundProgressTracker &&other)                     = delete;
+    CompoundProgressTracker &operator=(CompoundProgressTracker &&other)          = delete;
+    ~CompoundProgressTracker();
 
-    // CompoundProgressTrackerInterface...
-    int RegisterSubActivity() override;
-    void OnSubActivityProgress(int activity, int percent) override;
-    void UnregisterSubActivity(int activity) override;
+    //! Adds the specified child activity tracker.
+    void AddChild(const std::shared_ptr<ProgressTracker> &child);
+    //! Adds the specified child activity tracker.
+    void AddChild(const std::shared_ptr<ProgressTracker> &child, float weight);
 
   private:
-    struct SubActivityInfo {
-        int percent;
+    struct ChildInfo {
+        std::shared_ptr<ProgressTracker> child;
+        int                              progress;
+        float                            weight;
 
-        SubActivityInfo() : percent{0} {}
-        // Default copy/move, ok.
+        ChildInfo(const std::shared_ptr<ProgressTracker> &aChild, float aWeight)
+            : child{aChild}, progress{0}, weight{aWeight} { NumberTools::ClampMin(weight, .1f); }
+        ChildInfo() : progress{0}, weight{1.0f} {}
+        ChildInfo(const ChildInfo &other)            = default;
+        ChildInfo &operator=(const ChildInfo &other) = default;
+        ChildInfo(ChildInfo &&other)                 = default;
+        ChildInfo &operator=(ChildInfo &&other)      = default;
     };
 
-    void ComputePercent();
+    // ParentInterface...
+    void OnProgressUpdate(int id, int progressPercent) override;
 
-    Ids                                      ids_;
-    std::unordered_map<int, SubActivityInfo> subActivities_;
+    std::vector<ChildInfo> children_;
 };
 
 }    // Namespace Core.

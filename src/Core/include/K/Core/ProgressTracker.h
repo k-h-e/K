@@ -9,32 +9,56 @@
 #ifndef K_CORE_PROGRESSTRACKER_H_
 #define K_CORE_PROGRESSTRACKER_H_
 
-#include <K/Core/ProgressTrackerCore.h>
+#include <memory>
+#include <string>
+
+#include <K/Core/Interface.h>
 
 namespace K {
 namespace Core {
 
-//! Tracks progress of an activity that has a given number of discrete steps (of comparable complexity).
-class ProgressTracker : public ProgressTrackerCore {
+//! Keeps track of progress in percent.
+class ProgressTracker : public virtual Interface {
   public:
-    ProgressTracker(const std::shared_ptr<HandlerInterface> &handler,
-                    const std::shared_ptr<CompoundProgressTrackerInterface> &superActivityProgressTracker);
-    ProgressTracker(const ProgressTracker &other)            = delete;
-    ProgressTracker &operator=(const ProgressTracker &other) = delete;
-    ProgressTracker(ProgressTracker &&other)                 = delete;
-    ProgressTracker &operator=(ProgressTracker &&other)      = delete;
-    ~ProgressTracker()                                       = default;
+    //! Interface to progress tracker handlers.
+    class HandlerInterface : public virtual Interface {
+      public:
+        //! Informs the handler that the respective activity's progress has been updated. 
+        virtual void OnProgressUpdate(const std::string &activity, int progressPercent) = 0;
+    };
+    //! Interface to parent progress trackers.
+    class ParentInterface : public virtual Interface {
+      public:
+        //! Informs the parent that the respective activity's progress has been updated. 
+        virtual void OnProgressUpdate(int id, int progressPercent) = 0;
+    };
 
-    //! Sets the number of total steps.
-    void SetNumSteps(int numSteps);
-    //! Tells the tracker that another activity step has been completed.
-    void OnStepCompleted();
+    ProgressTracker(const std::shared_ptr<HandlerInterface> &handler, const std::string &activity);
+    ProgressTracker()                                                    = delete;
+    ProgressTracker(const ProgressTracker &other)                        = delete;
+    ProgressTracker &operator=(const ProgressTracker &other)             = delete;
+    ProgressTracker(ProgressTracker &&other)                             = delete;
+    ProgressTracker &operator=(ProgressTracker &&other)                  = delete;
+    ~ProgressTracker();
+
+    //! Sets a parent for the tracker.
+    /*!
+     *  Pass <c>nullptr</c> to unset a previously set parent. The passed ID is then ignored.
+     */
+    void SetParent(ParentInterface *parent, int idForParent);
+
+  protected:
+    void SetProgress(int progressPercent);
+    void NotifyParent();
+    void NotifyHandler();
 
   private:
-    void ComputePercent();
-
-    int numSteps_;
-    int numStepsCompleted_;
+    std::shared_ptr<HandlerInterface> handler_;
+    std::string                       activity_;
+    ParentInterface                   *parent_;
+    int                               idForParent_;
+    int                               progress_;
+    int                               oldProgress_;
 };
 
 }    // Namespace Core.
