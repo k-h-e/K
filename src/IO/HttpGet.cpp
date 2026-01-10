@@ -8,6 +8,7 @@
 
 #include <K/IO/HttpGet.h>
 
+#include <K/Core/IoBufferInterface.h>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/TextWriter.h>
@@ -20,28 +21,33 @@ using std::shared_ptr;
 using std::string;
 using std::to_string;
 using std::vector;
+using K::Core::IoBufferInterface;
+using K::Core::IoBuffers;
+using K::Core::IoBufferQueue;
 using K::Core::Log;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
 using K::Core::TextWriter;
+using K::Core::UniqueHandle;
 using K::IO::TcpConnection;
 
 namespace K {
 namespace IO {
 
 HttpGet::HttpGet(const string &host, const string &resource, const shared_ptr<RunLoop> &runLoop,
-                 const shared_ptr<ConnectionIO> &connectionIO)
-        : runLoop_{runLoop},
+                 const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<IoBuffers> &ioBuffers)
+        : ioBuffers_{ioBuffers},
+          runLoop_{runLoop},
           handler_{nullptr},
           receivingHeader_{true},
           numHeaderLines_{0},
           numContentBytesDelivered_{0},
           signalError_{false} {
-    runLoopClientId_ = runLoop_->AddClient(this);
+    runLoopClientId_ = runLoop_->AddClient(*this);
     
     auto connection{make_shared<TcpConnection>(host, 80, runLoop, connectionIO)};
-    endPoint_ = make_shared<ConnectionEndPoint>(connection, runLoop);
+    endPoint_ = make_shared<ConnectionEndPoint>(connection, runLoop, ioBuffers);
     endPoint_->Register(this);
     TextWriter writer{endPoint_};
     writer.Write("GET ");
@@ -77,7 +83,17 @@ void HttpGet::Register(RawStreamHandlerInterface *handler) {
 }
 
 void HttpGet::Activate(bool deepActivation) {
-    if (signalError_) {
+    (void) deepActivation;
+    
+    if (!contentQueue_.Empty()) {
+        auto buffer = contentQueue_.Get();
+        if (!contentQueue_.Empty() || signalError_) {
+            runLoop_->RequestActivation(runLoopClientId_, false);
+        }
+        if (handler_) {
+            handler_->OnRawStreamData(std::move(buffer));
+        }
+    } else if (signalError_) {
         signalError_ = false;
         if (handler_) {
             handler_->OnStreamError(*error_);
@@ -85,62 +101,45 @@ void HttpGet::Activate(bool deepActivation) {
     }
 }
 
-void HttpGet::OnRawStreamData(const void *data, int dataSize) {
+void HttpGet::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
     if (!error_) {
         if (receivingHeader_) {
-            OnHeaderData(data, dataSize);
+            ProcessHeaderData(buffer);
         } else {
-            OnContentData(data, dataSize);
+            ProcessContentData(buffer);
         }
     }
 }
 
 void HttpGet::OnStreamError(StreamInterface::Error error) {
-    if (!error_) {
-        if (error == Error::Eof) {
-            if (!numContentBytes_ || (numContentBytesDelivered_ != *numContentBytes_)) {
-                error = Error::IO;
-            }
-        }
-        
-        error_ = error;
-        if (*error_ == Error::Eof) {
-            Log::Print(Log::Level::Debug, this, [&]{
-                return "EOF, bytes_received=" + to_string(numContentBytesDelivered_);
-            });
-        } else {
-            Log::Print(Log::Level::Error, this, [&]{
-                return "error after receiving " + to_string(numContentBytesDelivered_) + " bytes!";
-            });
-        }
-        if (handler_) {
-            handler_->OnStreamError(*error_);
-        }
-    }
+    RaiseError(error);
 }
 
-void HttpGet::OnHeaderData(const void *data, int dataSize) {
-    const uint8_t *ptr = static_cast<const uint8_t *>(data);
-    for (int i = 0; i < dataSize; ++i) {
+void HttpGet::ProcessHeaderData(UniqueHandle<IoBufferInterface> &buffer) {
+    const uint8_t *ptr = static_cast<const uint8_t *>(buffer->Content());
+    for (int i = 0; i < buffer->Size(); ++i) {
         char character = static_cast<char>(*ptr);
         if (character == '\n') {
             if (line_.empty()) {
-                if (numContentBytes_) {
+                if (numContentBytes_ && (*numContentBytes_ >= 0)) {
                     receivingHeader_ = false;
-                    int numRemaining = dataSize - i - 1;
+                    int numRemaining = buffer->Size() - i - 1;
                     if (numRemaining) {
-                        numContentBytesDelivered_ += numRemaining;
-                        if (handler_) {
-                            handler_->OnRawStreamData(ptr + 1, numRemaining);
+                        Put(ptr + 1, numRemaining, contentQueue_, *ioBuffers_);
+                        runLoop_->RequestActivation(runLoopClientId_, false);
+                        FinishContentEnqueue(numRemaining);
+                    } else {
+                        if (*numContentBytes_ == 0) {
+                            RaiseError(Error::Eof);
                         }
                     }
                 } else {
-                    OnStreamError(Error::IO);
+                    RaiseError(Error::IO);
                 }
                 return;
             } else {
                 if (!ProcessHeaderLine()) {
-                    OnStreamError(Error::IO);
+                    RaiseError(Error::IO);
                     return;
                 }
             }
@@ -154,23 +153,11 @@ void HttpGet::OnHeaderData(const void *data, int dataSize) {
     }
 }
 
-void HttpGet::OnContentData(const void *data, int dataSize) {
-    numContentBytesDelivered_ += dataSize;
-            
-    optional<Error> error;
-    if (numContentBytesDelivered_ == *numContentBytes_) {
-        error = Error::Eof;
-    } else if (numContentBytesDelivered_ > *numContentBytes_) {
-        error = Error::IO;
-    }
-    
-    if (handler_) {
-        handler_->OnRawStreamData(data, dataSize);
-    }
-    
-    if (error) {
-        OnStreamError(*error);
-    }
+void HttpGet::ProcessContentData(UniqueHandle<IoBufferInterface> &buffer) {
+    int size { buffer->Size() };
+    contentQueue_.Put(std::move(buffer));
+    runLoop_->RequestActivation(runLoopClientId_, false);
+    FinishContentEnqueue(size);
 }
 
 bool HttpGet::ProcessHeaderLine() {
@@ -187,7 +174,7 @@ bool HttpGet::ProcessHeaderLine() {
         if (tokens.size() == 2u) {
             if (tokens[0] == "Content-Length") {
                 int num;
-                if (StringTools::Parse(tokens[1], &num) && (num >= 0)) {
+                if (StringTools::Parse(tokens[1], num) && (num >= 0)) {
                     numContentBytes_ = num;
                     success = true;
                 }
@@ -203,6 +190,42 @@ bool HttpGet::ProcessHeaderLine() {
     line_.clear();
     
     return success;
+}
+
+void HttpGet::FinishContentEnqueue(int numBytes) {
+    int numRemaining = *numContentBytes_ - numContentBytesDelivered_;
+    
+    numContentBytesDelivered_ += numBytes;
+     
+    if (numBytes == numRemaining) {
+        RaiseError(Error::Eof);
+    } else if (numBytes > numRemaining) {
+        RaiseError(Error::IO);
+    }
+}
+
+void HttpGet::RaiseError(StreamInterface::Error error) {
+    if (!error_) {
+        if (error == Error::Eof) {
+            if (!numContentBytes_ || (numContentBytesDelivered_ != *numContentBytes_)) {
+                error = Error::IO;
+            }
+        }
+        
+        error_       = error;
+        signalError_ = true;
+        runLoop_->RequestActivation(runLoopClientId_, false);
+        
+        if (*error_ == Error::Eof) {
+            Log::Print(Log::Level::Debug, this, [&]{
+                return "EOF, bytes_received=" + to_string(numContentBytesDelivered_);
+            });
+        } else {
+            Log::Print(Log::Level::Error, this, [&]{
+                return "error after receiving " + to_string(numContentBytesDelivered_) + " bytes!";
+            });
+        }
+    }
 }
 
 }    // Namespace IO.

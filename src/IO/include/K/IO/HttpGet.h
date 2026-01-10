@@ -13,10 +13,14 @@
 #include <optional>
 #include <string>
 #include <K/Core/AsyncInStreamInterface.h>
+#include <K/Core/IoBufferQueue.h>
 #include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/RunLoop.h>
 
 namespace K {
+    namespace Core {
+        class IoBuffers;
+    }
     namespace IO {
         class ConnectionEndPoint;
         class ConnectionIO;
@@ -32,7 +36,7 @@ class HttpGet : public virtual Core::AsyncInStreamInterface,
                 private virtual Core::RawStreamHandlerInterface {
   public:
     HttpGet(const std::string &host, const std::string &resource, const std::shared_ptr<Core::RunLoop> &runLoop,
-            const std::shared_ptr<K::IO::ConnectionIO> &connectionIO);
+            const std::shared_ptr<IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
     HttpGet()                                = delete;
     HttpGet(const HttpGet &other)            = delete;
     HttpGet &operator=(const HttpGet &other) = delete;
@@ -46,11 +50,15 @@ class HttpGet : public virtual Core::AsyncInStreamInterface,
 
   private:
     void Activate(bool deepActivation) override;
-    void OnRawStreamData(const void *data, int dataSize) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
-    void OnHeaderData(const void *data, int dataSize);
-    void OnContentData(const void *data, int dataSize);
+    void ProcessHeaderData(Core::UniqueHandle<Core::IoBufferInterface> &buffer);
+    void ProcessContentData(Core::UniqueHandle<Core::IoBufferInterface> &buffer);
     bool ProcessHeaderLine();
+    void FinishContentEnqueue(int numBytes);
+    void RaiseError(Core::StreamInterface::Error error);
+    
+    std::shared_ptr<Core::IoBuffers> ioBuffers_;    // Thread-safe.
     
     const std::shared_ptr<Core::RunLoop>        runLoop_;
     int                                         runLoopClientId_;
@@ -61,6 +69,7 @@ class HttpGet : public virtual Core::AsyncInStreamInterface,
     int                                         numHeaderLines_;
     std::optional<int>                          numContentBytes_;
     int                                         numContentBytesDelivered_;
+    Core::IoBufferQueue                         contentQueue_;
     std::optional<Core::StreamInterface::Error> error_;
     bool                                        signalError_;
     

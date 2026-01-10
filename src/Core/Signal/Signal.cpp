@@ -19,7 +19,7 @@ namespace Core {
 
 Signal::Signal(const shared_ptr<RunLoop> &runLoop)
         : loopThreadState_(make_unique<LoopThreadState>(runLoop)) {
-    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(loopThreadState_.get());
+    loopThreadState_->runLoopClientId = loopThreadState_->runLoop->AddClient(*loopThreadState_);
     adapter_ = make_unique<Adapter>(loopThreadState_->runLoop, loopThreadState_->runLoopClientId);
 }
 
