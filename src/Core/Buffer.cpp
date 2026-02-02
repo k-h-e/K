@@ -117,6 +117,21 @@ void Buffer::Grow() {
     }
 }
 
+void *Buffer::ByteSpanStart() {
+    assert(bufferFill_ > 0);
+    return &buffer_.front();
+}
+
+const void *Buffer::ByteSpanStart() const {
+    assert(bufferFill_ > 0);
+    return &buffer_.front();
+}
+
+int Buffer::ByteSpanSize() const {
+    assert(bufferFill_ > 0);
+    return bufferFill_;
+}
+
 bool Buffer::ErrorState() const {
     return error_;
 }

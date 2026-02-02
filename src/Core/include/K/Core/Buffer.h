@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <vector>
 
+#include <K/Core/ByteSpanInterface.h>
 #include <K/Core/SeekableBlockingOutStreamInterface.h>
 #include <K/Core/SeekableBlockingInStreamInterface.h>
 
@@ -21,7 +22,12 @@ namespace Core {
 class NonBlockingInStreamInterface;
 
 //! Binary buffer, allowing iterative composition and readout.
-class Buffer : public virtual SeekableBlockingOutStreamInterface {
+/*!
+ *  \note The \ref ByteSpanInterface methods may only be called when the buffer is not empty. Always fill a buffer
+ *        before handing it out as a byte span.
+ */
+class Buffer : public virtual ByteSpanInterface,
+               public virtual SeekableBlockingOutStreamInterface {
   public:
     //! Allows for iterative buffer readout.
     /*!
@@ -119,7 +125,12 @@ class Buffer : public virtual SeekableBlockingOutStreamInterface {
      */
     Reader GetReader() const;
 
-    //SeekableBlockingOutStreamInterface...
+    // ByteSpanInterface...
+    void *ByteSpanStart() override;
+    const void *ByteSpanStart() const override;
+    int ByteSpanSize() const override;
+
+    // SeekableBlockingOutStreamInterface...
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;

@@ -10,6 +10,8 @@
 
 #include <cassert>
 
+#include <K/Core/BlockingInStreamInterface.h>
+#include <K/Core/ByteSpanInterface.h>
 #include <K/Core/StringTools.h>
 
 using std::string;
@@ -31,6 +33,28 @@ void WriteItem(BlockingOutStreamInterface &stream, const void *item, int itemSiz
             return;
         }
     }
+}
+
+bool Transfer(BlockingInStreamInterface &inStream, BlockingOutStreamInterface &outStream, int numBytes,
+              ByteSpanInterface &buffer) {
+    bool success      { true };
+    int  numRemaining { numBytes };
+    while ((numRemaining > 0) && success) {
+        int numToRead { numRemaining < buffer.ByteSpanSize() ? numRemaining : buffer.ByteSpanSize() };
+        int numRead { inStream.ReadBlocking(buffer.ByteSpanStart(), numToRead) };
+        if (!inStream.ErrorState() && (numRead > 0)) {
+            WriteItem(outStream, buffer.ByteSpanStart(), numRead);
+            if (outStream.ErrorState()) {
+                success = false;
+            } else {
+                numRemaining -= numRead;
+            }
+        } else {
+            success = false;
+        }
+    }
+   
+    return success;
 }
 
 BlockingOutStreamInterface &operator<<(BlockingOutStreamInterface &stream, const string &value) {

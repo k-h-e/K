@@ -48,7 +48,7 @@ class Utm : public K::Core::Interface {
     Utm &operator=(Utm &&other)      = default;
     ~Utm()                           = default;
 
-    bool FromUtm(double easting, double northing, int zoneNumber, char zoneLetter, GeoPosition *outPosition);
+    bool FromUtm(double easting, double northing, int zoneNumber, char zoneLetter, GeoPosition &outPosition);
 
   private:
     static const char *zoneLetters;

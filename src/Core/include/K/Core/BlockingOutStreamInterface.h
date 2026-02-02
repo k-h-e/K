@@ -12,6 +12,13 @@
 #include <K/Core/OutStreamInterface.h>
 
 namespace K {
+    namespace Core {
+        class BlockingInStreamInterface;
+        class ByteSpanInterface;
+    }
+}
+
+namespace K {
 namespace Core {
 
 //! Interface to blocking output streams.
@@ -28,6 +35,13 @@ class BlockingOutStreamInterface : public virtual OutStreamInterface {
 
 //! Writes a binary item of specified size (in bytes).
 void WriteItem(BlockingOutStreamInterface &stream, const void *item, int itemSize);
+
+//! Transfers the specified number of bytes.
+/*!
+ *  \return <c>false</c> in case of failure.
+ */
+bool Transfer(BlockingInStreamInterface &inStream, BlockingOutStreamInterface &outStream, int numBytes,
+              ByteSpanInterface &buffer);
 
 template<typename T>
 BlockingOutStreamInterface &operator<<(BlockingOutStreamInterface &stream, const T &value) {
