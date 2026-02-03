@@ -30,7 +30,7 @@ class NmeaParser : public virtual Core::RawStreamHandlerInterface {
     NmeaParser &operator=(NmeaParser &&other)      = delete;
     ~NmeaParser()                                  = default;
 
-    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
 
   private:

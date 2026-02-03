@@ -14,7 +14,7 @@
 
 namespace K {
     namespace Core {
-        class IoBufferInterface;
+        class ReadableByteSpanInterface;
     }
 }
 
@@ -29,7 +29,8 @@ class NonBlockingOutStreamInterface : public virtual OutStreamInterface {
      *  \return Null-handle in case all data was accepted for writing, or otherwise the data that could not be accepted
      *          at the current time.
      */
-    virtual UniqueHandle<IoBufferInterface> WriteNonBlocking(UniqueHandle<IoBufferInterface> buffer) = 0;
+    virtual UniqueHandle<ReadableByteSpanInterface> WriteNonBlocking(UniqueHandle<ReadableByteSpanInterface> buffer)
+                                                        = 0;
 };
 
 }    // Namespace Core.

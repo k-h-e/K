@@ -14,14 +14,16 @@
 #include <K/Core/AsyncInStreamInterface.h>
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/Buffer.h>
-#include <K/Core/IoBufferQueue.h>
+#include <K/Core/BufferQueue.h>
 #include <K/Core/RunLoop.h>
 #include <K/IO/Connection.h>
 
 namespace K {
     namespace Core {
-        class IoBuffers;
         class RawStreamHandlerInterface;
+    }
+    namespace IO {
+        class IoBuffers;
     }
 }
 
@@ -35,7 +37,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
                            private virtual Connection::HandlerInterface {
   public:
     ConnectionEndPoint(const std::shared_ptr<Connection> &connection, const std::shared_ptr<Core::RunLoop> &runLoop,
-                       const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+                       const std::shared_ptr<IoBuffers> &ioBuffers);
     ConnectionEndPoint()                                           = delete;
     ConnectionEndPoint(const ConnectionEndPoint &other)            = delete;
     ConnectionEndPoint &operator=(const ConnectionEndPoint &other) = delete;
@@ -60,14 +62,14 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     void PushOutgoing();
     void RequestActivation();
 
-    const std::shared_ptr<Core::IoBuffers> &ioBuffers_;    // Thread-safe.
+    const std::shared_ptr<IoBuffers> &ioBuffers_;    // Thread-safe.
 
     const std::shared_ptr<Connection>     connection_;
     const std::shared_ptr<Core::RunLoop>  runLoop_;
     int                                   runLoopClientId_;
     Core::RawStreamHandlerInterface       *handler_;
     Core::Buffer                          accumulationBuffer_;
-    Core::IoBufferQueue                   writeQueue_;
+    Core::BufferQueue                     writeQueue_;
     bool                                  readyRead_;
     bool                                  readyWrite_;
     bool                                  activationRequested_;

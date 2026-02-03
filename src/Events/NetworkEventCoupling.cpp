@@ -10,8 +10,8 @@
 
 #include <cstring>
 
-#include <K/Core/IoBufferInterface.h>
 #include <K/Core/Log.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/Timer.h>
 #include <K/IO/ConnectionEndPoint.h>
@@ -31,9 +31,8 @@ using std::to_string;
 using std::unique_ptr;
 using std::vector;
 using K::Core::Buffer;
-using K::Core::IoBufferInterface;
-using K::Core::IoBuffers;
 using K::Core::Log;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::RunLoop;
 using K::Core::SeekableBlockingInStreamInterface;
 using K::Core::StreamInterface;
@@ -42,6 +41,7 @@ using K::Core::Timers;
 using K::Core::Timer;
 using K::Core::UniqueHandle;
 using K::IO::ConnectionEndPoint;
+using K::IO::IoBuffers;
 using K::IO::KeepAliveParameters;
 using K::IO::TcpConnection;
 
@@ -123,8 +123,8 @@ bool NetworkEventCoupling::ErrorState() const {
 
 // ---
 
-void NetworkEventCoupling::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
-    readBuffer_.Append(buffer->Content(), buffer->Size());
+void NetworkEventCoupling::OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) {
+    readBuffer_.Append(buffer->ByteSpanStartReadOnly(), buffer->ByteSpanSize());
     uint8_t *bufferU8 { static_cast<uint8_t *>(readBuffer_.Data()) };
 
     uint32_t  chunkSizeU32;

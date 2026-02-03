@@ -41,6 +41,13 @@ class UniqueHandle : public HandleBase {
     UniqueHandle &operator=(UniqueHandle &&other)      = default;
     ~UniqueHandle()                                    = default;
 
+    template<class OtherT>
+    UniqueHandle(UniqueHandle<OtherT> &&other) : HandleBase{other} {
+        if (handlee_) {
+            handlee_ = static_cast<T *>(static_cast<OtherT *>(handlee_));
+        }
+    }  
+
     //! Returns <c>false</c> in case the handle is a null-handle, i.e. in case it is not (or no longer) handling a
     //! handlee resource.
     explicit operator bool() const {

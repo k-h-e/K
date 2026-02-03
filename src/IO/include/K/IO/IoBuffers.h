@@ -6,27 +6,27 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_IOBUFFERS_H_
-#define K_CORE_IOBUFFERS_H_
+#ifndef K_IO_IOBUFFERS_H_
+#define K_IO_IOBUFFERS_H_
 
 #include <mutex>
 #include <vector>
 #include <mutex>
 
-#include <K/Core/IoBufferInterface.h>
+#include <K/Core/BufferProviderInterface.h>
 #include <K/Core/ReferenceCountTrackerInterface.h>
 #include <K/Core/ReusableItems.h>
 #include <K/Core/UniqueHandle.h>
 
 namespace K {
-namespace Core {
+namespace IO {
 
 //! Provides re-usable buffers for temporary storage of binary data.
 /*!
  *  The class is thread-safe, i.e its public non-static member methods are. The handed out buffers may be passed to
  *  different, arbitrary threads.
  */
-class IoBuffers : public virtual Interface {
+class IoBuffers : public virtual Core::BufferProviderInterface {
   public:
     IoBuffers();
     IoBuffers(const IoBuffers &other)            = delete;
@@ -35,17 +35,11 @@ class IoBuffers : public virtual Interface {
     IoBuffers &operator=(IoBuffers &&other)      = delete;
     ~IoBuffers()                                 = default;
 
-    //! Provides an I/O buffer of the size specified, or a smaller one in case the requested size exceeds the maximum
-    //! supported buffer size.
-    /*!
-     *  The provided buffer remains exlusively allocated to the owner of the passed out unique handle for as long as
-     *  that handle - or a potential decendant - lives.
-     * 
-     *  \return I/O buffer.
-     */ 
-    UniqueHandle<IoBufferInterface> Get(int size);
     //! Logs current statistics.
     void LogStatistics();
+
+    // BufferProviderInterface...
+    Core::UniqueHandle<Core::ByteSpanInterface> Get(int size);
 
   private:
     struct State;
@@ -79,18 +73,18 @@ class IoBuffers : public virtual Interface {
       private:
         void AddBucket();
 
-        State                     &state_;
-        int                       bufferSize_;
-        int                       buffersPerBucket_;
-        int                       alignment_;
-        int                       spacing_;
-        ReusableItems<BufferInfo> bufferInfos_;
-        std::vector<IoBuffer *>   bufferBuckets_;
-        std::vector<uint8_t *>    memoryBuckets_;
-        int                       numBuffers_;
-        int                       numBuffersInUse_;
-        int                       numBytes_;
-        int                       numBytesInUse_;
+        State                           &state_;
+        int                             bufferSize_;
+        int                             buffersPerBucket_;
+        int                             alignment_;
+        int                             spacing_;
+        Core::ReusableItems<BufferInfo> bufferInfos_;
+        std::vector<IoBuffer *>         bufferBuckets_;
+        std::vector<uint8_t *>          memoryBuckets_;
+        int                             numBuffers_;
+        int                             numBuffersInUse_;
+        int                             numBytes_;
+        int                             numBytesInUse_;
     };
 
     struct State : public virtual Interface {
@@ -114,7 +108,7 @@ class IoBuffers : public virtual Interface {
     std::shared_ptr<State> state_;
 };
 
-}    // Namespace Core.
+}    // Namespace IO.
 }    // Namespace K.
 
-#endif    // K_CORE_IOBUFFERS_H_
+#endif    // K_IO_IOBUFFERS_H_

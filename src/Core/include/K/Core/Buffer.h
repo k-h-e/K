@@ -126,9 +126,9 @@ class Buffer : public virtual ByteSpanInterface,
     Reader GetReader() const;
 
     // ByteSpanInterface...
-    void *ByteSpanStart() override;
-    const void *ByteSpanStart() const override;
+    const void *ByteSpanStartReadOnly() override;
     int ByteSpanSize() const override;
+    void *ByteSpanStart() override;
 
     // SeekableBlockingOutStreamInterface...
     bool ErrorState() const override;

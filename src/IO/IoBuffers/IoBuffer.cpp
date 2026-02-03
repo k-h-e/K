@@ -18,7 +18,7 @@ using std::to_string;
 using std::unique_lock;
 
 namespace K {
-namespace Core {
+namespace IO {
 
 IoBuffers::Group::IoBuffer::IoBuffer(uint8_t *memory, IoBuffers::Group *group, int infoId)
         : group_{group},
@@ -65,14 +65,19 @@ void IoBuffers::Group::IoBuffer::SetSize(int size) {
     group_->state_.numBytesInUse += static_cast<uintptr_t>(size_); 
 }
 
-void *IoBuffers::Group::IoBuffer::Content()  {
+const void *IoBuffers::Group::IoBuffer::ByteSpanStartReadOnly()  {
     assert(memory_ != nullptr);
     return memory_;
 }
 
-int IoBuffers::Group::IoBuffer::Size() const {
+int IoBuffers::Group::IoBuffer::ByteSpanSize() const {
     assert(size_ > 0);
     return size_;
+}
+
+void *IoBuffers::Group::IoBuffer::ByteSpanStart()  {
+    assert(memory_ != nullptr);
+    return memory_;
 }
 
 void IoBuffers::Group::IoBuffer::OnReferenceAdded() {
@@ -94,5 +99,5 @@ void IoBuffers::Group::IoBuffer::OnReferenceRemoved() {
     }
 }    // ................................................................................................................
 
-}    // Namespace Core.
+}    // Namespace IO.
 }    // Namespace K.

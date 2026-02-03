@@ -10,6 +10,7 @@
 #define K_IO_DEPRECATED_UARTCONNECTION_H_
 
 #include <memory>
+
 #include <K/IO/Uart.h>
 #include <K/IO/Deprecated/BufferedConnection.h>
 
@@ -29,7 +30,7 @@ class UartConnection : public BufferedConnection {
     //! Establishes a UART (serial) connection via the specified serial device.
     UartConnection(
         const std::string &deviceFileName, Uart::BaudRate baudRate,
-        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+        const std::shared_ptr<K::IO::ConnectionIO> &connectionIO, const std::shared_ptr<IoBuffers> &ioBuffers);
     UartConnection(const UartConnection &other)             = delete;
     UartConnection &operator=(const UartConnection &other)  = delete;
     UartConnection(const UartConnection &&other)            = delete;

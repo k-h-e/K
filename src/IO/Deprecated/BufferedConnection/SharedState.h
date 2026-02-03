@@ -13,14 +13,16 @@
 #include <mutex>
 #include <condition_variable>
 
-#include <K/Core/IoBufferQueue.h>
+#include <K/Core/BufferQueue.h>
 #include <K/IO/ConnectionIO.h>
 #include <K/IO/Deprecated/BufferedConnection.h>
 
 namespace K {
     namespace Core {
-        class IoBuffers;
         class RawStreamHandlerInterface;
+    }
+    namespace IO {
+        class IoBuffers;
     }
 }
 
@@ -32,7 +34,7 @@ namespace Deprecated {
 class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInterface {
   public:
     SharedState(int bufferSizeThreshold, const std::shared_ptr<ConnectionIO> &connectionIO,
-                const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+                const std::shared_ptr<IoBuffers> &ioBuffers);
     SharedState(const SharedState &other)             = delete;
     SharedState &operator=(const SharedState &other)  = delete;
     SharedState(const SharedState &&other)            = delete;
@@ -48,9 +50,9 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
     std::optional<StreamInterface::Error> StreamError();
 
     // ConnectionIO::ClientInterface...
-    bool OnDataRead(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
-    Core::UniqueHandle<Core::IoBufferInterface> OnReadyWrite() override;
-    void OnIncompleteWrite(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    bool OnDataRead(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
+    Core::UniqueHandle<Core::ReadableByteSpanInterface> OnReadyWrite() override;
+    void OnIncompleteWrite(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
     void OnCustomCall() override;
     void OnEof() override;
     void OnError() override;
@@ -63,10 +65,10 @@ class BufferedConnection::SharedState : public virtual ConnectionIO::ClientInter
 
     std::condition_variable                          writeCanContinue_;
     std::shared_ptr<ConnectionIO>                    connectionIO_;
-    std::shared_ptr<Core::IoBuffers>                 ioBuffers_;
+    std::shared_ptr<IoBuffers>                       ioBuffers_;
     std::shared_ptr<Core::RawStreamHandlerInterface> handler_;
     bool                                             handlerCalledInitially_;
-    Core::IoBufferQueue                              writeQueue_;
+    Core::BufferQueue                                writeQueue_;
     int                                              bufferSizeThreshold_;
     bool                                             canNotWrite_;
     std::optional<StreamInterface::Error>            error_;

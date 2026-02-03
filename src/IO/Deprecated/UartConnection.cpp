@@ -12,8 +12,9 @@
 
 using std::shared_ptr;
 using std::string;
-using K::Core::IoBuffers;
+
 using K::IO::ConnectionIO;
+using K::IO::IoBuffers;
 
 namespace K {
 namespace IO {

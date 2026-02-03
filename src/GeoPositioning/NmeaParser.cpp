@@ -9,8 +9,8 @@
 #include <K/GeoPositioning/NmeaParser.h>
 
 #include <cassert>
-#include <K/Core/IoBufferInterface.h>
 #include <K/Core/Log.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 #include <K/Core/StringTools.h>
 #include <K/GeoPositioning/NmeaMessageHandlerInterface.h>
 
@@ -18,8 +18,8 @@ using std::shared_ptr;
 using std::string;
 using std::to_string;
 using std::vector;
-using K::Core::IoBufferInterface;
 using K::Core::Log;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
 using K::Core::UniqueHandle;
@@ -36,10 +36,10 @@ NmeaParser::NmeaParser(const shared_ptr<NmeaMessageHandlerInterface> &handler)
     // Nop.
 }
 
-void NmeaParser::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
+void NmeaParser::OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) {
     if (!error_) {
-        const uint8_t *dataPtr = static_cast<const uint8_t *>(buffer->Content());
-        for (int i = 0; i < buffer->Size(); ++i) {
+        const uint8_t *dataPtr = static_cast<const uint8_t *>(buffer->ByteSpanStartReadOnly());
+        for (int i = 0; i < buffer->ByteSpanSize(); ++i) {
             char character = static_cast<char>(*dataPtr++);
 
             if (character == '$') {

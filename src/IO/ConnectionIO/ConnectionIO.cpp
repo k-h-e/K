@@ -20,8 +20,8 @@
 using std::shared_ptr;
 using std::make_shared;
 using K::Core::ThreadPool;
-using K::Core::IoBuffers;
 using K::Core::Log;
+using K::IO::IoBuffers;
 
 namespace K {
 namespace IO {

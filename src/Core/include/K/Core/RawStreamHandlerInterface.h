@@ -14,7 +14,7 @@
 
 namespace K {
     namespace Core {
-        class IoBufferInterface;
+        class ReadableByteSpanInterface;
     }
 }
 
@@ -25,7 +25,7 @@ namespace Core {
 class RawStreamHandlerInterface : public virtual StreamHandlerInterface {
   public:
     //! Hands over another portion of raw stream data to the handler.
-    virtual void OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) = 0;
+    virtual void OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) = 0;
 };
 
 }    // Namespace Core.

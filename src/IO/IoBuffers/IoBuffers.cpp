@@ -6,7 +6,7 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include <K/Core/IoBuffers.h>
+#include <K/IO/IoBuffers.h>
 
 #include <cassert>
 #include <mutex>
@@ -21,8 +21,12 @@ using std::mutex;
 using std::to_string;
 using std::unique_lock;
 
+using K::Core::ByteSpanInterface;
+using K::Core::Log;
+using K::Core::UniqueHandle;
+
 namespace K {
-namespace Core {
+namespace IO {
 
 IoBuffers::IoBuffers()
         : state_{make_shared<State>()} {
@@ -37,7 +41,7 @@ IoBuffers::IoBuffers()
     state_->groups.push_back(make_unique<Group>(4096,  2, *state_));
 }
 
-UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
+UniqueHandle<ByteSpanInterface> IoBuffers::Get(int size) {
     assert(size > 0);
     Group::IoBuffer *buffer;
     {
@@ -47,7 +51,7 @@ UniqueHandle<IoBufferInterface> IoBuffers::Get(int size) {
         buffer->SetSize(size <= group.BufferSize() ? size : group.BufferSize());
     }    // ............................................................................................................
 
-    return UniqueHandle<IoBufferInterface>{*buffer, *buffer, state_};
+    return UniqueHandle<ByteSpanInterface>{*buffer, *buffer, state_};
 }
 
 void IoBuffers::LogStatistics() {
@@ -73,5 +77,5 @@ IoBuffers::Group &IoBuffers::SelectGroup(int size) {
     return *(state_->groups.back());
 }
 
-}    // Namespace Core.
+}    // Namespace IO.
 }    // Namespace K.

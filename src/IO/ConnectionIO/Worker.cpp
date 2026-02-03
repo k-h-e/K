@@ -13,8 +13,9 @@
 
 #include <cstring>
 
-#include <K/Core/IoBuffers.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 #include <K/Core/Log.h>
+#include <K/IO/IoBuffers.h>
 #include <K/IO/IOTools.h>
 
 #include "SharedState.h"
@@ -23,8 +24,8 @@ using std::memcpy;
 using std::shared_ptr;
 using std::size_t;
 using std::to_string;
-using K::Core::IoBuffers;
 using K::Core::Log;
+using K::IO::IoBuffers;
 using K::IO::IOTools;
 
 namespace K {
@@ -304,8 +305,8 @@ void ConnectionIO::Worker::Write(ClientInfo *clientInfo) {
             }
             return;
         } else {
-            const uint8_t *data   { static_cast<uint8_t *>(buffer->Content()) };
-            int           numLeft { buffer->Size() };
+            const uint8_t *data   { static_cast<const uint8_t *>(buffer->ByteSpanStartReadOnly()) };
+            int           numLeft { buffer->ByteSpanSize() };
             while (numLeft) {
                 int numWritten { static_cast<int>(write(clientInfo->fileDescriptor, data, numLeft)) };
                 if (numWritten > 0) {

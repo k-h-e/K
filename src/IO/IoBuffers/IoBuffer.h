@@ -6,16 +6,17 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_BUFFERS_GROUP_IOBUFFER_H_
-#define K_CORE_BUFFERS_GROUP_IOBUFFER_H_
+#ifndef K_IO_BUFFERS_GROUP_IOBUFFER_H_
+#define K_IO_BUFFERS_GROUP_IOBUFFER_H_
 
-#include <K/Core/IoBuffers.h>
+#include <K/Core/ByteSpanInterface.h>
+#include <K/IO/IoBuffers.h>
 
 namespace K {
-namespace Core {
+namespace IO {
 
-class IoBuffers::Group::IoBuffer : public virtual IoBufferInterface,
-                                   public virtual ReferenceCountTrackerInterface {
+class IoBuffers::Group::IoBuffer : public virtual Core::ByteSpanInterface,
+                                   public virtual Core::ReferenceCountTrackerInterface {
   public:
     IoBuffer(uint8_t *memory, Group *group, int infoId);
     IoBuffer();
@@ -27,9 +28,10 @@ class IoBuffers::Group::IoBuffer : public virtual IoBufferInterface,
 
     void SetSize(int size);
 
-    // IoBufferInterface...
-    void *Content() override;
-    virtual int Size() const override;
+    // ByteSpanInterface...
+    const void *ByteSpanStartReadOnly() override;
+    virtual int ByteSpanSize() const override;
+    void *ByteSpanStart() override;
 
     // ReferenceCountTrackerInterface...
     void OnReferenceAdded() override;
@@ -42,7 +44,7 @@ class IoBuffers::Group::IoBuffer : public virtual IoBufferInterface,
     int     size_;
 };
 
-}    // Namespace Core.
+}    // Namespace IO.
 }    // Namespace K.
 
-#endif    // K_CORE_BUFFERS_GROUP_IOBUFFER_H_
+#endif    // K_IO_BUFFERS_GROUP_IOBUFFER_H_

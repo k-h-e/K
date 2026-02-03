@@ -20,11 +20,11 @@ using std::shared_ptr;
 using std::make_shared;
 using std::optional;
 using std::to_string;
-using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
+using K::IO::IoBuffers;
 
 namespace K {
 namespace IO {

@@ -11,8 +11,8 @@
 #include <cassert>
 #include <cstring>
 
-#include <K/Core/IoBufferInterface.h>
 #include <K/Core/Log.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 #include <K/Core/ResultAcceptor.h>
 #include <K/Core/RunLoop.h>
 #include <K/IO/ConnectionIO.h>
@@ -28,8 +28,8 @@ using std::optional;
 using std::shared_ptr;
 using std::size_t;
 using std::to_string;
-using K::Core::IoBufferInterface;
 using K::Core::Log;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::ResultAcceptor;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
@@ -116,13 +116,13 @@ void Connection::SetCloseResultAcceptor(const shared_ptr<ResultAcceptor> &result
     closeResultAcceptor_ = resultAcceptor;
 }
 
-UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
-    UniqueHandle<IoBufferInterface> buffer;
-    int                             numRead { 0 };
+UniqueHandle<ReadableByteSpanInterface> Connection::ReadNonBlocking() {
+    UniqueHandle<ReadableByteSpanInterface> buffer;
+    int                                     numRead { 0 };
     if (!ErrorState()) {
         buffer = loopThreadState_->readQueue.Get();
         if (buffer) {
-            numRead = buffer->Size();
+            numRead = buffer->ByteSpanSize();
             loopThreadState_->RequestActivation(true);
         } else {
             if (loopThreadState_->eof) {
@@ -137,9 +137,9 @@ UniqueHandle<IoBufferInterface> Connection::ReadNonBlocking() {
     return buffer;
 }
 
-UniqueHandle<IoBufferInterface> Connection::WriteNonBlocking(UniqueHandle<IoBufferInterface> buffer) {
-    UniqueHandle<IoBufferInterface> unaccepted;                       // Preset results for success.
-    int                             numWritten { buffer->Size() };    // Preset results for success.
+UniqueHandle<ReadableByteSpanInterface> Connection::WriteNonBlocking(UniqueHandle<ReadableByteSpanInterface> buffer) {
+    UniqueHandle<ReadableByteSpanInterface> unaccepted;                               // Preset results for success.
+    int                                     numWritten { buffer->ByteSpanSize() };    // Preset results for success.
     if (!ErrorState()) {
         if (loopThreadState_->writeQueue.PayloadSize() < static_cast<size_t>(loopThreadState_->bufferSizeConstraint)) {
             loopThreadState_->writeQueue.Put(std::move(buffer));

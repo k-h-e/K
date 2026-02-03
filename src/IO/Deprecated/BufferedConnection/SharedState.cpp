@@ -12,9 +12,9 @@
 #include <cassert>
 #include <cstring>
 
-#include <K/Core/IoBuffers.h>
 #include <K/Core/Log.h>
 #include <K/IO/ConnectionIO.h>
+#include <K/IO/IoBuffers.h>
 
 using std::memcpy;
 using std::mutex;
@@ -24,12 +24,12 @@ using std::size_t;
 using std::to_string;
 using std::unique_lock;
 
-using K::Core::IoBufferInterface;
-using K::Core::IoBuffers;
 using K::Core::Log;
 using K::Core::RawStreamHandlerInterface;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::StreamInterface;
 using K::Core::UniqueHandle;
+using K::IO::IoBuffers;
 
 namespace K {
 namespace IO {
@@ -106,7 +106,7 @@ optional<StreamInterface::Error> BufferedConnection::SharedState::StreamError() 
 
 // ----
 
-bool BufferedConnection::SharedState::OnDataRead(UniqueHandle<IoBufferInterface> buffer) {
+bool BufferedConnection::SharedState::OnDataRead(UniqueHandle<ReadableByteSpanInterface> buffer) {
     unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     if (!error_) {
@@ -119,7 +119,7 @@ bool BufferedConnection::SharedState::OnDataRead(UniqueHandle<IoBufferInterface>
     return false;
 }    // ......................................................................................... critical section, end.
 
-UniqueHandle<IoBufferInterface> BufferedConnection::SharedState::OnReadyWrite() {
+UniqueHandle<ReadableByteSpanInterface> BufferedConnection::SharedState::OnReadyWrite() {
     unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     auto buffer = writeQueue_.Get();
@@ -131,7 +131,7 @@ UniqueHandle<IoBufferInterface> BufferedConnection::SharedState::OnReadyWrite() 
     return buffer;
 }    // ......................................................................................... critical section, end.
 
-void BufferedConnection::SharedState::OnIncompleteWrite(UniqueHandle<IoBufferInterface> buffer) {
+void BufferedConnection::SharedState::OnIncompleteWrite(UniqueHandle<ReadableByteSpanInterface> buffer) {
     unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     EnsureHandlerCalledInitially();
     writeQueue_.PutBack(std::move(buffer));

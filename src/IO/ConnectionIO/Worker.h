@@ -15,13 +15,13 @@
 #include <unordered_set>
 
 #include <K/Core/ActionInterface.h>
-#include <K/Core/IoBufferQueue.h>
+#include <K/Core/BufferQueue.h>
 #include <K/IO/ConnectionIO.h>
 
 #include "WorkInfo.h"
 
 namespace K {
-    namespace Core {
+    namespace IO {
         class IoBuffers;
     }
 }
@@ -32,7 +32,7 @@ namespace IO {
 //! Worker for the central I/O mechanism.
 class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
   public:
-    Worker(int pipe, std::shared_ptr<SharedState> sharedState, const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+    Worker(int pipe, std::shared_ptr<SharedState> sharedState, const std::shared_ptr<IoBuffers> &ioBuffers);
     Worker(const Worker &other)            = delete;
     Worker &operator=(const Worker &other) = delete;
     Worker(Worker &&other)                 = delete;
@@ -88,15 +88,15 @@ class ConnectionIO::Worker : public virtual K::Core::ActionInterface {
     void SetClientError(ClientInfo *clientInfo);
     void ScheduleClientDeregistration(const ClientInfo &clientInfo);
 
-    std::shared_ptr<SharedState>     sharedState_;    // Thread-safe.
-    std::shared_ptr<Core::IoBuffers> ioBuffers_;      // Thread-safe.
+    std::shared_ptr<SharedState> sharedState_;    // Thread-safe.
+    std::shared_ptr<IoBuffers>   ioBuffers_;      // Thread-safe.
 
     int                                               pipe_;
     fd_set                                            readSet_;
     fd_set                                            writeSet_;
     int                                               highestFileDescriptor_;
     uint8_t                                           buffer_[bufferSize];
-    Core::IoBufferQueue                               workingQueue_;
+    Core::BufferQueue                                 workingQueue_;
     WorkInfo                                          workInfo_;
     std::unordered_map<ClientInterface *, ClientInfo> clients_;
     std::vector<ClientInterface *>                    clientsToUnregister_;

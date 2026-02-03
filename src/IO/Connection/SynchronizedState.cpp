@@ -16,8 +16,8 @@ using std::mutex;
 using std::shared_ptr;
 using std::size_t;
 using std::unique_lock;
-using K::Core::IoBufferInterface;
 using K::Core::Log;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::RunLoop;
 using K::Core::UniqueHandle;
 
@@ -72,7 +72,7 @@ void Connection::SynchronizedState::Sync(LoopThreadState *loopThreadState) {
     }
 }    // ......................................................................................... critical section, end.
 
-bool Connection::SynchronizedState::OnDataRead(UniqueHandle<IoBufferInterface> buffer) {
+bool Connection::SynchronizedState::OnDataRead(UniqueHandle<ReadableByteSpanInterface> buffer) {
     unique_lock<mutex> critical{lock_};    // Critical section .........................................................
     if (!error_ && !eof_) {
         readQueue_.Put(std::move(buffer));
@@ -88,9 +88,9 @@ bool Connection::SynchronizedState::OnDataRead(UniqueHandle<IoBufferInterface> b
     }
 }    // ......................................................................................... critical section, end.
 
-UniqueHandle<IoBufferInterface> Connection::SynchronizedState::OnReadyWrite() {
+UniqueHandle<ReadableByteSpanInterface> Connection::SynchronizedState::OnReadyWrite() {
     unique_lock<mutex> critical{lock_};    // Critical section .........................................................
-    UniqueHandle<IoBufferInterface> buffer;
+    UniqueHandle<ReadableByteSpanInterface> buffer;
     if (!error_) {
         buffer = writeQueue_.Get();
         if (buffer) {
@@ -102,7 +102,7 @@ UniqueHandle<IoBufferInterface> Connection::SynchronizedState::OnReadyWrite() {
     return buffer;
 }    // ......................................................................................... critical section, end.
 
-void Connection::SynchronizedState::OnIncompleteWrite(UniqueHandle<IoBufferInterface> buffer) {
+void Connection::SynchronizedState::OnIncompleteWrite(UniqueHandle<ReadableByteSpanInterface> buffer) {
     unique_lock<mutex> critical{lock_};    // Critical section .........................................................
     writeQueue_.PutBack(std::move(buffer));
 }    // ......................................................................................... critical section, end.

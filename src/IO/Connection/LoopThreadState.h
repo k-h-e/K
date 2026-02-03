@@ -9,7 +9,7 @@
 #ifndef K_IO_CONNECTION_LOOPTHREADSTATE_H_
 #define K_IO_CONNECTION_LOOPTHREADSTATE_H_
 
-#include <K/Core/IoBufferQueue.h>
+#include <K/Core/BufferQueue.h>
 #include <K/Core/RunLoop.h>
 #include <K/IO/Connection.h>
 
@@ -27,8 +27,8 @@ struct Connection::LoopThreadState : public virtual Core::RunLoop::ClientInterfa
     int                                      runLoopClientId;
 
     Connection::HandlerInterface             *handler;
-    Core::IoBufferQueue                      readQueue;
-    Core::IoBufferQueue                      writeQueue;
+    Core::BufferQueue                        readQueue;
+    Core::BufferQueue                        writeQueue;
     std::optional<Error>                     error;
     bool                                     eof;
     bool                                     clientReadPaused;

@@ -9,20 +9,16 @@
 #ifndef K_CORE_BYTESPANINTERFACE_H_
 #define K_CORE_BYTESPANINTERFACE_H_
 
-#include <K/Core/Interface.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 
 namespace K {
 namespace Core {
 
 //! Interface to entities giving access to a span of bytes.
-class ByteSpanInterface : public virtual Interface {
+class ByteSpanInterface : public virtual ReadableByteSpanInterface {
   public:
     //! Grants read/write access to the byte span.
     virtual void *ByteSpanStart() = 0;
-    //! Grants read access to the byte span.
-    virtual const void *ByteSpanStart() const = 0;
-    //! Tells the size in bytes of the byte span, which is guaranteed to be positive.
-    virtual int ByteSpanSize() const = 0;
 };
 
 }    // Namespace Core.

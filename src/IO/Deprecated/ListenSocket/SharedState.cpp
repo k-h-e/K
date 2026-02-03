@@ -13,6 +13,7 @@
 #include <K/IO/IOTools.h>
 #include <K/IO/NetworkTools.h>
 #include <K/IO/Deprecated/TcpConnection.h>
+
 #include "Acceptor.h"
 
 using std::make_shared;
@@ -22,9 +23,10 @@ using std::optional;
 using std::shared_ptr;
 using std::to_string;
 using std::unique_lock;
-using K::Core::IoBuffers;
+
 using K::Core::Log;
 using K::Core::ThreadPool;
+using K::IO::IoBuffers;
 using K::IO::IOTools;
 using K::IO::NetworkTools;
 using K::IO::Deprecated::TcpConnection;

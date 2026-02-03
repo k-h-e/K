@@ -16,9 +16,11 @@
 
 namespace K {
     namespace Core {
-        class IoBufferInterface;
-        class IoBuffers;
+        class ReadableByteSpanInterface;
         class ThreadPool;
+    }
+    namespace IO {
+        class IoBuffers;
     }
 }
 
@@ -39,19 +41,19 @@ class ConnectionIO : public virtual K::Core::Interface {
          *  \return <c>false</c> in case the client asks to pause reading. The client must however always accept more
          *          read data passed via OnDataRead(). 
          */
-        virtual bool OnDataRead(Core::UniqueHandle<Core::IoBufferInterface> buffer) = 0;
+        virtual bool OnDataRead(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) = 0;
         //! Asks the client to provide data to write.
         /*!
          *  \return Data to write, or null-handle in case the client does currently not have any more data to write.
          */
-        virtual Core::UniqueHandle<Core::IoBufferInterface> OnReadyWrite() = 0;
-        virtual void OnIncompleteWrite(Core::UniqueHandle<Core::IoBufferInterface> buffer) = 0;
+        virtual Core::UniqueHandle<Core::ReadableByteSpanInterface> OnReadyWrite() = 0;
+        virtual void OnIncompleteWrite(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) = 0;
         virtual void OnCustomCall() = 0;
         virtual void OnEof() = 0;
         virtual void OnError() = 0;
     };
 
-    ConnectionIO(const std::shared_ptr<Core::IoBuffers> &ioBuffers,
+    ConnectionIO(const std::shared_ptr<IoBuffers>        &ioBuffers,
                  const std::shared_ptr<Core::ThreadPool> &threadPool);
     ~ConnectionIO();
     ConnectionIO(const ConnectionIO &other)            = delete;

@@ -6,7 +6,7 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#include <K/Core/IoBuffers.h>
+#include <K/IO/IoBuffers.h>
 
 #include <cassert>
 
@@ -16,8 +16,10 @@
 
 using std::to_string;
 
+using K::Core::Log;
+
 namespace K {
-namespace Core {
+namespace IO {
 
 IoBuffers::Group::Group(int bufferSize, int buffersPerBucket, IoBuffers::State &state)
         : state_{state},
@@ -126,5 +128,5 @@ void IoBuffers::Group::AddBucket() {
     });
 }
 
-}    // Namespace Core.
+}    // Namespace IO.
 }    // Namespace K.

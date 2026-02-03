@@ -68,9 +68,9 @@ class Connection : public virtual Core::NonBlockingIOStreamInterface {
 
     // NonBlockingIOStreamInterface...
     void SetCloseResultAcceptor(const std::shared_ptr<Core::ResultAcceptor> &resultAcceptor) override;
-    Core::UniqueHandle<Core::IoBufferInterface> ReadNonBlocking() override;
-    Core::UniqueHandle<Core::IoBufferInterface> WriteNonBlocking(Core::UniqueHandle<Core::IoBufferInterface> buffer)
-        override;
+    Core::UniqueHandle<Core::ReadableByteSpanInterface> ReadNonBlocking() override;
+    Core::UniqueHandle<Core::ReadableByteSpanInterface> WriteNonBlocking(
+        Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
     bool ErrorState() const override;
     std::optional<Error> StreamError() const override;
 

@@ -6,32 +6,36 @@
 //                                                                                                        //     //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////  //        //
 
-#ifndef K_CORE_NONBLOCKINGINSTREAMINTERFACE_H_
-#define K_CORE_NONBLOCKINGINSTREAMINTERFACE_H_
+#ifndef K_CORE_BUFFERPROVIDERINTERFACE_H_
+#define K_CORE_BUFFERPROVIDERINTERFACE_H_
 
+#include <K/Core/Interface.h>
 #include <K/Core/UniqueHandle.h>
-#include <K/Core/InStreamInterface.h>
 
 namespace K {
     namespace Core {
-        class ReadableByteSpanInterface;
+        class ByteSpanInterface;
     }
 }
 
 namespace K {
 namespace Core {
 
-//! Interface to nonblocking input streams.
-class NonBlockingInStreamInterface : public virtual InStreamInterface {
+//! Interface to entities capable of providing buffers.
+class BufferProviderInterface : public virtual Interface {
   public:
-    //! Reads data with nonblocking semantics.
+    //! Provides an I/O buffer of the size specified, or a smaller one in case the requested size exceeds the maximum
+    //! supported buffer size.
     /*!
-     *  \return Buffer with read data, or a null-handle in case no data was available for reading.
-     */
-    virtual UniqueHandle<ReadableByteSpanInterface> ReadNonBlocking() = 0;
+     *  The provided buffer remains exlusively allocated to the owner of the passed out unique handle for as long as
+     *  that handle - or a potential decendant - lives.
+     * 
+     *  \return buffer.
+     */ 
+    virtual UniqueHandle<ByteSpanInterface> Get(int size) = 0;
 };
 
 }    // Namespace Core.
 }    // Namespace K.
 
-#endif    // K_CORE_NONBLOCKINGINSTREAMINTERFACE_H_
+#endif    // K_CORE_BUFFERPROVIDERINTERFACE_H_

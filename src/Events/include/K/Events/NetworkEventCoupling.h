@@ -20,11 +20,11 @@
 
 namespace K {
     namespace Core {
-        class IoBuffers;
         class Timers;
     }
     namespace IO {
         class ConnectionEndPoint;
+        class IoBuffers;
         class KeepAliveParameters;
         class TcpConnection;
     }
@@ -56,7 +56,7 @@ class NetworkEventCoupling : public virtual Core::ErrorStateInterface,
         const std::shared_ptr<IO::TcpConnection> &tcpConnection, const std::string &protocolVersion,
         const IO::KeepAliveParameters &keepAliveParameters, const std::shared_ptr<EventHub> &hub,
         const std::shared_ptr<Event> &connectedEvent, const std::shared_ptr<Event> &disconnectedEvent,
-        const std::shared_ptr<Core::RunLoop> &runLoop, const std::shared_ptr<Core::IoBuffers> &ioBuffers,
+        const std::shared_ptr<Core::RunLoop> &runLoop, const std::shared_ptr<IO::IoBuffers> &ioBuffers,
         const std::shared_ptr<Core::Timers> &timers);
     NetworkEventCoupling()                                             = delete;
     NetworkEventCoupling(const NetworkEventCoupling &other)            = delete;
@@ -95,7 +95,7 @@ class NetworkEventCoupling : public virtual Core::ErrorStateInterface,
                        AcceptingChunkData
     };
 
-    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
     void OnTimer() override;
     void OnEventsAvailable() override;

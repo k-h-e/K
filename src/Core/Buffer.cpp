@@ -11,9 +11,9 @@
 #include <cassert>
 #include <cstring>
 
-#include <K/Core/IoBufferInterface.h>
 #include <K/Core/NonBlockingInStreamInterface.h>
 #include <K/Core/NumberTools.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 #include <K/Core/ResultAcceptor.h>
 
 using std::memcpy;
@@ -97,8 +97,8 @@ int Buffer::Append(NonBlockingInStreamInterface &stream) {
     if (!error_) {
         auto buffer = stream.ReadNonBlocking();
         if (buffer) {
-            Append(buffer->Content(), buffer->Size());
-            return buffer->Size();
+            Append(buffer->ByteSpanStartReadOnly(), buffer->ByteSpanSize());
+            return buffer->ByteSpanSize();
         }
     }
     
@@ -117,12 +117,7 @@ void Buffer::Grow() {
     }
 }
 
-void *Buffer::ByteSpanStart() {
-    assert(bufferFill_ > 0);
-    return &buffer_.front();
-}
-
-const void *Buffer::ByteSpanStart() const {
+const void *Buffer::ByteSpanStartReadOnly() {
     assert(bufferFill_ > 0);
     return &buffer_.front();
 }
@@ -130,6 +125,11 @@ const void *Buffer::ByteSpanStart() const {
 int Buffer::ByteSpanSize() const {
     assert(bufferFill_ > 0);
     return bufferFill_;
+}
+
+void *Buffer::ByteSpanStart() {
+    assert(bufferFill_ > 0);
+    return &buffer_.front();
 }
 
 bool Buffer::ErrorState() const {

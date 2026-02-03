@@ -15,11 +15,11 @@
 
 namespace K {
     namespace Core {
-        class IoBuffers;
         class RawStreamHandlerInterface;
     }
     namespace IO {
         class ConnectionIO;
+        class IoBuffers;
     }
 }
 
@@ -41,7 +41,7 @@ class BufferedConnection : public virtual Core::Deprecated::ConnectionStreamInte
      */
     BufferedConnection(
         std::optional<int> fd, int bufferSizeThreshold, const std::shared_ptr<K::IO::ConnectionIO> &connectionIO,
-        const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+        const std::shared_ptr<IoBuffers> &ioBuffers);
     BufferedConnection(const BufferedConnection &other)             = delete;
     BufferedConnection &operator=(const BufferedConnection &other)  = delete;
     BufferedConnection(const BufferedConnection &&other)            = delete;

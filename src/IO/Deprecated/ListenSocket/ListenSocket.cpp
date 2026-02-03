@@ -12,8 +12,9 @@
 
 using std::make_shared;
 using std::shared_ptr;
-using K::Core::IoBuffers;
+
 using K::Core::ThreadPool;
+using K::IO::IoBuffers;
 using K::IO::Socket;
 
 namespace K {

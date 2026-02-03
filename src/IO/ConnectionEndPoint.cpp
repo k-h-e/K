@@ -11,20 +11,20 @@
 #include <cassert>
 #include <cstring>
 
-#include <K/Core/IoBuffers.h>
 #include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/ResultAcceptor.h>
+#include <K/IO/IoBuffers.h>
 
 using std::memcpy;
 using std::optional;
 using std::shared_ptr;
 using std::size_t;
 
-using K::Core::IoBuffers;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::ResultAcceptor;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
+using K::IO::IoBuffers;
 
 namespace K {
 namespace IO {
