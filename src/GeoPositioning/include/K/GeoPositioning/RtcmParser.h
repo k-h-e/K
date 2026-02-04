@@ -28,7 +28,7 @@ class RtcmParser : public virtual Core::RawStreamHandlerInterface {
     RtcmParser(RtcmParser &&other)                 = delete;
     RtcmParser &operator=(RtcmParser &&other)      = delete;
 
-    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
 
   private:

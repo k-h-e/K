@@ -10,14 +10,14 @@
 
 #include <cassert>
 
-#include <K/Core/IoBufferInterface.h>
 #include <K/Core/Log.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 #include <K/GeoPositioning/RtcmMessageHandlerInterface.h>
 
 using std::shared_ptr;
 using std::to_string;
-using K::Core::IoBufferInterface;
 using K::Core::Log;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::StreamInterface;
 using K::Core::UniqueHandle;
 
@@ -33,10 +33,10 @@ RtcmParser::RtcmParser(const shared_ptr<RtcmMessageHandlerInterface> &handler)
    // Nop.
 }
 
-void RtcmParser::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
+void RtcmParser::OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) {
     if (!error_) {
-        const uint8_t *dataPtr { static_cast<const uint8_t *>(buffer->Content()) };
-        const int     dataSize { buffer->Size() };
+        const uint8_t *dataPtr { static_cast<const uint8_t *>(buffer->ByteSpanStartReadOnly()) };
+        const int     dataSize { buffer->ByteSpanSize() };
         for (int i = 0; i < dataSize; ++i) {
             uint8_t byte = *dataPtr++;
 

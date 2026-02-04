@@ -8,14 +8,15 @@
 
 #include <K/IO/RawStreamSaver.h>
 
-#include <K/Core/IoBufferInterface.h>
+#include <K/Core/ReadableByteSpanInterface.h>
 #include <K/IO/File.h>
 #include <K/IO/StreamBuffer.h>
 
 using std::make_shared;
 using std::make_unique;
 using std::string;
-using K::Core::IoBufferInterface;
+
+using K::Core::ReadableByteSpanInterface;
 using K::Core::StreamInterface;
 using K::Core::UniqueHandle;
 using K::IO::Path;
@@ -29,9 +30,9 @@ RawStreamSaver::RawStreamSaver(const Path &fileName)
     // Nop.
 }
 
-void RawStreamSaver::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
+void RawStreamSaver::OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) {
     if (fileStream_) {
-        WriteItem(*fileStream_, buffer->Content(), buffer->Size());
+        WriteItem(*fileStream_, buffer->ByteSpanStartReadOnly(), buffer->ByteSpanSize());
     }
 }
 

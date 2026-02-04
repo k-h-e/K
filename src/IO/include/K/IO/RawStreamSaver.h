@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <string>
+
 #include <K/Core/BlockingOutStreamInterface.h>
 #include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/StreamInterface.h>
@@ -35,7 +36,7 @@ class RawStreamSaver : public virtual Core::RawStreamHandlerInterface {
     RawStreamSaver &operator=(RawStreamSaver &&other)      = delete;
     ~RawStreamSaver()                                      = default;
 
-    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
 
   private:

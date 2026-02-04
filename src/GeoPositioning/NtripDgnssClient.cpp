@@ -19,15 +19,16 @@ using std::make_shared;
 using std::string;
 using std::to_string;
 using std::stringstream;
-using K::Core::IoBufferInterface;
-using K::Core::IoBuffers;
+
 using K::Core::Log;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
 using K::Core::UniqueHandle;
 using K::GeoPositioning::RtcmParser;
 using K::IO::ConnectionIO;
+using K::IO::IoBuffers;
 
 namespace K {
 namespace GeoPositioning {
@@ -35,7 +36,7 @@ namespace GeoPositioning {
 class NtripDgnssClient::ReadHandler : public virtual RawStreamHandlerInterface {
   public:
     ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler);
-    void OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) override;
+    void OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) override;
     void OnStreamError(StreamInterface::Error error) override;
 
   private:
@@ -68,18 +69,19 @@ NtripDgnssClient::~NtripDgnssClient() {
 }
 
 void NtripDgnssClient::SendGga(const std::string &gga) {
-    //Log::Print(Log::Level::Debug, this, [&]{ return "sending position: \"" + gga + "\""; });
-    string lineBreak = "\r\n";
+    string lineBreak { "\r\n" };
     WriteItem(connection_, &gga[0], static_cast<int>(gga.size()));
     WriteItem(connection_, &lineBreak[0], static_cast<int>(lineBreak.size()));
 }
+
+// ---
 
 NtripDgnssClient::ReadHandler::ReadHandler(const shared_ptr<RtcmMessageHandlerInterface> &messageHandler)
         : parser_(messageHandler) {
     // Nop.
 }
 
-void NtripDgnssClient::ReadHandler::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
+void NtripDgnssClient::ReadHandler::OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) {
     parser_.OnRawStreamData(std::move(buffer));
 }
 

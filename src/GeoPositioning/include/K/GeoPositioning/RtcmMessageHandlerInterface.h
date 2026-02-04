@@ -12,9 +12,13 @@
 #include <K/Core/StreamHandlerInterface.h>
 
 namespace K {
-namespace GeoPositioning {
+    namespace GeoPositioning {
+        class RtcmMessage;
+    }
+}
 
-class RtcmMessage;
+namespace K {
+namespace GeoPositioning {
 
 //! Interface to entities receiving and processing RTCM messages.
 class RtcmMessageHandlerInterface : public virtual Core::StreamHandlerInterface {

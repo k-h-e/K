@@ -11,12 +11,12 @@
 
 #include <memory>
 
-#include <K/Core/IoBufferQueue.h>
+#include <K/Core/BufferQueue.h>
 #include <K/Core/RawStreamHandlerInterface.h>
 
 namespace K {
     namespace Core {
-        class IoBuffers;
+        class BufferProviderInterface;
     }
 }
 
@@ -28,21 +28,20 @@ class RawStreamHandlerTee : public virtual Core::RawStreamHandlerInterface {
   public:
     RawStreamHandlerTee(const std::shared_ptr<RawStreamHandlerInterface> &streamHandler1,
                         const std::shared_ptr<RawStreamHandlerInterface> &streamHandler2,
-                        const std::shared_ptr<Core::IoBuffers> &ioBuffers);
+                        const std::shared_ptr<Core::BufferProviderInterface> &bufferProvider);
     RawStreamHandlerTee(const RawStreamHandlerTee &other)            = delete;
     RawStreamHandlerTee &operator=(const RawStreamHandlerTee &other) = delete;
     RawStreamHandlerTee(RawStreamHandlerTee &&other)                 = delete;
     RawStreamHandlerTee &operator=(RawStreamHandlerTee &&other)      = delete;
 
-    void OnRawStreamData(Core::UniqueHandle<Core::IoBufferInterface> buffer) override;
+    void OnRawStreamData(Core::UniqueHandle<Core::ReadableByteSpanInterface> buffer) override;
     void OnStreamError(Core::StreamInterface::Error error) override;
 
   private:
-    std::shared_ptr<Core::IoBuffers> ioBuffers_;    // Thread-safe.
-
     std::shared_ptr<Core::RawStreamHandlerInterface> streamHandler1_;
     std::shared_ptr<Core::RawStreamHandlerInterface> streamHandler2_;
-    Core::IoBufferQueue                              workingQueue_;
+    Core::BufferQueue                                workingQueue_;
+    std::shared_ptr<Core::BufferProviderInterface>   bufferProvider_;
 };
 
 }    // Namespace IO.
