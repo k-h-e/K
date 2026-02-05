@@ -11,34 +11,34 @@
 #include <cassert>
 #include <cstring>
 
+#include <K/Core/BufferProviderInterface.h>
 #include <K/Core/RawStreamHandlerInterface.h>
 #include <K/Core/ResultAcceptor.h>
-#include <K/IO/IoBuffers.h>
 
 using std::memcpy;
 using std::optional;
 using std::shared_ptr;
 using std::size_t;
 
+using K::Core::BufferProviderInterface;;
 using K::Core::RawStreamHandlerInterface;
 using K::Core::ResultAcceptor;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
-using K::IO::IoBuffers;
 
 namespace K {
 namespace IO {
 
 ConnectionEndPoint::ConnectionEndPoint(const shared_ptr<Connection> &connection, const shared_ptr<RunLoop> &runLoop,
-                                       const shared_ptr<IoBuffers> &ioBuffers)
-        : ioBuffers_{ioBuffers},
-          connection_{connection},
+                                       const shared_ptr<BufferProviderInterface> &bufferProvider)
+        : connection_{connection},
           runLoop_{runLoop},
           handler_{nullptr},
           readyRead_{false},
           readyWrite_{false},
           activationRequested_{false},
-          signalError_{false} {
+          signalError_{false},
+          bufferProvider_{bufferProvider} {
     runLoopClientId_ = runLoop_->AddClient(*this);
     connection_->Register(this);
 }
@@ -80,7 +80,7 @@ int ConnectionEndPoint::WriteBlocking(const void *data, int dataSize) {
         } else {
             PushOutgoing();
             if (!error_) {
-                Put(data, dataSize, writeQueue_, *ioBuffers_);
+                Put(data, dataSize, writeQueue_, *bufferProvider_);
                 PushOutgoing();
             }
         }
@@ -162,7 +162,7 @@ void ConnectionEndPoint::DispatchIncoming() {
 
 void ConnectionEndPoint::PushOutgoing() {
     if (!accumulationBuffer_.Empty()) {
-        Put(accumulationBuffer_.Data(), accumulationBuffer_.DataSize(), writeQueue_, *ioBuffers_);
+        Put(accumulationBuffer_.Data(), accumulationBuffer_.DataSize(), writeQueue_, *bufferProvider_);
         accumulationBuffer_.Clear();
     }
 

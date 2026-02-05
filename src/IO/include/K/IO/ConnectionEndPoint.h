@@ -20,10 +20,8 @@
 
 namespace K {
     namespace Core {
+        class BufferProviderInterface;
         class RawStreamHandlerInterface;
-    }
-    namespace IO {
-        class IoBuffers;
     }
 }
 
@@ -37,7 +35,7 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
                            private virtual Connection::HandlerInterface {
   public:
     ConnectionEndPoint(const std::shared_ptr<Connection> &connection, const std::shared_ptr<Core::RunLoop> &runLoop,
-                       const std::shared_ptr<IoBuffers> &ioBuffers);
+                       const std::shared_ptr<Core::BufferProviderInterface> &bufferProvider);
     ConnectionEndPoint()                                           = delete;
     ConnectionEndPoint(const ConnectionEndPoint &other)            = delete;
     ConnectionEndPoint &operator=(const ConnectionEndPoint &other) = delete;
@@ -62,20 +60,19 @@ class ConnectionEndPoint : public virtual Core::AsyncInStreamInterface,
     void PushOutgoing();
     void RequestActivation();
 
-    const std::shared_ptr<IoBuffers> &ioBuffers_;    // Thread-safe.
-
-    const std::shared_ptr<Connection>     connection_;
-    const std::shared_ptr<Core::RunLoop>  runLoop_;
-    int                                   runLoopClientId_;
-    Core::RawStreamHandlerInterface       *handler_;
-    Core::Buffer                          accumulationBuffer_;
-    Core::BufferQueue                     writeQueue_;
-    bool                                  readyRead_;
-    bool                                  readyWrite_;
-    bool                                  activationRequested_;
-    bool                                  signalError_;
-    std::optional<Error>                  error_;
-    std::shared_ptr<Core::ResultAcceptor> closeResultAcceptor_;
+    const std::shared_ptr<Connection>              connection_;
+    const std::shared_ptr<Core::RunLoop>           runLoop_;
+    int                                            runLoopClientId_;
+    Core::RawStreamHandlerInterface                *handler_;
+    Core::Buffer                                   accumulationBuffer_;
+    Core::BufferQueue                              writeQueue_;
+    bool                                           readyRead_;
+    bool                                           readyWrite_;
+    bool                                           activationRequested_;
+    bool                                           signalError_;
+    std::shared_ptr<Core::BufferProviderInterface> bufferProvider_;
+    std::optional<Error>                           error_;
+    std::shared_ptr<Core::ResultAcceptor>          closeResultAcceptor_;
 };
 
 }    // Namespace IO.

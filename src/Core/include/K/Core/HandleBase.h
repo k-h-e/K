@@ -22,7 +22,8 @@ namespace K {
 namespace K {
 namespace Core {
 
-//! Handlee-type-agnostic base class to Handle<T>, used to minimize template-induced code size expansion.
+//! Handlee-type-agnostic base class to SharedHandle<T> and UniqueHandle<T>, used to minimize template-induced code size
+//! expansion.
 class HandleBase : public virtual Interface {
   public:
     //! If the handle is still pointing to a handlee resource, it unregisters from it and becomes a null-handle.

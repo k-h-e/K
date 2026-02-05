@@ -8,7 +8,7 @@
 
 #include <K/IO/HttpGet.h>
 
-#include <K/Core/IoBufferInterface.h>
+#include <K/Core/BufferProviderInterface.h>
 #include <K/Core/Log.h>
 #include <K/Core/StringTools.h>
 #include <K/Core/TextWriter.h>
@@ -21,10 +21,11 @@ using std::shared_ptr;
 using std::string;
 using std::to_string;
 using std::vector;
-using K::Core::IoBufferInterface;
-using K::Core::IoBuffers;
-using K::Core::IoBufferQueue;
+
+using K::Core::BufferProviderInterface;
+using K::Core::BufferQueue;
 using K::Core::Log;
+using K::Core::ReadableByteSpanInterface;
 using K::Core::RunLoop;
 using K::Core::StreamInterface;
 using K::Core::StringTools;
@@ -36,18 +37,19 @@ namespace K {
 namespace IO {
 
 HttpGet::HttpGet(const string &host, const string &resource, const shared_ptr<RunLoop> &runLoop,
-                 const shared_ptr<ConnectionIO> &connectionIO, const shared_ptr<IoBuffers> &ioBuffers)
-        : ioBuffers_{ioBuffers},
-          runLoop_{runLoop},
+                 const shared_ptr<ConnectionIO> &connectionIO,
+                 const shared_ptr<BufferProviderInterface> &bufferProvider)
+        : runLoop_{runLoop},
           handler_{nullptr},
           receivingHeader_{true},
           numHeaderLines_{0},
           numContentBytesDelivered_{0},
+          bufferProvider_{bufferProvider},
           signalError_{false} {
     runLoopClientId_ = runLoop_->AddClient(*this);
     
     auto connection{make_shared<TcpConnection>(host, 80, runLoop, connectionIO)};
-    endPoint_ = make_shared<ConnectionEndPoint>(connection, runLoop, ioBuffers);
+    endPoint_ = make_shared<ConnectionEndPoint>(connection, runLoop, bufferProvider);
     endPoint_->Register(this);
     TextWriter writer{endPoint_};
     writer.Write("GET ");
@@ -101,7 +103,7 @@ void HttpGet::Activate(bool deepActivation) {
     }
 }
 
-void HttpGet::OnRawStreamData(UniqueHandle<IoBufferInterface> buffer) {
+void HttpGet::OnRawStreamData(UniqueHandle<ReadableByteSpanInterface> buffer) {
     if (!error_) {
         if (receivingHeader_) {
             ProcessHeaderData(buffer);
@@ -115,17 +117,17 @@ void HttpGet::OnStreamError(StreamInterface::Error error) {
     RaiseError(error);
 }
 
-void HttpGet::ProcessHeaderData(UniqueHandle<IoBufferInterface> &buffer) {
-    const uint8_t *ptr = static_cast<const uint8_t *>(buffer->Content());
-    for (int i = 0; i < buffer->Size(); ++i) {
+void HttpGet::ProcessHeaderData(UniqueHandle<ReadableByteSpanInterface> &buffer) {
+    const uint8_t *ptr = static_cast<const uint8_t *>(buffer->ByteSpanStartReadOnly());
+    for (int i = 0; i < buffer->ByteSpanSize(); ++i) {
         char character = static_cast<char>(*ptr);
         if (character == '\n') {
             if (line_.empty()) {
                 if (numContentBytes_ && (*numContentBytes_ >= 0)) {
                     receivingHeader_ = false;
-                    int numRemaining = buffer->Size() - i - 1;
+                    int numRemaining = buffer->ByteSpanSize() - i - 1;
                     if (numRemaining) {
-                        Put(ptr + 1, numRemaining, contentQueue_, *ioBuffers_);
+                        Put(ptr + 1, numRemaining, contentQueue_, *bufferProvider_);
                         runLoop_->RequestActivation(runLoopClientId_, false);
                         FinishContentEnqueue(numRemaining);
                     } else {
@@ -153,8 +155,8 @@ void HttpGet::ProcessHeaderData(UniqueHandle<IoBufferInterface> &buffer) {
     }
 }
 
-void HttpGet::ProcessContentData(UniqueHandle<IoBufferInterface> &buffer) {
-    int size { buffer->Size() };
+void HttpGet::ProcessContentData(UniqueHandle<ReadableByteSpanInterface> &buffer) {
+    int size { buffer->ByteSpanSize() };
     contentQueue_.Put(std::move(buffer));
     runLoop_->RequestActivation(runLoopClientId_, false);
     FinishContentEnqueue(size);

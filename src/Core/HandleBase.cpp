@@ -62,13 +62,15 @@ HandleBase::HandleBase(HandleBase &&other)
 }
 
 HandleBase &HandleBase::operator=(HandleBase &&other) {
-    handlee_               = other.handlee_;
-    referenceCountTracker_ = other.referenceCountTracker_;
-    keepAlive_             = std::move(other.keepAlive_);
+    if (&other != this) {
+        handlee_               = other.handlee_;
+        referenceCountTracker_ = other.referenceCountTracker_;
+        keepAlive_             = std::move(other.keepAlive_);
 
-    other.handlee_               = nullptr;
-    other.referenceCountTracker_ = nullptr;
-    other.keepAlive_.reset();
+        other.handlee_               = nullptr;
+        other.referenceCountTracker_ = nullptr;
+        other.keepAlive_.reset();
+    }
 
     return *this;
 }

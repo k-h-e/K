@@ -42,7 +42,7 @@ class UniqueHandle : public HandleBase {
     ~UniqueHandle()                                    = default;
 
     template<class OtherT>
-    UniqueHandle(UniqueHandle<OtherT> &&other) : HandleBase{other} {
+    UniqueHandle(UniqueHandle<OtherT> &&other) : HandleBase{std::move(other)} {
         if (handlee_) {
             handlee_ = static_cast<T *>(static_cast<OtherT *>(handlee_));
         }
