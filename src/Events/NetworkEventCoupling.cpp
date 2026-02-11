@@ -15,6 +15,7 @@
 #include <K/Core/StringTools.h>
 #include <K/Core/Timer.h>
 #include <K/IO/ConnectionEndPoint.h>
+#include <K/IO/IoBuffers.h>
 #include <K/IO/KeepAliveParameters.h>
 #include <K/IO/TcpConnection.h>
 #include <K/Events/EventFilterConfiguration.h>
