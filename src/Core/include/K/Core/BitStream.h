@@ -9,7 +9,9 @@
 #ifndef K_CORE_BITSTREAM_H_
 #define K_CORE_BITSTREAM_H_
 
+#include <cstdint>
 #include <deque>
+
 #include <K/Core/Interface.h>
 
 namespace K {

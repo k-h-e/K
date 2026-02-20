@@ -9,6 +9,7 @@
 #ifndef K_CORE_LOG_H_
 #define K_CORE_LOG_H_
 
+#include <cstdint>
 #include <string>
 #include <functional>
 

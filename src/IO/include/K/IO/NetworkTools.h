@@ -9,6 +9,7 @@
 #ifndef K_IO_NETWORKTOOLS_H_
 #define K_IO_NETWORKTOOLS_H_
 
+#include <cstdint>
 #include <optional>
 #include <string>
 
