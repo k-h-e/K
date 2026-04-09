@@ -10,6 +10,7 @@
 
 #include <unistd.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <cerrno>
 
@@ -125,7 +126,7 @@ bool NetworkTools::PrepareSocket(int fd, Core::Interface *loggingObject) {
         return false;
     }
     return true;
-#elif defined(K_PLATFORM_LINUX)
+#elif defined(K_PLATFORM_LINUX) || defined(K_PLATFORM_ANDROID)
     (void)fd;
     (void)loggingObject;
     return true;

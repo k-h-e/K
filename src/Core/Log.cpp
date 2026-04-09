@@ -8,6 +8,10 @@
 
 #include <K/Core/Log.h>
 
+#if defined(K_PLATFORM_ANDROID)
+#include <android/log.h>
+#endif
+
 #include <cstdio>
 
 #include <K/Core/Interface.h>
@@ -21,6 +25,7 @@ namespace Core {
 
 Log::Level Log::currentLevel = Log::Level::Debug;
 
+#if defined(K_PLATFORM_MAC) || defined(K_PLATFORM_IOS) || defined(K_PLATFORM_LINUX)
 void Log::Print(Level level, const Interface *source, const std::function<std::string()> &generateLogLine) {
     if (level >= currentLevel) {
         if (source) {
@@ -30,6 +35,21 @@ void Log::Print(Level level, const Interface *source, const std::function<std::s
         }
     }
 }
+#elif defined(K_PLATFORM_ANDROID)
+void Log::Print(Level level, const Interface *source, const std::function<std::string()> &generateLogLine) {
+    if (level >= currentLevel) {
+        if (source) {
+            __android_log_print(
+                ANDROID_LOG_DEBUG, "K", "%s",
+	            (string("[") + StringTools::GetCleanClassName(*source) + "] " + generateLogLine()).c_str());
+        } else {
+            __android_log_print(ANDROID_LOG_DEBUG, "K", "%s", generateLogLine().c_str());
+        }
+    }
+}
+#else
+#error Unknown platform.
+#endif
 
 }    // Namespace Core.
 }    // Namespace K.
