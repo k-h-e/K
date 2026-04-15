@@ -108,7 +108,7 @@ int File::ReadBlocking(void *buffer, int bufferSize) {
             error_ = Error::User;
         } else {
             while (true) {
-                int numRead = read(fd_, buffer, bufferSize);
+                int numRead = static_cast<int>(read(fd_, buffer, bufferSize));
                 if (numRead > 0) {
                     position_ += numRead;
                     return numRead;
@@ -141,7 +141,7 @@ int File::WriteBlocking(const void *data, int dataSize) {
             error_ = Error::User;
         } else {
             while (true) {
-                int numWritten = write(fd_, data, dataSize);
+                int numWritten = static_cast<int>(write(fd_, data, dataSize));
                 if (numWritten > 0) {
                     position_ += numWritten;
                     return numWritten;

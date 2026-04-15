@@ -10,10 +10,13 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+
 #include <cstring>
 #include <cassert>
+
 #include <K/Core/Log.h>
 #include <K/IO/IOTools.h>
+
 #include "WorkInfo.h"
 
 using std::shared_ptr;
@@ -21,37 +24,38 @@ using std::unique_lock;
 using std::mutex;
 using std::string;
 using std::to_string;
+
 using K::Core::Log;
 
 namespace K {
 namespace IO {
 
 ConnectionIO::SharedState::SharedState(int pipe)
-        : pipe_(pipe),
-          registrationOperationRunning_(false),
-          error_(false),
-          shutDownRequested_(false),
-          workerFinished_(false) {
+        : pipe_{pipe},
+          registrationOperationRunning_{false},
+          error_{false},
+          shutDownRequested_{false},
+          workerFinished_{false} {
     // If the pipe is bad, error state will be regularly raised by the worker.
 }
 
 ConnectionIO::SharedState::~SharedState() {
     if (pipe_ != -1) {
-        (void)IOTools::CloseFileDescriptor(pipe_, this);
+        (void) IOTools::CloseFileDescriptor(pipe_, this);
     }
 }
 
 bool ConnectionIO::SharedState::Register(const shared_ptr<ClientInterface> &client, int fd) {
-    assert(client);
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    assert (client);
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (error_ || (fd < 0)) {
         Log::Print(Log::Level::Warning, this, [&]{ return "failed to register client for fd " + to_string(fd)
             + ", initial checks failed, error_state=" + to_string(error_); });
         return false;
     }
 
-    bool switchedToNonBlocking = false;
-    int flags = fcntl(fd, F_GETFL);
+    bool switchedToNonBlocking { false };
+    int flags { fcntl(fd, F_GETFL) };
     if (flags != -1) {
         if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1) {
             switchedToNonBlocking = true;
@@ -86,7 +90,7 @@ bool ConnectionIO::SharedState::Register(const shared_ptr<ClientInterface> &clie
         stateChanged_.wait(critical);
     }
 
-    bool success = registrationInfo_.success;
+    bool success { registrationInfo_.success };
 
     registrationOperationRunning_ = false;
     registrationInfo_             = RegistrationInfo();
@@ -99,10 +103,10 @@ bool ConnectionIO::SharedState::Register(const shared_ptr<ClientInterface> &clie
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::Unregister(const shared_ptr<ClientInterface> &client, bool *outFinalStreamError)  {
-    assert(client);
+    assert (client);
     *outFinalStreamError = true;
 
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     while (registrationOperationRunning_) {
         if (error_) {
             Log::Print(Log::Level::Warning, this, []{
@@ -141,7 +145,7 @@ void ConnectionIO::SharedState::Unregister(const shared_ptr<ClientInterface> &cl
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::SetClientCanRead(ClientInterface *client) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (!error_) {
         clientsReadyToRead_.push_back(client);
         NotifyWorker();
@@ -149,7 +153,7 @@ void ConnectionIO::SharedState::SetClientCanRead(ClientInterface *client) {
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::SetClientCanWrite(ClientInterface *client) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (!error_) {
         clientsReadyToWrite_.push_back(client);
         NotifyWorker();
@@ -157,7 +161,7 @@ void ConnectionIO::SharedState::SetClientCanWrite(ClientInterface *client) {
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::RequestCustomCall(ClientInterface *client) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (!error_) {
         clientsWithCustomCallRequested_.push_back(client);
         NotifyWorker();
@@ -165,7 +169,7 @@ void ConnectionIO::SharedState::RequestCustomCall(ClientInterface *client) {
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::RequestErrorState(ClientInterface *client) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (!error_) {
         clientsWithErrorStateRequested_.push_back(client);
         NotifyWorker();
@@ -173,13 +177,13 @@ void ConnectionIO::SharedState::RequestErrorState(ClientInterface *client) {
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::ShutDown()  {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     DoShutDown(&critical);
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::GetWork(WorkInfo *outInfo) {
     outInfo->Clear();
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     outInfo->shutDownRequested = shutDownRequested_;
 
     if (!error_) {
@@ -216,7 +220,7 @@ void ConnectionIO::SharedState::GetWork(WorkInfo *outInfo) {
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::OnErrorState() {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     if (!error_) {
         error_ = true;
         stateChanged_.notify_all();
@@ -225,22 +229,22 @@ void ConnectionIO::SharedState::OnErrorState() {
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::OnClientRegistered(bool success) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     registrationInfo_.success  = success;
     registrationInfo_.finished = true;
     stateChanged_.notify_all();
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::OnClientUnregistered(bool finalStreamError) {
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     unregistrationInfo_.finalStreamError = finalStreamError;
     unregistrationInfo_.finished         = true;
     stateChanged_.notify_all();
 }    // ......................................................................................... critical section, end.
 
 void ConnectionIO::SharedState::OnCompletion(int completionId) {
-    (void)completionId;
-    unique_lock<mutex> critical(lock_);    // Critical section..........................................................
+    (void) completionId;
+    unique_lock<mutex> critical{lock_};    // Critical section..........................................................
     workerFinished_ = true;
     stateChanged_.notify_all();
 }    // ......................................................................................... critical section, end.
@@ -248,17 +252,15 @@ void ConnectionIO::SharedState::OnCompletion(int completionId) {
 // Lock assumed to be held.
 void ConnectionIO::SharedState::NotifyWorker() {
     if (pipe_ != -1) {
-        uint8_t dummyByte = 0u;
+        uint8_t dummyByte { 0u };
         while (true) {
-            int numWritten = write(pipe_, &dummyByte, 1);
+            int numWritten { static_cast<int>(write(pipe_, &dummyByte, 1)) };
             if (numWritten == 1) {
                 return;
-            }
-            else if (numWritten == -1) {
+            } else if (numWritten == -1) {
                 if (errno == EINTR) {
                     // Nop.
-                }
-                else {
+                } else {
                     assert(false);
                 }
             }

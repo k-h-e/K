@@ -10,6 +10,9 @@
 
 #if defined(K_PLATFORM_ANDROID)
 #include <android/log.h>
+#elif defined(K_PLATFORM_MAC) || defined(K_PLATFORM_IOS) || defined(K_PLATFORM_LINUX)
+#else
+#error Unknown platform!
 #endif
 
 #include <cstdio>
@@ -48,7 +51,7 @@ void Log::Print(Level level, const Interface *source, const std::function<std::s
     }
 }
 #else
-#error Unknown platform.
+#error Unknown platform!
 #endif
 
 }    // Namespace Core.

@@ -131,7 +131,7 @@ bool NetworkTools::PrepareSocket(int fd, Core::Interface *loggingObject) {
     (void)loggingObject;
     return true;
 #else
-#error Unknown platform.
+#error Unknown platform!
 #endif
 }
 
