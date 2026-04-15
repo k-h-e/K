@@ -40,10 +40,10 @@ void Log::Print(Level level, const Interface *source, const std::function<std::s
     if (level >= currentLevel) {
         if (source) {
             __android_log_print(
-                ANDROID_LOG_DEBUG, "K", "%s",
-	            (string("[") + StringTools::GetCleanClassName(*source) + "] " + generateLogLine()).c_str());
+                ANDROID_LOG_DEBUG, StringTools::GetCleanClassName(*source, 2).c_str(),
+                "%s", generateLogLine().c_str());
         } else {
-            __android_log_print(ANDROID_LOG_DEBUG, "K", "%s", generateLogLine().c_str());
+            __android_log_print(ANDROID_LOG_DEBUG, "native", "%s", generateLogLine().c_str());
         }
     }
 }

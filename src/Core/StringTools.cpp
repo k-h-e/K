@@ -26,6 +26,7 @@ using std::out_of_range;
 using std::string;
 using std::unordered_set;
 using std::vector;
+
 using K::Core::NumberTools;
 
 namespace K {
@@ -300,10 +301,10 @@ string StringTools::GetCleanClassName(const Interface &instance, int maxNumSegme
         for (int i = numTokens - maxNumSegments; i < numTokens; ++i) {
             newTokens.push_back(tokens[i]);
         }
-        tokens = newTokens;
+        return string{"..."} + StringTools::Concatenate(newTokens, "::");
+    } else {
+        return StringTools::Concatenate(tokens, "::");
     }
-
-    return StringTools::Concatenate(tokens, "::");
 }
 
 void StringTools::Serialize(const string &text, BlockingOutStreamInterface &stream) {
