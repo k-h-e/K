@@ -46,6 +46,11 @@ class File : public virtual Core::SeekableBlockingIOStreamInterface {
     static bool Rename(const K::IO::Path &oldFileName, const K::IO::Path &newFileName);
     //! Deletes the specified file.
     static bool Delete(const K::IO::Path &fileName);
+    //! Copyies the specified file.
+    /*!
+     *  \return <c>false</c> in case of failure. The destination file is then left behind in an undefined state.
+     */
+    static bool Copy(const K::IO::Path &sourceFileName, const K::IO::Path &destinationFileName);
 
   private:
     K::IO::Path                           fileName_;

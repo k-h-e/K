@@ -10,17 +10,24 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+
 #include <cstdio>
 #include <cerrno>
 #include <cassert>
-#include <K/Core/ResultAcceptor.h>
+#include <memory>
+
+#include <K/Core/Buffer.h>
 #include <K/Core/Log.h>
+#include <K/Core/ResultAcceptor.h>
 #include <K/IO/IOTools.h>
 
 using std::optional;
+using std::make_unique;
 using std::shared_ptr;
 using std::string;
 using std::to_string;
+
+using K::Core::Buffer;
 using K::Core::Log;
 using K::Core::ResultAcceptor;
 using K::Core::StreamInterface;
@@ -251,6 +258,17 @@ bool File::Delete(const Path &fileName) {
     }
     return success;
 }
+
+bool File::Copy(const Path &sourceFileName, const Path &destinationFileName) {
+    auto buffer = make_unique<Buffer>(2048);
+    File sourceFile{sourceFileName, File::AccessMode::ReadOnly, false};
+    File destinationFile{destinationFileName, File::AccessMode::ReadOnly, true};
+
+    sfdgsdfgsf
+
+    return false;
+}
+
 
 }    // Namesapce IO.
 }    // Namespace K.
