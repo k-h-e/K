@@ -22,6 +22,7 @@
 #include <K/IO/IOTools.h>
 
 using std::optional;
+using std::make_shared;
 using std::make_unique;
 using std::shared_ptr;
 using std::string;
@@ -260,13 +261,31 @@ bool File::Delete(const Path &fileName) {
 }
 
 bool File::Copy(const Path &sourceFileName, const Path &destinationFileName) {
-    auto buffer = make_unique<Buffer>(2048);
-    File sourceFile{sourceFileName, File::AccessMode::ReadOnly, false};
-    File destinationFile{destinationFileName, File::AccessMode::ReadOnly, true};
+    auto result = make_shared<ResultAcceptor>();
+    {
+        File destination{destinationFileName, File::AccessMode::WriteOnly, true};
+        destination.SetCloseResultAcceptor(result);
+    
+        File   source{sourceFileName, File::AccessMode::ReadOnly, false};
+        Buffer buffer{2048};
+        while (result->Unset()) {
+            int numRead = source.ReadBlocking(buffer.ByteSpanStart(), buffer.ByteSpanSize());
+            if (numRead > 0) {
+                WriteItem(destination, buffer.ByteSpanStart(), numRead);
+                if (destination.ErrorState()) {
+                    result->OnFailure();
+                }
+            } else {
+                if (source.StreamError() == StreamInterface::Error::Eof) {
+                    result->OnSuccess();
+                } else {
+                    result->OnFailure();
+                }
+            }
+        }            
+    }
 
-    sfdgsdfgsf
-
-    return false;
+    return result->Success();
 }
 
 

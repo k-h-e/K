@@ -40,8 +40,10 @@ class ResultAcceptor : public virtual Interface {
     void OnFailure();
     //! Tells whether the accumulated result is success.
     bool Success();
-    //! Tells whether the accumulated result is success.
+    //! Tells whether the accumulated result is failure.
     bool Failure();
+    //! Tells whether the accumulated result is still unset.
+    bool Unset();
     //! Returns a human-readable string describing the current result state.
     std::string ToString();
 

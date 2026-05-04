@@ -45,6 +45,11 @@ bool ResultAcceptor::Failure() {
     return valid_ ? !success_ : false;
 }    // ......................................................................................... critical section, end.
 
+bool ResultAcceptor::Unset() {
+    unique_lock<mutex> critical(lock_);    // Critical section .........................................................
+    return !valid_;
+}    // ......................................................................................... critical section, end.
+
 string ResultAcceptor::ToString() {
     unique_lock<mutex> critical(lock_);    // Critical section .........................................................
     return valid_ ? (success_ ? "success" : "failure") : "not set";
