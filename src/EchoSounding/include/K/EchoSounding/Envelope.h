@@ -16,6 +16,7 @@
 #include <K/Core/SerializableInterface.h>
 
 namespace K {
+//! Echo sounding.
 namespace EchoSounding {
 
 //! Holds a set of echo sounder envelope data.
