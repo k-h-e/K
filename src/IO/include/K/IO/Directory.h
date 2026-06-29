@@ -11,8 +11,10 @@
 
 #include <dirent.h>
 #include <memory>
+#include <optional>
 #include <unordered_map>
-#include <string>
+#include <unordered_set>
+
 #include <K/Core/ErrorStateInterface.h>
 #include <K/IO/Path.h>
 
@@ -36,7 +38,9 @@ class Directory : public virtual K::Core::ErrorStateInterface {
      *  ErrorState() should be inspected to check whether or not directory reading finished because of an encountered
      *  error.
      */
-    bool GetNextEntry(std::string *outName, bool *outIsDirectory, off_t *outSize);
+    bool GetNextEntry(std::string &outName, bool &outIsDirectory, off_t &outSize);
+    
+    // ErrorStateInterface...
     bool ErrorState() const;
 
     //! Creates the specified directory.
@@ -48,9 +52,15 @@ class Directory : public virtual K::Core::ErrorStateInterface {
     //! Reads the specified directory and returns information on all file-type entries.
     /*!
      * \return
-     * Map mapping file name to file size, <c>nullptr</c> in case of failure.
+     * Map mapping file name to file size, or <c>nullopt</c> in case of failure.
      */
-    static std::shared_ptr<std::unordered_map<std::string, off_t>> GetFiles(const K::IO::Path &directory);
+    static std::optional<std::unordered_map<std::string, off_t>> GetFiles(const K::IO::Path &directory);
+    //! Reads the specified directory and returns information on all directory-type entries.
+    /*!
+     * \return
+     * Set of subdirectories, or <c>nullopt</c> in case of failure.
+     */
+    static std::optional<std::unordered_set<std::string>> GetSubDirectories(const K::IO::Path &directory);
 
   private:
     K::IO::Path path_;
